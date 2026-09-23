@@ -51,8 +51,8 @@ None. `/qa-plan` is a planning utility. Story readiness gates are separate.
 3. Skill assigns test types per coding-standards.md table:
    - Logic story → Unit test (BLOCKING)
    - Integration story → Integration test (BLOCKING)
-   - Visual story → Screenshot + lead sign-off (ADVISORY)
-   - UI story → Manual walkthrough doc (ADVISORY)
+   - Visual story → Retained screenshot + lead sign-off (BLOCKING)
+   - UI story → Retained screenshot of each screen (BLOCKING)
 4. Skill drafts QA plan with story-by-story test type breakdown
 5. Skill asks "May I write to `production/qa/qa-plan-sprint-003.md`?"
 6. File is written on approval; verdict is COMPLETE

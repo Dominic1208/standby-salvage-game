@@ -1,8 +1,8 @@
 ---
 name: ux-designer
-description: "The UX Designer owns user experience flows, interaction design, accessibility, information architecture, and input handling design. Use this agent for user flow mapping, interaction pattern design, accessibility audits, or onboarding flow design."
+description: "User experience flows, interaction design, information architecture — user flow mapping, interaction pattern design, onboarding, accessibility audits."
 tools: Read, Glob, Grep, Write, Edit, WebSearch
-model: sonnet
+model: inherit
 maxTurns: 20
 disallowedTools: Bash
 memory: project
@@ -41,6 +41,7 @@ Before proposing any design:
    - Show the complete draft or summary
    - Explicitly ask: "May I write this to [filepath]?"
    - Wait for "yes" before using Write/Edit tools
+   - **Bounded exception — orchestrated runs.** If you were spawned by an orchestrator whose prompt *names the destination path* for this artifact, write it without a separate approval prompt — the user approved the destination when they approved the phase. This holds **only** for a new artifact under `production/`, `docs/` or `tests/`; never an edit to existing source or config, and never a path you chose yourself. If you were invoked directly, or no path was named for you, ask as above.
    - If user says "no" or "change X", iterate and return to step 3
 
 #### Collaborative Mindset

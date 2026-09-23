@@ -88,7 +88,9 @@ Fired after a tool completes. **Cannot block** (exit code ignored for blocking).
 
 ## SubagentStart
 
-Fired when a subagent is spawned via the Task tool.
+Fired when a subagent is spawned via the `Agent` tool (named `Task` before
+Claude Code 2.1.63; `Task` still works as an alias in permission rules and
+`tools:` frontmatter, but the hook payload's `tool_name` is now `Agent`).
 
 ```json
 {

@@ -88,9 +88,10 @@ At any point, run:
 /help
 ```
 
-This reads your current phase from `production/stage.txt`, checks which
-artifacts exist, and tells you exactly what to do next. It distinguishes
-between REQUIRED next steps and OPTIONAL opportunities.
+This reads your current phase from `project.stage` in `project.yaml` (falling
+back to `production/stage.txt`), checks which artifacts exist, and tells you
+exactly what to do next. It distinguishes between REQUIRED next steps and
+OPTIONAL opportunities.
 
 ### Step 5: Create Your Directory Structure
 
@@ -155,7 +156,7 @@ with defined pillars and a player journey. This is where you figure out
      |                                        |                    |
      v                                        v                    v
   10 concepts     Concept doc with       Validation          Engine pinned in
-  MDA analysis    pillars, MDA,          of concept          technical-preferences.md
+  MDA analysis    pillars, MDA,          of concept          project.yaml
   Player motiv.   core loop, USP         document
                                                                    |
                                                                    v
@@ -230,8 +231,9 @@ Or with a specific engine:
 
 **What /setup-engine does:**
 
-- Populates `.claude/docs/technical-preferences.md` with naming conventions,
-  performance budgets, and engine-specific defaults
+- Writes engine, language, specialists, naming conventions, and performance
+  budgets to `project.yaml` (the source of truth) and mirrors them to
+  `.claude/docs/technical-preferences.md` (the human-readable legacy fallback)
 - Detects knowledge gaps (engine version newer than LLM training data) and
   advises cross-referencing `docs/engine-reference/`
 - Creates version-pinned reference docs in `docs/engine-reference/`
@@ -268,7 +270,7 @@ production.
 
 **Requirements to pass:**
 
-- Engine configured in `technical-preferences.md`
+- Engine configured in `project.yaml` (`engine.*`)
 - `design/gdd/game-concept.md` exists with pillars
 - `design/gdd/systems-index.md` exists with dependency ordering
 
@@ -357,7 +359,8 @@ Before the next system starts, validate the current one:
 /design-review design/gdd/combat-system.md
 ```
 
-Checks all 8 sections for completeness, formula clarity, edge case resolution,
+Checks the sections your `modes.workflow` tier requires (all 8 at `full`, 5 at
+`standard`) for completeness, formula clarity, edge case resolution,
 bidirectional dependencies, and testable acceptance criteria.
 
 **Verdict:** APPROVED / NEEDS REVISION / MAJOR REVISION. Only APPROVED GDDs
@@ -599,8 +602,9 @@ Three modes: screen/flow, HUD, and interaction patterns. Output goes to
 interaction map, data requirements, events fired, accessibility, localization.
 
 Reads your `accessibility-requirements.md` (written in Phase 3) and your
-input method config from `technical-preferences.md` to drive accessibility
-and input coverage checks — no need to re-specify them per screen.
+input method config from `project.yaml` (the `platform.*` block, falling back
+to `technical-preferences.md`) to drive accessibility and input coverage
+checks — no need to re-specify them per screen.
 
 > **Tip:** `/design-system` emits a 📌 UX Flag for every system with UI
 > requirements. Use those flags as a checklist for which screens need specs.
@@ -1156,7 +1160,8 @@ These topics apply across all phases.
 Director gates are specialist agents that review your work at key workflow steps.
 By default they run at every checkpoint. You can control how much review you get.
 
-**Set your review intensity once during `/start`.** Saved to `production/review-mode.txt`.
+**Set your review intensity once during `/start`.** Saved to `modes.review_mode`
+in `project.yaml` (mirrored to `production/review-mode.txt` as a legacy fallback).
 
 | Mode | What runs | Best for |
 |------|-----------|----------|
@@ -1172,7 +1177,7 @@ By default they run at every checkpoint. You can control how much review you get
 ```
 
 The `--review` flag works on all gate-using skills. Change the global mode at any
-time by editing `production/review-mode.txt` directly or re-running `/start`.
+time by editing `modes.review_mode` in `project.yaml` or re-running `/start`.
 
 Full gate definitions and check pattern: `.claude/docs/director-gates.md`
 
@@ -1256,7 +1261,7 @@ The system has 12 hooks that run automatically:
 | `validate-skill-change.sh` | Skill file written | Advises running `/skill-test` after `.claude/skills/` changes |
 | `log-agent.sh` | Agent start | Logs agent invocations for audit trail |
 | `log-agent-stop.sh` | Agent stop | Completes agent audit trail (start + stop) |
-| `session-stop.sh` | Session end | Final session logging |
+| `session-stop.sh` | **Every response ends** | Session logging and the subagent spawn tally. Despite the name it fires once per response, not once per session. |
 
 ### Context Resilience
 
@@ -1327,8 +1332,9 @@ Phase gates are formal checkpoints. Run `/gate-check` with the transition name:
 - **CONCERNS** -- requirements met with acknowledged risks, passable
 - **FAIL** -- requirements not met, blocks advancement with specific remediation
 
-When a gate passes, `production/stage.txt` is updated (only then), which
-controls the status line and `/help` behavior.
+When a gate passes, `project.stage` in `project.yaml` is updated (only then) —
+mirrored to `production/stage.txt` — which controls the status line and `/help`
+behavior.
 
 ### Reverse Documentation
 

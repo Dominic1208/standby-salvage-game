@@ -1,6 +1,6 @@
 ---
 name: creative-director
-description: "The Creative Director is the highest-level creative authority for the project. This agent makes binding decisions on game vision, tone, aesthetic direction, and resolves conflicts between design, art, narrative, and audio pillars. Use this agent when a decision affects the fundamental identity of the game or when department leads cannot reach consensus."
+description: "Highest creative authority — vision, tone, aesthetic direction. Use when a decision affects game identity or department leads deadlock."
 tools: Read, Glob, Grep, Write, Edit, WebSearch
 model: opus
 maxTurns: 30
@@ -318,7 +318,7 @@ serves the pillar?" Often 20% of the scope delivers 80% of the pillar value.
 
 ## Gate Verdict Format
 
-When invoked via a director gate (e.g., `CD-PILLARS`, `CD-GDD-ALIGN`, `CD-NARRATIVE-FIT`), always
+When invoked via a director gate (e.g., `CD-PILLARS`, `CD-GDD-ALIGN`, `CD-NARRATIVE`), always
 begin your response with the verdict token on its own line:
 
 ```

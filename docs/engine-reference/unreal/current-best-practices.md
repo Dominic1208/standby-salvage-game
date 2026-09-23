@@ -267,6 +267,18 @@ void AMyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 ```cpp
 // ✅ Reuse objects instead of Spawn/Destroy
+//
+// ⚠ INCONSISTENT WITH THIS FILE'S OWN RULE (flagged 2026-08-10).
+// The GC section above states that an unmarked raw UObject pointer is
+// "Dangerous! May be garbage collected" and requires UPROPERTY() +
+// TObjectPtr<T>. This pooling example then holds raw AActor* in a bare TArray,
+// which is exactly the shape that section forbids. FOLLOW THE RULE, NOT THIS
+// SNIPPET: declare the pool UPROPERTY() TArray<TObjectPtr<AActor>>.
+//
+// Left visible rather than silently rewritten: the corrected form has not been
+// verified against Epic's docs for 5.7, and this directory is the offline
+// substitute for them -- editing a code sample here from memory is the failure
+// mode the whole reference exists to prevent. Re-verify, then fix both together.
 TArray<AActor*> ProjectilePool;
 
 AActor* GetPooledProjectile() {

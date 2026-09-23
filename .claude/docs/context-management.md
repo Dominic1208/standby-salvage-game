@@ -17,13 +17,45 @@ after each significant milestone:
 - Implementation milestone reached
 - Test results obtained
 
-The state file should contain: current task, progress checklist, key decisions
-made, files being worked on, and open questions.
+**Create it from `.claude/docs/templates/session-state.md`** — the file has a
+schema, and hooks depend on it.
+
+Two regions, and the distinction is load-bearing:
+
+| Region | Who reads it | Rule |
+|--------|--------------|------|
+| `<!-- STATUS -->` … `<!-- /STATUS -->` | `statusline.sh` (breadcrumb, Production+ only) | Keep the markers even when empty |
+| `<!-- CHECKPOINT -->` … `<!-- /CHECKPOINT -->` | `session-start.sh` and `pre-compact.sh` | **Overwrite, never append.** Under ~25 lines — hooks inject it verbatim |
+| Everything after `<!-- /CHECKPOINT -->` | humans, and an agent that wants detail | Free-form; no hook injects it |
+
+The checkpoint holds: current task, next step, what it is blocked on, files in
+progress, open questions. Write it so a cold reader can resume without opening
+anything else.
+
+> **Why the split.** One append-only file doing both jobs grows without bound —
+> past 700 lines every consumer invents its own slice: a status line parsing a
+> STATUS block nothing writes, `pre-compact` injecting `head -100` (12.7 KB, at
+> the moment context is scarcest), `session-start` previewing `tail -20` — the
+> opposite end. None was wrong, because nothing defined where
+> the recoverable state lived. Now every consumer reads the named region, and
+> the cost is fixed no matter how long the narrative grows.
+
+**Rotation.** When the narrative passes ~200 lines, move it into
+`production/session-logs/`:
+
+```bash
+bash .claude/scripts/rotate-session-state.sh            # --dry-run to preview
+```
+
+The checkpoint stays, the narrative is appended to a dated log, nothing is
+deleted. `session-start.sh` observes when rotation is due but never performs it.
 
 ### Status Line Block (Production+ only)
 
 When the project is in Production, Polish, or Release stage, include a structured
-status block in `active.md` that the status line script can parse:
+status block in `active.md` that the status line script can parse. (The project
+stage is resolved from `project.stage` in `project.yaml`, falling back to
+`production/stage.txt`.)
 
 ```markdown
 <!-- STATUS -->
@@ -68,6 +100,37 @@ This keeps the context window holding only the *current* section's discussion
 - Light (read/review): ~3k tokens startup
 - Medium (implement feature): ~8k tokens
 - Heavy (multi-system refactor): ~15k tokens
+
+## Deterministic Helpers — `.claude/scripts/`
+
+The cheapest context saving is not summarising a document, it is **not reading it
+at all**. When a question has a deterministic answer, a script should answer it
+and the model should spend its budget on judgment instead.
+
+Two directories, two purposes — reach for the right one:
+
+| Directory | Purpose | Invoked by |
+|---|---|---|
+| `.claude/hooks/` | Event-driven — wired into `settings.json` and fired by Claude Code | the harness |
+| `.claude/scripts/` | Manually invoked from a skill body | `bash .claude/scripts/<name>.sh` |
+
+Current helpers:
+
+- **`gdd-structure-check.sh`** — which of the 8 standard sections a GDD contains.
+  Replaces a full-document read per GDD, and cannot hallucinate a missing
+  section. Reports **presence only**; the caller applies the workflow tier.
+- **`review-scope.sh`** — which GDDs changed since the last cross-review, plus
+  their declared dependencies. Replaces reasoning through git history.
+
+Two rules when adding one:
+
+1. **A skill invoking a script needs `Bash` in `allowed-tools`**, or the step
+   silently no-ops. A skill that only needs *resolved config* does not — use the
+   documented `` !`cmd` `` body form, which is preprocessing and is not gated by
+   `allowed-tools` (see `.claude/docs/config-resolution.md`).
+2. **Emit observations, not verdicts.** A script that scores or judges will
+   eventually contradict a tier, mode, or per-system override it does not know
+   about. Report what is on disk and let the caller decide what it means.
 
 ## Subagent Delegation
 

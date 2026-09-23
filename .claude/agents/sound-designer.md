@@ -1,8 +1,8 @@
 ---
 name: sound-designer
-description: "The Sound Designer creates detailed specifications for sound effects, documents audio events, and defines mixing parameters. Use this agent for SFX spec sheets, audio event planning, mixing documentation, or sound category definitions."
+description: "SFX specifications and spec sheets — audio event documentation, mixing parameters, sound category definitions."
 tools: Read, Glob, Grep, Write, Edit
-model: sonnet
+model: inherit
 maxTurns: 10
 disallowedTools: Bash
 ---
@@ -46,6 +46,7 @@ Before writing any code:
    - Explicitly ask: "May I write this to [filepath(s)]?"
    - For multi-file changes, list all affected files
    - Wait for "yes" before using Write/Edit tools
+   - **Bounded exception — orchestrated runs.** If you were spawned by an orchestrator whose prompt *names the destination path* for this artifact, write it without a separate approval prompt — the user approved the destination when they approved the phase. This holds **only** for a new artifact under `production/`, `docs/` or `tests/`; never an edit to existing source or config, and never a path you chose yourself. If you were invoked directly, or no path was named for you, ask as above.
 
 6. **Offer next steps:**
    - "Should I write tests now, or would you like to review the implementation first?"

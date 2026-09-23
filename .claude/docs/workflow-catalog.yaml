@@ -6,6 +6,9 @@
 #   pattern: text pattern that must appear in the file (checked after glob)
 #   min_count: minimum matching files required (default: 1)
 #   note: human-readable fallback when completion can't be auto-detected
+#   any_of: list of alternative {glob, pattern} specs — the step is complete if
+#           ANY one of them matches. Use when a setting has migrated and may
+#           legitimately live in either the new or the legacy location.
 #
 # required: true → blocks progression to next phase (shown as REQUIRED)
 # required: false → optional enhancement (shown as OPTIONAL)
@@ -31,9 +34,20 @@ phases:
         name: "Engine Setup"
         command: /setup-engine
         required: true
+        # v1.1: engine.name in project.yaml is the primary source; technical-
+        # preferences.md is the legacy fallback. Checking only the legacy file
+        # made a correctly-configured project fail this REQUIRED gate.
         artifact:
-          glob: ".claude/docs/technical-preferences.md"
-          pattern: "Engine: [^[]"
+          any_of:
+            - glob: "project.yaml"
+              pattern: "name:[[:space:]]*(Godot|Unity|Unreal)"
+            # technical-preferences.md writes "- **Engine**: Godot 4.6", so the
+            # pattern must clear the bold markers. The previous "Engine: [^[]"
+            # required a literal "Engine: " and therefore never matched any
+            # file /setup-engine produces. The [^[] guard rejects the
+            # "[TO BE CONFIGURED]" placeholder.
+            - glob: ".claude/docs/technical-preferences.md"
+              pattern: "\\*\\*Engine\\*\\*: [^[]"
         description: "Configure engine, pin version, set naming conventions and performance budgets"
 
       - id: game-concept
@@ -85,7 +99,7 @@ phases:
         command: /design-review
         required: true
         repeatable: true
-        description: "Validate each GDD (8 required sections, no MAJOR REVISION verdict). Run per system."
+        description: "Validate each GDD (required sections per workflow tier, no MAJOR REVISION verdict). Run per system."
 
       - id: review-all-gdds
         name: "Cross-GDD Review"
@@ -143,10 +157,16 @@ phases:
 
       - id: accessibility-doc
         name: "Accessibility Requirements"
+        # This step had no `command:` at all -- the only artifact entry in the
+        # catalog that named no producer. It was REQUIRED, so the Technical
+        # Setup -> Pre-Production gate could never pass, and the remediation
+        # every skill printed ("run /ux-design") wrote into design/ux/ where
+        # this glob does not look. /ux-design now has an `accessibility` mode.
+        command: /ux-design
         required: true
         artifact:
           glob: "design/accessibility-requirements.md"
-        description: "Commit accessibility tier (Basic/Standard/Comprehensive/Exemplary) and feature matrix. UX specs (Phase 4) reference this tier."
+        description: "Run `/ux-design accessibility`. Commit accessibility tier (Basic/Standard/Comprehensive/Exemplary) and feature matrix. UX specs (Phase 4) reference this tier."
 
   pre-production:
     label: "Pre-Production"
@@ -191,7 +211,11 @@ phases:
         command: /prototype
         required: false
         artifact:
-          glob: "prototypes/*/README.md"
+          # /prototype writes prototypes/[name]-concept/REPORT.md -- it has never
+          # written a README. The `-concept` suffix is load-bearing: /vertical-slice
+          # writes the same REPORT.md basename under `-vertical-slice`, so a bare
+          # `prototypes/*/REPORT.md` here would let either step satisfy the other.
+          glob: "prototypes/*-concept/REPORT.md"
           min_count: 1
         description: "Build a throwaway prototype to validate the core mechanic is fun before committing to full production. Recommended for first-time mechanics or high-risk design decisions. Solo devs with proven concepts may skip."
 
@@ -237,7 +261,11 @@ phases:
         command: /vertical-slice
         required: false
         artifact:
-          glob: "prototypes/*/REPORT.md"
+          # Must stay scoped to `-vertical-slice`: the untethered form matched
+          # /prototype's concept report, so running only /prototype silently
+          # marked the vertical slice complete and skipped the validation the
+          # Pre-Production → Production gate exists to require.
+          glob: "prototypes/*-vertical-slice/REPORT.md"
           min_count: 1
         description: "Build and playtest a vertical slice — a complete end-to-end pass through the core loop. Recommended before committing epics and stories to production. Skipping is a valid solo dev call but increases risk of late-stage design pivots. If built, must be played and documented before advancing."
 
@@ -355,7 +383,10 @@ phases:
         command: /playtest-report
         required: true
         artifact:
-          glob: "production/playtests/*.md"
+          # /playtest-report writes production/qa/playtests/, not production/playtests/.
+          # The old glob matched nothing on every project, so this REQUIRED step
+          # read as 0/3 forever no matter how many playtests were actually run.
+          glob: "production/qa/playtests/*.md"
           min_count: 3
         description: "Cover: new player experience, mid-game systems, difficulty curve"
 

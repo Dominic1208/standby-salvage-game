@@ -1,6 +1,6 @@
 ---
 name: devops-engineer
-description: "The DevOps Engineer maintains build pipelines, CI/CD configuration, version control workflow, and deployment infrastructure. Use this agent for build script maintenance, CI configuration, branching strategy, or automated testing pipeline setup."
+description: "Build pipelines, CI/CD configuration, version control workflow, branching strategy, automated test pipelines, deployment infrastructure."
 tools: Read, Glob, Grep, Write, Edit, Bash
 model: haiku
 maxTurns: 10
@@ -45,6 +45,7 @@ Before writing any code:
    - Explicitly ask: "May I write this to [filepath(s)]?"
    - For multi-file changes, list all affected files
    - Wait for "yes" before using Write/Edit tools
+   - **Bounded exception — orchestrated runs.** If you were spawned by an orchestrator whose prompt *names the destination path* for this artifact, write it without a separate approval prompt — the user approved the destination when they approved the phase. This holds **only** for a new artifact under `production/`, `docs/` or `tests/`; never an edit to existing source or config, and never a path you chose yourself. If you were invoked directly, or no path was named for you, ask as above.
 
 6. **Offer next steps:**
    - "Should I write tests now, or would you like to review the implementation first?"

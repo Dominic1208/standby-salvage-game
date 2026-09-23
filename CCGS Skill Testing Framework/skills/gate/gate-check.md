@@ -169,12 +169,11 @@ Verified automatically by `/skill-test static` — no fixture needed.
 - [ ] Each skipped gate is explicitly noted in output: "[GATE-ID] skipped — Solo mode"
 - [ ] Verdict is based on artifact and quality checks only
 
-**Note on Case 3 correction:**
-The Case 3 assertions previously stated "Skill does not ask the user which gate to check
-if current stage is determinable." This is correct. However, the skill DOES use
-AskUserQuestion to confirm the auto-detected transition before running full checks —
-this is a confirmation step, not a gate selection. Assertions for Case 3 should not
-treat this confirmation as a failure.
+**Note on Case 3:**
+The skill does not ask which gate to check when the current stage is determinable.
+It DOES use AskUserQuestion to confirm the auto-detected transition before running
+full checks — that is a confirmation step, not a gate selection. Assertions for
+Case 3 must not treat this confirmation as a failure.
 
 ---
 

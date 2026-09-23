@@ -14,6 +14,7 @@ Or check `README.md` for the version badge.
 ## Table of Contents
 
 - [Upgrade Strategies](#upgrade-strategies)
+- [v1.0 → v1.1](#v10--v11)
 - [v1.0.0-beta → v1.0](#v100-beta--v10)
 - [v0.4.x → v1.0](#v04x--v10)
 - [v0.4.0 → v0.4.1](#v040--v041)
@@ -25,12 +26,13 @@ Or check `README.md` for the version badge.
 
 ## Upgrade Strategies
 
-There are three ways to pull in template updates. Choose based on how your
+There are four ways to pull in template updates. Choose based on how your
 repo is set up.
 
 ### Strategy A — Git Remote Merge (recommended)
 
-Best when: you cloned the template and have your own commits on top of it.
+Best when: you cloned the template and have your own commits on top of it —
+your repo shares history with the template.
 
 ```bash
 # Add the template as a remote (one-time setup)
@@ -40,16 +42,95 @@ git remote add template https://github.com/Donchitos/Claude-Code-Game-Studios.gi
 git fetch template main
 
 # Merge into your branch
-git merge template/main --allow-unrelated-histories
+git merge template/main
 ```
 
 Git will flag conflicts only in files that both the template *and* you have
 changed. Resolve each one — your game content goes in, structural improvements
 come along for the ride. Then commit the merge.
 
-**Tip:** The files most likely to conflict are `CLAUDE.md` and
+**Tip:** The files most likely to conflict are `CLAUDE.md`, `project.yaml`, and
 `.claude/docs/technical-preferences.md`, because you've filled them in with
 your engine and project settings. Keep your content; accept the structural changes.
+
+**If git refuses with `fatal: refusing to merge unrelated histories`**, your
+repo did not start as a clone of the template (zip download, `git init` from
+scratch). Do **not** force it with `--allow-unrelated-histories` — with no
+common ancestor, git flags *every* template file as a conflict and you'll be
+resolving hundreds of files by hand. Use Strategy A2 instead.
+
+### Strategy A2 — Selective checkout (no shared history)
+
+Best when: your repo has no common history with the template but you do use git.
+
+> **First, check whether you have edited any framework files.** The checkout
+> below **replaces** everything under `.claude/`. Files *you added* survive, but
+> your edits to files the framework also ships are overwritten — agent
+> definitions and director gates are the ones people customise most.
+>
+> ```bash
+> git log --oneline -- .claude    # commits here mean you have customisations
+> ```
+>
+> If that lists anything beyond your initial import, work through the restore
+> step below rather than skipping it.
+
+```bash
+git remote add template https://github.com/Donchitos/Claude-Code-Game-Studios.git
+git fetch template main
+
+# Take the framework-owned paths wholesale from the new version.
+# This overwrites/adds template files but never deletes files you added.
+git checkout template/main -- .claude UPGRADING.md CHANGELOG.md docs/migration-guide-v1.1.md
+
+# The checkout is STAGED, not committed — so nothing is lost yet, and this
+# lists every framework file it changed:
+git diff --cached --stat -- .claude
+
+# Restore any file whose local edits you want to keep. This is one command per
+# file, deliberately: each is a decision between your version and the new one.
+git checkout HEAD -- .claude/docs/technical-preferences.md   # v1.0 config; v1.1 keeps config in project.yaml
+git checkout HEAD -- <any other file you customised>
+
+git status   # review what changed before committing
+```
+
+> **Restoring a file keeps your version of it in full — including whatever the
+> new release changed there.** For a file you edited lightly, it is usually
+> better to take the new version and re-apply your change on top than to keep
+> the old one wholesale. `git diff HEAD template/main -- <file>` shows what you
+> would be giving up.
+
+For `CLAUDE.md`, don't checkout — diff and merge by hand, keeping your
+engine/project content:
+
+```bash
+git diff HEAD template/main -- CLAUDE.md
+```
+
+`project.yaml` depends on where you are coming from, and the two cases need
+opposite actions:
+
+- **Upgrading from v1.0** (the case this section is about): you have no
+  `project.yaml` — it did not exist in v1.0. There is nothing to merge by hand,
+  and the checkout above deliberately does not fetch it. Build it from your
+  legacy files instead, which is what the converter is for:
+
+  ```bash
+  bash .claude/scripts/migrate-v1-config.sh --dry-run   # preview
+  bash .claude/scripts/migrate-v1-config.sh             # writes project.yaml
+  ```
+
+  If you skip this, `detect-gaps.sh` will nudge you at the next session start —
+  but do it here rather than discovering it later.
+
+- **Upgrading from v1.1 or later:** you already have a `project.yaml` holding
+  your settings. Treat it like `CLAUDE.md` — diff and merge by hand, never
+  checkout, or you will overwrite your own configuration:
+
+  ```bash
+  git diff HEAD template/main -- project.yaml
+  ```
 
 ---
 
@@ -78,6 +159,154 @@ Best when: you didn't use git to set up the template (just downloaded a zip).
 2. Copy the files listed under **"Safe to overwrite"** directly.
 3. For files under **"Merge carefully"**, open both versions side-by-side
    and manually merge the structural changes while keeping your content.
+
+---
+
+## v1.0 → v1.1
+
+**Released:** 2026-09-23
+**Key themes:** `project.yaml` as the single source of truth, a modes system
+(`modes.rigor` fronting `workflow`/`docs.density`/`qa.level`/`story_granularity`,
+plus `review_mode` and `automation`), `/settings`, `project.local.yaml`
+per-developer overrides, migration tooling, token-efficiency cuts.
+
+This is the biggest config change since the template's `production/stage.txt`
+/ `production/review-mode.txt` era. Read
+[CHANGELOG.md](CHANGELOG.md#110--2026-09-23) for the full list of additions —
+this section covers what to do about it.
+
+### What Changed
+
+See [CHANGELOG.md](CHANGELOG.md#110--2026-09-23) for the complete list. The
+short version: `project.yaml` replaces `production/stage.txt`,
+`production/review-mode.txt`, and `.claude/docs/technical-preferences.md` as
+the primary config store (all three still work as a fallback — nothing is
+force-deleted), a new `modes` block controls how much process the project
+carries (`modes.rigor: minimal | standard | full`), and a new `/settings`
+skill views and edits any of it, including a gitignored
+`project.local.yaml` for settings that should vary per developer.
+
+### Heads-up: the process level you get by default has changed
+
+`modes.rigor` now defaults to **`minimal`**, not `standard`. If your
+`project.yaml` sets `modes.rigor` explicitly, nothing changes for you and you
+can skip this.
+
+If it does not, the upgrade is visible: any of the six knobs `rigor` fronts that
+you never set moves from the `standard` row to the `minimal` row. In practice
+that means fewer required GDD sections, terser writing, coarser stories, no
+director review panels, and `qa.level` dropping from `standard` to `minimal`.
+Knobs you *did* set explicitly are untouched.
+
+**To keep the old behaviour, pin it in one line:**
+
+```yaml
+modes:
+  rigor: standard
+```
+
+We changed the default because we measured it. Built both ways, `standard` cost
+several times more to reach working code, did not produce a better result, and
+gave nothing back when a fresh developer picked the project up. Most projects
+were paying for process that did not repay.
+If yours is one that does -- several interacting systems, or a design someone
+else has to implement -- `standard` and `full` are one `/settings` call away,
+and `/help` and `/gate-check` will suggest raising it as your project grows.
+
+### Files: Safe to Overwrite
+
+**Take `.claude/` as a whole. Do not copy a subset.** v1.1 adds around 73 new
+files under that directory — `automation-modes.md`, `workflow-modes.md`,
+`config-resolution.md`, `effects-map.md`, 28 director gates, the game-brief
+template, 7 guidance templates, 8 scripts, 6 gate-check references, 10
+`CONTRACT.md` files — and the skills cross-reference each other across all of
+them. A partial copy leaves skills pointing at documents you do not have, which
+fails at the moment you run them rather than at the moment you copy. That is why
+there is no short file list here.
+
+```
+.claude/          (the whole directory — new and changed files alike)
+                  EXCEPT .claude/docs/technical-preferences.md — see the note below.
+                  The template ships a placeholder copy of that file; overwriting
+                  yours silently discards your Forbidden Patterns and Allowed
+                  Libraries, which have no project.yaml equivalent. Back it up
+                  before you copy and restore it afterwards.
+README.md
+CHANGELOG.md
+UPGRADING.md
+.gitignore        (adds project.local.yaml)
+```
+
+> **Strategy A (git merge) protects you here automatically** — git flags that file
+> as a conflict because you both changed it. The manual-copy strategies do not:
+> a recursive copy overwrites it without a word.
+
+Your own tests under `tests/` and any tooling under `tools/` are yours; the
+template ships nothing into either, so nothing there is at risk.
+
+Copying is additive: files *you* added under `.claude/` survive, because nothing
+is deleted. Only files the template also ships get replaced.
+
+All 74 `SKILL.md` files changed in v1.1, and 66 of them now resolve config via
+`resolve_config`. If you have not hand-edited any skill file, taking them all is
+safe.
+
+> **Two things under `.claude/` are yours — check them before you copy.**
+>
+> - `.claude/docs/technical-preferences.md` still holds your Forbidden Patterns
+>   and Allowed Libraries, which have no `project.yaml` equivalent. Keep your
+>   copy; see [Merge Carefully](#claudedocstechnical-preferencesmd) below.
+> - Anything else you customised — agent definitions and director gates are the
+>   usual ones. If your project is in git, `git log --oneline -- .claude` lists
+>   whether you have any. Re-apply your edits on top of the new version rather
+>   than keeping your old file wholesale; the new version almost certainly
+>   changed there too.
+
+(`project.yaml` itself is not copied from the template — `/start` generates it
+for new projects, and `.claude/scripts/migrate-v1-config.sh` builds it from
+your legacy config files for existing ones.)
+
+### Files: Merge Carefully
+
+#### `project.yaml` (new — this is YOUR data, not template infrastructure)
+
+This file does not exist in v1.0. If you have an existing project with
+`production/stage.txt`, `production/review-mode.txt`, or a filled-in
+`.claude/docs/technical-preferences.md`, **do not hand-author
+`project.yaml`** — those files hold your project's actual configuration and
+migrating them by hand risks transcription errors the tooling is built to
+avoid. Follow the dedicated
+[migration guide](docs/migration-guide-v1.1.md) instead, which walks
+`.claude/scripts/migrate-v1-config.sh` end to end.
+
+If you're starting fresh (no legacy files with real values), just run
+`/start` — it writes a complete `project.yaml` for you.
+
+#### `.claude/docs/technical-preferences.md`
+
+Stays in place. Most of its content (engine, naming, performance budgets,
+testing framework, specialists) has a `project.yaml` equivalent now and is
+read from there first. Two sections — Forbidden Patterns and Allowed
+Libraries — have no `project.yaml` equivalent and this file remains their
+home permanently; `--finalize` migration never deletes it.
+
+### After Upgrading
+
+1. If you have an existing project (not starting fresh), read
+   [docs/migration-guide-v1.1.md](docs/migration-guide-v1.1.md) and run
+   `.claude/scripts/migrate-v1-config.sh --dry-run` to see what migration
+   would do before committing to it.
+2. Run `/settings` to see your effective configuration once `project.yaml`
+   exists — it shows you the value, source, and whether each setting is
+   locally overridable.
+3. Consider setting `modes.rigor` explicitly if your project doesn't match
+   the `minimal` default — `/settings modes.rigor=standard` to keep the
+   process level v1.0 had, `modes.rigor=full` for a project that wants every
+   gate. The migration report says this too.
+4. If you customised any skill, re-read it against the new version before
+   relying on it — a skill that resolves config differently from the rest of
+   the framework fails quietly, by taking a default branch rather than by
+   erroring.
 
 ---
 
@@ -140,7 +369,7 @@ None — all changes are to infrastructure files with no user content.
 | **New skill** | `/vertical-slice` — Pre-Production gate that validates the full game loop with a production-quality end-to-end build before Production. Pairs with the overhauled `/prototype` (concept validation right after `/brainstorm`). |
 | **New flow** | Entity inventory step in `/map-systems` — surfaces all named entities up front for cleaner downstream GDD authoring. |
 | **UX polish** | Added missing `AskUserQuestion` widgets to 7 skills; comprehensive skill audit for consistency, prompts, and flow gaps; exposed `--review` flag in `argument-hints` for all `team-*` skills. |
-| **Bug fixes** | `#21` log-agent hooks logged "unknown" `agent_type`; `#36` missing `allowed-tools` in `/architecture-decision` and `/story-done`; `#42` `rg --type gdscript` is invalid (now uses `--glob *.gd`); `#43` session-start preview showed oldest state instead of newest; `#45` duplicate `## 0.` heading and broken step numbering in `/architecture-decision`. |
+| **Bug fixes** | log-agent hooks logged "unknown" `agent_type`; missing `allowed-tools` in `/architecture-decision` and `/story-done`; `rg --type gdscript` is invalid (now uses `--glob *.gd`); session-start preview showed oldest state instead of newest; duplicate `## 0.` heading and broken step numbering in `/architecture-decision`. |
 | **Project docs** | Added `CONTRIBUTING.md` (framework contribution guidelines) and `SECURITY.md` (coordinated disclosure policy). |
 | **Counts/refs** | Synced agent/skill/hook counts across `WORKFLOW-GUIDE.md`, `README.md`, and agent rosters; fixed stale agent names and skill model-tier fields. |
 
@@ -157,8 +386,8 @@ SECURITY.md
 
 **Existing files to overwrite (no user content):**
 - All files under `.claude/skills/` modified in the commit range (skill audit + AskUserQuestion widgets + `--review` argument-hints)
-- `.claude/hooks/log-agent.sh` (fix #21)
-- `README.md`, `docs/WORKFLOW-GUIDE.md`, `docs/examples/skill-flow-diagrams.md`
+- `.claude/hooks/log-agent.sh` (`agent_type` logging fix)
+- `README.md`, `docs/WORKFLOW-GUIDE.md`, `docs/skill-flow-diagrams.md`
 - `UPGRADING.md`
 
 ---
@@ -637,14 +866,14 @@ is safe. Otherwise, add this block manually:
 the terminal status line:
 
 ```
-ctx: 42% | claude-sonnet-4-6 | Systems Design
+ctx: 42% | claude-sonnet-5 | Systems Design
 ```
 
 In Production/Polish/Release stages, it also shows the active Epic/Feature/Task
 from `production/session-state/active.md` if a `<!-- STATUS -->` block is present:
 
 ```
-ctx: 42% | claude-sonnet-4-6 | Production | Combat System > Melee Combat > Hitboxes
+ctx: 42% | claude-sonnet-5 | Production | Combat System > Melee Combat > Hitboxes
 ```
 
 The current stage is auto-detected from project artifacts, or can be pinned by
@@ -709,9 +938,6 @@ versions directly with no risk to your project content.
 .claude/skills/map-systems/SKILL.md
 .claude/skills/design-system/SKILL.md
 .claude/docs/templates/systems-index.md
-.claude/docs/templates/collaborative-protocols/design-agent-protocol.md
-.claude/docs/templates/collaborative-protocols/implementation-agent-protocol.md
-.claude/docs/templates/collaborative-protocols/leadership-agent-protocol.md
 .claude/hooks/detect-gaps.sh
 .claude/hooks/session-start.sh
 production/session-state/.gitkeep

@@ -1,8 +1,8 @@
 ---
 name: qa-tester
-description: "The QA Tester writes detailed test cases, bug reports, and test checklists. Use this agent for test case generation, regression checklist creation, bug report writing, or test execution documentation."
+description: "Writes test cases, bug reports, and checklists — test case generation, regression checklist creation, execution documentation."
 tools: Read, Glob, Grep, Write, Edit, Bash
-model: sonnet
+model: inherit
 maxTurns: 10
 ---
 
@@ -47,6 +47,7 @@ Before writing any code:
    - Explicitly ask: "May I write this to [filepath(s)]?"
    - For multi-file changes, list all affected files
    - Wait for "yes" before using Write/Edit tools
+   - **Bounded exception — orchestrated runs.** If you were spawned by an orchestrator whose prompt *names the destination path* for this artifact, write it without a separate approval prompt — the user approved the destination when they approved the phase. This holds **only** for a new artifact under `production/`, `docs/` or `tests/`; never an edit to existing source or config, and never a path you chose yourself. If you were invoked directly, or no path was named for you, ask as above.
 
 6. **Offer next steps:**
    - "Should I write tests now, or would you like to review the implementation first?"
@@ -180,8 +181,8 @@ Before writing any test, classify the story type per `coding-standards.md`:
 |---|---|---|---|
 | Logic (formulas, state machines) | Automated unit test — must pass | `tests/unit/[system]/` | BLOCKING |
 | Integration (multi-system) | Integration test or documented playtest | `tests/integration/[system]/` | BLOCKING |
-| Visual/Feel (animation, VFX) | Screenshot + lead sign-off doc | `production/qa/evidence/` | ADVISORY |
-| UI (menus, HUD, screens) | Manual walkthrough doc or interaction test | `production/qa/evidence/` | ADVISORY |
+| Visual/Feel (animation, VFX) | Retained screenshot + lead sign-off doc | `production/qa/evidence/` | BLOCKING |
+| UI (menus, HUD, screens) | Retained screenshot of each screen touched | `production/qa/evidence/` | BLOCKING |
 | Config/Data (balance tuning) | Smoke check pass | `production/qa/smoke-[date].md` | ADVISORY |
 
 State the story type, output location, and gate level (BLOCKING or ADVISORY) at the start of

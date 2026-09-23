@@ -146,6 +146,17 @@ skills:
     priority: high
     category: pipeline
 
+  - name: vertical-slice
+    spec: ""
+    last_static: ""
+    last_static_result: ""
+    last_spec: ""
+    last_spec_result: ""
+    last_category: ""
+    last_category_result: ""
+    priority: high
+    category: pipeline
+
   - name: design-system
     spec: CCGS Skill Testing Framework/skills/authoring/design-system.md
     last_static: ""
@@ -788,6 +799,17 @@ skills:
 
   - name: day-one-patch
     spec: CCGS Skill Testing Framework/skills/utility/day-one-patch.md
+    last_static: ""
+    last_static_result: ""
+    last_spec: ""
+    last_spec_result: ""
+    last_category: ""
+    last_category_result: ""
+    priority: low
+    category: utility
+
+  - name: settings
+    spec: ""
     last_static: ""
     last_static_result: ""
     last_spec: ""

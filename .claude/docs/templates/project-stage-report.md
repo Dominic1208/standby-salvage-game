@@ -70,7 +70,7 @@
 
 ### Prototypes
 - **Active Prototypes**: [N] in `prototypes/`
-  - ✅ [Prototype 1] — documented with README
+  - ✅ [Prototype 1] — documented with REPORT.md
   - ⚠️  [Prototype 2] — no README, unclear status
 - **Archived**: [N] (experiments completed)
 - **Key Gaps**:

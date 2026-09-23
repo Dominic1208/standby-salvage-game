@@ -90,7 +90,7 @@ multi-dimensional verdicts and integrate correctly with director gate mode.
 
 ### `pipeline`
 
-**Skills**: create-epics, create-stories, dev-story, create-control-manifest, propagate-design-change, map-systems
+**Skills**: create-epics, create-stories, dev-story, create-control-manifest, propagate-design-change, map-systems, vertical-slice
 
 Pipeline skills produce artifacts that other skills consume. They must write files
 with correct schema, respect layer/priority ordering, and gate before writing.

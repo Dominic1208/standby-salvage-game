@@ -3,6 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Engine Version** | Unreal Engine 5.7 |
+| **Installed at pin time** | NOT DETERMINED — `/setup-engine` §3 probes the installed editor and records the result here. |
 | **Release Date** | November 2025 |
 | **Project Pinned** | 2026-02-13 |
 | **Last Docs Verified** | 2026-02-13 |
@@ -13,6 +14,15 @@
 The LLM's training data likely covers Unreal Engine up to ~5.3. Versions 5.4, 5.5,
 5.6, and 5.7 introduced significant changes that the model does NOT know about.
 Always cross-reference this directory before suggesting Unreal API calls.
+
+## Installed-Version Gap Warning
+
+The warning above is one-directional — it covers the **model** knowing less than
+this pin. The reverse gap is real and `/setup-engine` §3 creates it deliberately
+("pin the newer one and upgrade later"): this reference can sit **ahead of the
+installed editor**, and an agent citing it correctly then emits APIs that do not
+compile locally. **Check `Installed at pin time` above before trusting a
+version-qualified claim** — `NOT DETERMINED` means the gap is unknown, not absent.
 
 ## Post-Cutoff Version Timeline
 

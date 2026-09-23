@@ -14,7 +14,7 @@ Verified by reading the agent's `.claude/agents/qa-lead.md` frontmatter:
 
 - [ ] `description:` field is present and domain-specific (references test strategy, story readiness, coverage, bug triage — not generic)
 - [ ] `allowed-tools:` list is read-focused; may include Read for story files, test files, and coding-standards; Bash only if running test commands is required
-- [ ] Model tier is `claude-sonnet-4-6` per coordination-rules.md
+- [ ] Model tier is `claude-sonnet-5` per coordination-rules.md
 - [ ] Agent definition does not claim authority over implementation decisions or game design
 
 ---
@@ -57,7 +57,7 @@ Verified by reading the agent's `.claude/agents/qa-lead.md` frontmatter:
 - [ ] Does not abandon the coverage requirement — asks for a deterministic alternative if the current approach is ruled flaky
 
 ### Case 5: Context pass — uses provided context
-**Scenario:** Agent receives a gate context block that includes the coding-standards.md testing standards section, which specifies: Logic stories require blocking automated unit tests, Visual/Feel stories require screenshots + lead sign-off (advisory), Config/Data stories require smoke check pass (advisory). A story classified as "Logic" type is submitted with only a manual walkthrough document as evidence.
+**Scenario:** Agent receives a gate context block that includes the coding-standards.md testing standards section, which specifies: Logic stories require blocking automated unit tests, Visual/Feel stories require a blocking retained screenshot + lead sign-off, Config/Data stories require smoke check pass (advisory). A story classified as "Logic" type is submitted with only a manual walkthrough document as evidence.
 **Expected:** Assessment references the specific test evidence requirements from coding-standards.md, identifies that a "Logic" story requires an automated unit test (not just a manual walkthrough), and returns INADEQUATE with the specific requirement cited.
 **Assertions:**
 - [ ] References the specific story type classification ("Logic") from the provided context

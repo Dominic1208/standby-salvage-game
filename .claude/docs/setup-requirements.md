@@ -72,6 +72,37 @@ python3 --version      # Should show python version (optional)
 | **Python 3** | JSON data file validation in commit and asset hooks is skipped. Invalid JSON can be committed without warning. |
 | **Both** | All hooks still execute without error (exit 0) but provide no validation. You're flying without safety nets. |
 
+## Optional Performance Settings
+
+CCGS deliberately ships **no** values for the settings below. Each one's best
+value depends on your machine, your Claude plan and how you work, so a value
+committed here would be a guess every user inherits without noticing. Set the
+ones you want in `.claude/settings.local.json`, which is gitignored and yours
+alone.
+
+| Setting | What it does | When to change it |
+| ---- | ---- | ---- |
+| `promptCacheTtl` | How long the main conversation's prompt cache lives. | Raise it if you work in long sessions with gaps; the cache surviving a break avoids re-sending context. |
+| `subagentPromptCacheTtl` | The same, for subagents and other off-conversation requests. | Worth raising on a 49-agent project like this one, where `team-*` skills spawn repeatedly. |
+| `autoCompactWindow` | How full the context gets before Claude Code compacts it. | Lower it if compaction keeps surprising you mid-task; raise it if you would rather compact less often and keep more history. |
+| `skillListingBudgetFraction` | How much context the skill listing may occupy. | CCGS ships 74 skills, so the listing is not small. Lower it if you want more room for work; `skillListingMaxDescChars` trims each description instead. |
+
+`sandbox.enabled` isolates shell commands from your filesystem and network. It
+is worth turning on, but it runs on **macOS, Linux and WSL2 only** — it is not
+available on native Windows, which is CCGS's primary platform.
+
+### One setting CCGS does ship
+
+`permissions.defaultMode` is set to `default` in `.claude/settings.json`, on
+purpose. It makes Claude Code ask before acting, which is what every approval
+gate in this framework depends on. Project settings outrank personal ones, so
+this holds even if your own config sets `acceptEdits` or `auto` — otherwise
+CCGS's collaboration protocol would be silently switched off for you and the
+agents would write files you never approved.
+
+If you genuinely want it off, override it in `.claude/settings.local.json`,
+which takes precedence. Understand what you are turning off first.
+
 ## Recommended IDE
 
 Claude Code works with any editor, but the template is optimized for:

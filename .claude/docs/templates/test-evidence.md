@@ -32,6 +32,10 @@ the acceptance criteria numbers from the story that this evidence covers.]
 List all captured evidence below. Store files in the same directory as this
 document or in `production/qa/evidence/[story-slug]/`.
 
+**The file must actually be on disk.** Visual/Feel and UI gates are BLOCKING by
+default, and `/story-done` and `/test-evidence-review` glob for the image — a
+filename listed here with no file beside it does not satisfy the gate.
+
 | # | Filename | What It Shows | Acceptance Criterion |
 |---|----------|--------------|----------------------|
 | 1 | `[filename.png]` | [brief description of what is visible] | AC-1 |
