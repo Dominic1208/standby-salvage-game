@@ -130,7 +130,7 @@ the expansion.) Per-system overrides read via
 
 **Default**: `minimal` (the rationale block above `_yaml_helper_defaults` in
 `.claude/hooks/yaml-helper.sh` carries the reasoning and the ordering
-constraint). **Set by**: `/start`, `/settings`. **Locked to
+constraint). **Set by**: `/start` (via `modes.rigor`), `/settings`. **Locked to
 `project.yaml`** (not locally overridable — divergence would change which
 artifacts must exist on disk).
 

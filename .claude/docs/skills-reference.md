@@ -1,6 +1,6 @@
 # Available Skills (Slash Commands)
 
-73 slash commands organized by phase. Type `/` in Claude Code to access any of them.
+74 slash commands organized by phase. Type `/` in Claude Code to access any of them.
 
 ## Onboarding & Navigation
 
@@ -11,6 +11,7 @@
 | `/project-stage-detect` | Full project audit — detect phase, identify existence gaps, recommend next steps |
 | `/setup-engine` | Configure engine + version, detect knowledge gaps, populate version-aware reference docs |
 | `/adopt` | Brownfield format audit — checks internal structure of existing GDDs/ADRs/stories, produces migration plan |
+| `/settings` | View or change project config — the effective merged values, or a local override in `project.local.yaml` |
 
 ## Game Design
 
@@ -71,7 +72,7 @@
 | `/scope-check` | Analyze feature or sprint scope against original plan, flag scope creep |
 | `/perf-profile` | Structured performance profiling with bottleneck identification |
 | `/tech-debt` | Scan, track, prioritize, and report on technical debt |
-| `/gate-check` | Validate readiness to advance between development phases (PASS/CONCERNS/FAIL) |
+| `/gate-check` | Validate readiness to advance between development phases (PASS/CONCERNS/NOT ASSESSED/FAIL) |
 | `/consistency-check` | Scan all GDDs against the entity registry to detect cross-document inconsistencies (stats, names, rules that contradict each other) |
 | `/security-audit` | Audit the game for security vulnerabilities: save tampering, cheat vectors, network exploits, data exposure, and input validation gaps |
 
@@ -144,7 +145,7 @@ Claude Code ships its own skills, and one name collides with CCGS's.
 | You type | You get | Use it for |
 |---------|---------|-----------|
 | `/code-review` | **CCGS's** — project skills take the bare name | Architectural review against this project's coding standards, SOLID, testability and the control manifest. Knows about ADRs, stories and `docs/architecture/`. |
-| `/code-review:code-review` | **Claude Code's bundled** review | Reviewing a pull request or a plain diff, with no knowledge of CCGS's design documents or gates. |
+| `/review` | **Claude Code's bundled** review — the alias of its `/code-review`, which CCGS's skill shadows | Reviewing a pull request or a plain diff for correctness bugs, with no knowledge of CCGS's design documents or gates. |
 
 Both are useful; they answer different questions. Reach for the CCGS one during
 `/dev-story` and before `/story-done`, because it checks the things the gates

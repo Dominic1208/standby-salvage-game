@@ -4,8 +4,8 @@
 
 Agent: `producer` | Model tier: Opus | Domain: Scope, timeline, dependencies, production risk
 
-**Trigger**: At milestone review (`/milestone-review`), at mid-sprint retrospectives,
-or when a scope change is proposed that affects the milestone
+**Trigger**: At milestone review (`/milestone-review`), or when a scope change is
+proposed that affects the milestone
 
 **Context to pass**:
 - Milestone definition and target date

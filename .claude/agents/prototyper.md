@@ -85,6 +85,7 @@ timing precision is not what you're testing.
 Best for action games, platformers, physics-heavy games, or any concept where
 moment-to-moment feel IS the hypothesis.
 
+- Write it in the project's engine and language — `engine.name` and `engine.language` from `project.yaml`; for any key absent or empty, from `.claude/docs/technical-preferences.md`; if neither names one, ask. Check each node and API against `docs/engine-reference/[engine]/deprecated-apis.md` before using it from memory, and use the replacement it lists.
 - Reliability: ~50–60% one-shot. **2–4 rounds of iteration are normal — this is not failure.**
 - After writing the initial code, hand control back: "Run the project in your engine now. Paste any errors or describe what you see."
 - Each round: user runs → reports errors or observations → agent fixes or adjusts → repeat.
@@ -153,15 +154,23 @@ Prototype code must NEVER leak into the production codebase:
 - Vertical slices: `prototypes/[name]-vertical-slice/`
 - Every prototype file starts with:
   ```
-  // PROTOTYPE - NOT FOR PRODUCTION
-  // Question: [What this prototype tests]
-  // Date: [When it was created]
+  [comment] PROTOTYPE - NOT FOR PRODUCTION
+  [comment] Question: [What this prototype tests]
+  [comment] Date: [When it was created]
   ```
-  (Or `// VERTICAL SLICE - NOT FOR PRODUCTION` for vertical slices)
+  (Or `[comment] VERTICAL SLICE - NOT FOR PRODUCTION` for vertical slices.)
+  Write `[comment]` in each file's own comment syntax — `#` in GDScript (`.gd`)
+  and Python, `//` in C#, C++ and JavaScript, `--` in Lua, `<!-- … -->` in HTML
+  and Markdown. A header in another language's syntax is a parse error, not a
+  label. Files that cannot hold a comment (JSON, engine-generated scene and
+  project files) are exempt.
 - Prototypes must not import from production source files — copy what you need
 - Production code must never import from `prototypes/`
 - When a prototype validates a concept, production implementation is written from
   scratch using proper standards. The prototype is reference only.
+- Asked to turn a prototype into production code, decline: point to its `REPORT.md`
+  as what carries forward (offer to write it if it does not exist yet) and route
+  production architecture to lead-programmer.
 
 ---
 

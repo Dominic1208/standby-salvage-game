@@ -50,6 +50,7 @@ not_a_system_gdd() {
     case "$(basename "$1")" in
         game-concept.md|systems-index.md|game-pillars.md|gdd-cross-review-*.md) return 0 ;;
         gameplay-tags.md|fixture-swap-ledger.md|entity-registry.md)             return 0 ;;
+        sound-bible.md)                                                         return 0 ;;
         *) return 1 ;;
     esac
 }

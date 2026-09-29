@@ -69,19 +69,21 @@ If nothing notable: *No significant observations.*
 
 ## Sign-Off
 
-All roles must sign off before the story can be marked COMPLETE via `/story-done`.
-Visual/Feel stories require the designer or art-lead sign-off. UI stories require
-the UX lead or designer sign-off.
+A **Visual/Feel** story needs the lead sign-off below — the art-director, or the
+designer who owns the feature — before `/story-done` marks it COMPLETE. A **UI**
+story is closed by the retained screenshot of each screen it touched; a sign-off
+here is welcome but not required (`.claude/docs/coding-standards.md`).
 
-**Solo developers**: all sign-offs may be by the same person in each role. The
-intent is that someone deliberately reviews the evidence before marking complete —
-not that three separate people must participate.
+**Solo developers**: you may sign as the lead yourself. The intent is that
+someone deliberately reviews the evidence before marking complete.
 
 | Role | Name | Date | Signature |
 |------|------|------|-----------|
-| Developer (implemented) | | | [ ] Approved |
-| Designer / Art Lead / UX Lead | | | [ ] Approved |
-| QA Lead | | | [ ] Approved |
+| Lead (art-director / designer) | | | [ ] Approved |
+
+*Optional:* add a row for anyone else whose review your team wants, such as the
+developer or the QA lead. `/story-done` and `/test-evidence-review` treat every
+row in this table as required, so add one only for someone who will sign.
 
 **Any sign-off can be marked "Deferred — [reason]"** if the person is
 unavailable. Deferred sign-offs must be resolved before the story advances

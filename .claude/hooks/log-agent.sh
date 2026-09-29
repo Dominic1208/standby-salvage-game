@@ -47,6 +47,14 @@ fi
 
 INPUT=$(cat)
 
+# Claude Code's own internal agents (prompt suggestions, /btw side questions)
+# report agent_type as an empty string -- not a CCGS spawn. log-agent-stop.sh
+# skips them; so does this hook, or one would be logged as "unknown" and
+# counted in session-stop.sh's spawn tally. A MISSING agent_type still logs.
+if printf '%s' "$INPUT" | grep -qE '"agent_type"[[:space:]]*:[[:space:]]*""'; then
+    exit 0
+fi
+
 # Parse agent name -- use jq if available, fall back to grep
 if command -v jq >/dev/null 2>&1; then
     AGENT_NAME=$(echo "$INPUT" | jq -r '.agent_type // "unknown"' 2>/dev/null)

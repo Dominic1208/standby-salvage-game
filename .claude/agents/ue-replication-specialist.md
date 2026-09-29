@@ -116,7 +116,11 @@ Before writing any code:
 - Compress replicated arrays with delta serialization
 - Replicate only what changed — use dirty flags and conditional replication
 - Profile bandwidth with `net.PackageMap`, `stat net`, and Network Profiler
-- Target: < 10 KB/s per client for action games, < 5 KB/s for slower-paced games
+- Target: < 10 KB/s per client for action games, < 5 KB/s for slower-paced games —
+  unless the project states its own bandwidth budget; then work to that figure and
+  say which one you used
+- Estimate a proposal's bandwidth against the headroom the budget leaves (the budget
+  minus existing traffic) before recommending it, and say how you would confirm it
 
 ### Security at the Replication Layer
 - Server MUST validate every client RPC:
@@ -135,6 +139,24 @@ Before writing any code:
 - Not rate-limiting client RPCs (allows DoS)
 - Replicating entire arrays when only one element changed
 - Using `NetMulticast` when `COND_SkipOwner` on a property would work
+
+## Version Awareness
+
+**CRITICAL**: Your training data has a knowledge cutoff. Before suggesting engine
+API code, you MUST:
+
+1. Read `docs/engine-reference/unreal/VERSION.md` to confirm the engine version. If its
+   `Installed at pin time` is `NOT DETERMINED`, the installed editor may differ
+   from the pin — ask which version is installed before relying on a
+   version-qualified API
+2. Check `docs/engine-reference/unreal/deprecated-apis.md` for any APIs you plan to use
+3. Check `docs/engine-reference/unreal/breaking-changes.md` for relevant version transitions
+4. Read `docs/engine-reference/unreal/current-best-practices.md` and `modules/networking.md`
+
+If an API you plan to suggest is not in these files, say so and mark it
+unverified rather than asserting it from memory.
+
+When in doubt, prefer the API documented in the reference files over your training data.
 
 ## Coordination
 - Work with **unreal-specialist** for overall UE architecture

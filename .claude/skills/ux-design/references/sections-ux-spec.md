@@ -199,6 +199,19 @@ Present the data requirements as a table:
 
 ---
 
+#### Section F2: Input Method Completeness Checklist
+
+One checklist block per input method in the spec's **Platform Target** line —
+keyboard, gamepad, mouse, touch; drop the blocks for methods this game does not
+support and say so. Take the items from section 11 of
+`.claude/docs/templates/ux-spec.md` (reachability, tab/d-pad order, visible
+focus, focus trap for modals, Esc/back behavior, hit-target sizes, controller
+disconnect). Tick an item only when the Interaction Map above already specifies
+it; an unticked item is an open implementation question — list it under Open
+Questions rather than ticking it.
+
+---
+
 #### Section G: Accessibility
 
 Cross-reference `design/accessibility-requirements.md` if it exists.

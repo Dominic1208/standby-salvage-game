@@ -35,9 +35,10 @@ the skill body instead.
 Claude Code permission-checks every injected command **before** the skill
 renders. Outside auto mode, anything that does not come back "allow" — including
 a command that would normally just prompt — **aborts the whole invocation**, and
-the model never sees the skill. A preloaded skill (`skills:` on an agent) is
+the model never sees the skill. A read-only command such as `git status`, which
+Claude Code approves on its own, comes back "allow" and runs without a grant. A preloaded skill (`skills:` on an agent) is
 checked the same way at agent launch, so a failing bootstrap line stops the agent
-from starting (GitHub issue #128). Measured on Claude Code 2.1.281 in default
+from starting. Measured on Claude Code 2.1.281 in default
 mode:
 
 | Bootstrap form | Repo root | Subdirectory | Bash-less agent preloading it |
@@ -53,7 +54,8 @@ What that table rules out:
   can approve it. `${CLAUDE_SKILL_DIR}` and `${CLAUDE_PROJECT_DIR}` are fine: Claude
   Code substitutes them as text before the check.
 - **No `${CLAUDE_PROJECT_DIR}` for the path.** In a skill it is the directory
-  Claude Code was launched from, not the repo root, so it breaks from `src/`.
+  Claude Code was launched from, not the repo root, so it breaks when Claude
+  Code is started in a subdirectory.
   `${CLAUDE_SKILL_DIR}` always names the skill's own folder.
 - **No `source … && …` compound.** Each part must be approved; `bash <file>
   resolve_config` is one command. `yaml-helper.sh` dispatches only
@@ -79,9 +81,9 @@ defaults below.
 review_mode: lean (production/review-mode.txt)
 automation: guided (project.local.yaml)
 workflow: standard (project.yaml)
-docs.density: balanced (default)
-story_granularity: balanced (default)
-qa.level: standard (default)
+docs.density: balanced (rigor:standard)
+story_granularity: balanced (rigor:standard)
+qa.level: standard (rigor:standard)
 team.size: individual (rigor:standard)
 project.stage: Systems Design (production/stage.txt)
 automation_always_ask: scope_changes, file_deletions, schema_changes (default)
@@ -95,7 +97,7 @@ An inline --review flag, if passed, overrides review_mode.
 ```
 
 Every knob line ends with its **provenance** in parentheses. That is what makes a
-wrong value diagnosable — `review_mode: solo (default)` when `project.yaml` says
+wrong value diagnosable — `review_mode: solo (rigor:minimal)` when `project.yaml` says
 `full` points straight at the problem.
 
 ## Resolution chain
@@ -117,7 +119,7 @@ default rather than propagating a nonsense mode into every skill.
 > already sets `docs.density: terse` resolves exactly as it did before `rigor`
 > existed, because step 2 answers first. Invert steps 4 and 5 and `rigor` becomes
 > a no-op; hoist step 4 above step 2 and it silently overrides settings people
-> already have. Tests **X.2** and **X.3** assert both directions.
+> already have.
 >
 > Derived values report their provenance as **`rigor:<level>`**, so the source
 > vocabulary is `{project.local.yaml, project.yaml, <legacy path>, rigor:<level>,
@@ -186,32 +188,27 @@ constraint. Raising the tier is one question in `/start` or one `/settings`
 call, and `settings-guidance.md § 4`'s upward triggers are written to fire from
 this starting state. (`team.size` is the one knob the flip does not move:
 `minimal` and `standard` both yield `individual`, and only `full` opts into the
-`studio` roster.) Test **X.8** asserts the six stay defaultless.
+`studio` roster.)
 
 > **The flip DOES reach existing projects.** A `project.yaml` that sets some of
 > the six explicitly but never sets `rigor` keeps its explicit values and takes
 > the new `minimal` row for the rest -- so an unset `qa.level` that used to
-> resolve `standard` now resolves `minimal`. Test **X.3** pins exactly this.
+> resolve `standard` now resolves `minimal`.
 > Pin the old behaviour by setting `modes.rigor: standard` explicitly; see
 > UPGRADING.md.
 
 `modes.workflow` is **fronted, not replaced**: it keeps
-`workflow_overrides.system_overrides`, which still beats the derived value
-(**X.6**). Setting any of the six explicitly overrides just that one and leaves
+`workflow_overrides.system_overrides`, which still beats the derived value.
+Setting any of the six explicitly overrides just that one and leaves
 its siblings on the rigor level, which is how "comprehensive but compact"
 (`rigor: full` + `docs.density: terse`) stays expressible. Two of the six —
 `modes.review_mode` and `team.size` — are personal-experience knobs that also
 remain overridable from `project.local.yaml` (that source sits above the
 expansion), unlike the four on-disk knobs, which are locked.
 
-> **This table is asserted against the helper, not maintained by hand.** Test
-> **X.10** reads `_yaml_helper_defaults` through `get_yaml_default` and checks
-> both directions: every knob listed here must carry the value the helper
-> actually returns, and none of the six fronted knobs may appear at all. It
-> exists because a table can list knobs the helper has stopped defaulting and
-> read as correct: the structural check pairs a knob with the word "default" on
-> a single line, so a two-cell table row is invisible to it. Editing this table
-> without editing the helper now fails the build.
+> **Keep this table in step with the helper.** Every knob listed here must carry
+> the value `_yaml_helper_defaults` returns (read it through `get_yaml_default`),
+> and none of the six fronted knobs may appear in it.
 
 **`testing.strict.*` has no central default on purpose.** Its unset default
 differs per skill by design: `/smoke-check` treats unset as **blocking** (it is a
@@ -269,12 +266,12 @@ mistake is the easier one to make by copy-paste. The framework has the mechanism
 (`notes:`) and already uses it for absence, emptiness, tabs, locked keys, orphan
 locals and bad enums. Shape is the gap.
 
-**Deliberately not fixed in v1.1.** Detecting "this key is present in the file but
+**Why it is not caught yet.** Detecting "this key is present in the file but
 resolved to nothing" means changing the parser every config read in the framework
 goes through, and the empty-value fall-through above is a *legitimate* case of
 exactly that signature. Distinguishing "empty on purpose" from "unparseable" is
 real work, not a one-liner, and it lands in the most load-bearing file there is.
-Recorded here as v1.2.
+Until then, check the structure yourself when a setting seems ignored.
 
 **Duplicate-key precedence was undocumented before this entry.** Last-wins is
 deterministic and reproducible, so it is not a bug — but nothing said so, which

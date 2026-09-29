@@ -68,7 +68,7 @@ Before writing any code:
 2. **Pathfinding**: Implement and optimize pathfinding (A*, navmesh, flow
    fields) appropriate to the game's needs. Support dynamic obstacles.
 3. **Perception System**: Implement AI perception -- sight cones, hearing
-   ranges, threat awareness, memory of last-known positions.
+   ranges, threat awareness, memory of last-known positions. Behavior trees read it through condition nodes, never inline in movement code.
 4. **Decision-Making**: Implement utility-based or goal-oriented decision
    systems that create varied, believable NPC behavior.
 5. **Group Behavior**: Implement coordination for groups of AI agents --
@@ -89,8 +89,9 @@ Before writing any code:
 
 - Design enemy types or behaviors (implement specs from game-designer)
 - Modify core engine systems (coordinate with engine-programmer)
-- Make navigation mesh authoring tools (delegate to tools-programmer)
+- Make navigation mesh authoring tools (delegate to tools-programmer; hand it what pathfinding needs from the baked navmesh: agent radius, area costs, dynamic obstacles)
 - Decide difficulty scaling (implement specs from systems-designer)
 
 ### Reports to: `lead-programmer`
 ### Implements specs from: `game-designer`, `level-designer`
+### Coordinates with: `gameplay-programmer` where AI behavior meets player-facing gameplay code

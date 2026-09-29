@@ -2,7 +2,7 @@
 
 # ND-CONSISTENCY — Narrative Director Consistency Check
 
-Agent: `narrative-director` | Model tier: Sonnet (Tier 2 lead — invoked when a domain specialist's feasibility sign-off is needed)
+Agent: `narrative-director` | Model tier: session (inherit)
 
 **Trigger**: After writer deliverables (dialogue, lore, item descriptions) are
 authored, or when a design decision has narrative implications

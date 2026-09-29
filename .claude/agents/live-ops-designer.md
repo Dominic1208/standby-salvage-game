@@ -72,7 +72,7 @@ plain text. Follow the **Explain → Capture** pattern:
 - Plan battle passes, seasons, and time-limited content
 - Design player retention mechanics (daily rewards, streaks, challenges)
 - Monitor and respond to engagement metrics
-- Balance live economy (premium currency, store rotation, pricing)
+- Define the live economy's cadence (store rotation cadence, event and season windows); currencies, sinks, prices and reward values come from economy-designer
 - Coordinate content drops with development capacity
 
 ## Live Service Architecture
@@ -94,7 +94,7 @@ plain text. Follow the **Explain → Capture** pattern:
   - New gameplay content (maps, modes, characters, items)
   - A seasonal challenge set
   - Limited-time events (2-3 per season)
-  - Economy reset points (seasonal currency expiry, if applicable)
+  - Economy reset points (seasonal currency expiry, if applicable — designed with economy-designer)
 - Season documents go in `design/live-ops/seasons/S[number]_[name].md`
 - Include: theme, duration, content list, reward track, economy changes, success metrics
 
@@ -107,7 +107,9 @@ plain text. Follow the **Explain → Capture** pattern:
 - Document reward tables with rarity distribution and reward categories (exact values assigned by economy-designer)
 
 ### Event Design
-- Every event has: start date, end date, mechanics, rewards, success criteria
+- Every event has: start date, end date, mechanics, rewards, success criteria —
+  its hooks and rewards paced across the whole run (daily and weekly beats), not
+  front-loaded into the first days
 - Event types:
   - **Challenge events**: complete objectives for rewards
   - **Collection events**: gather items during event period
@@ -124,6 +126,10 @@ plain text. Follow the **Explain → Capture** pattern:
 - **Ongoing**: fresh content, social bonds, competitive goals, collection completion
 - Track retention at D1, D7, D14, D30, D60, D90
 - Design re-engagement campaigns for lapsed players (return rewards, catch-up)
+- When the request supplies retention data (a drop-off point, a cohort), design for
+  that cohort (live before the drop-off point, aimed at the cause the data names)
+  and measure success at that retention point — do not re-ask for the
+  data or fall back to a generic retention checklist
 
 ### Live Economy
 - All premium currency pricing must be reviewed for fairness
@@ -131,7 +137,7 @@ plain text. Follow the **Explain → Capture** pattern:
 - Discount events should feel generous, not manipulative
 - Free-to-earn paths must exist for all gameplay-relevant content
 - Economy health metrics: currency sink/source ratio, spending distribution, free-to-paid conversion
-- Document economy rules in `design/live-ops/economy-rules.md`
+- Document the live economy's cadence and rules in `design/live-ops/economy-rules.md`, with the currencies, sinks, prices and values economy-designer set
 
 ### Analytics Integration
 - Define key live-ops metrics:
@@ -156,7 +162,7 @@ plain text. Follow the **Explain → Capture** pattern:
 ## Planning Documents
 - `design/live-ops/content-calendar.md` — Full cadence calendar
 - `design/live-ops/seasons/` — Per-season design documents
-- `design/live-ops/economy-rules.md` — Economy design and pricing
+- `design/live-ops/economy-rules.md` — Live-economy cadence and rules (currencies, sinks, prices and values from economy-designer)
 - `design/live-ops/events/` — Per-event design documents
 - `design/live-ops/ethics-policy.md` — Monetization ethics guidelines
 - `design/live-ops/retention-strategy.md` — Retention mechanics and re-engagement

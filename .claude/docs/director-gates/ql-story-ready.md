@@ -2,13 +2,14 @@
 
 # QL-STORY-READY — QA Lead Story Readiness Check
 
-Agent: `qa-lead` | Model tier: Sonnet (Tier 2 lead — invoked when a domain specialist's feasibility sign-off is needed)
+Agent: `qa-lead` | Model tier: session (inherit)
 
-**Trigger**: Before a story is accepted into a sprint — invoked by `/create-stories`,
-`/story-readiness`, and `/sprint-plan` during story selection
+**Trigger**: Before a story is accepted into a sprint — invoked by `/create-stories`
+and `/story-readiness`
 
 **Context to pass**:
-- Story file path
+- Story file path — or, from `/create-stories` (which runs this gate before any
+  story is written), the story inline
 - Story type (Logic / Integration / Visual/Feel / UI / Config/Data)
 - Acceptance criteria list (verbatim from the story)
 - The GDD requirement (TR-ID and text) the story covers

@@ -9,8 +9,9 @@
 # false NEGATIVE, the dangerous direction). Hashing the bytes has neither
 # problem: content changed <=> hash changed. The residual failure directions
 # are false POSITIVES (re-review something unchanged — wasted tokens, never a
-# missed review): a hash tool changing between stamp and check, or a receipt
-# file that was never written.
+# missed review): a hash tool changing between stamp and check, a receipt
+# file that was never written, or no hash tool at all (git, sha1sum, shasum),
+# which makes everything read CHANGED and says so on stderr.
 #
 # ONE EXCEPTION, and it is deliberate. `check` stays silent on an absent
 # LITERAL path, because a caller may name an optional input on every run
@@ -78,15 +79,44 @@
 set -u
 export LC_ALL=C
 
+# SHA-1 of stdin, as "<hex>  -". The fallback when git cannot hash: sha1sum is
+# GNU coreutils, which older macOS releases do not ship; every macOS has
+# shasum, which prints the same hex. Each is RUN before it is used -- a tool that is found but fails must
+# not win. Returns 1 when neither runs.
+sha1_stdin() {
+  if [ -z "${_RR_SHA1+x}" ]; then
+    _RR_SHA1=""
+    if printf '' | sha1sum >/dev/null 2>&1; then _RR_SHA1=sha1sum
+    elif printf '' | shasum -a 1 >/dev/null 2>&1; then _RR_SHA1=shasum
+    fi
+  fi
+  case "$_RR_SHA1" in
+    sha1sum) sha1sum ;;
+    shasum)  shasum -a 1 ;;
+    *)       return 1 ;;
+  esac
+}
+
+# Printed at most once per run, on stderr: with no hash tool nothing can be
+# verified unchanged, and the caller should know why everything reads CHANGED.
+_rr_warned=""
+warn_no_hash() {
+  [ -n "$_rr_warned" ] && return 0
+  echo "review-receipts: no hash tool (git, sha1sum or shasum) -- nothing can read UNCHANGED" >&2
+  _rr_warned=1
+}
+
 hash_file() {
   # git hash-object is preferred (stable, content-addressed, no mtime input).
-  # sha1sum fallback produces a DIFFERENT hash for the same bytes (git
+  # The SHA-1 fallback produces a DIFFERENT hash for the same bytes (git
   # prepends a blob header) — so a stamp made with one tool and checked with
   # the other reads CHANGED. That failure direction is safe (re-review).
+  # The file goes in on stdin: sha1sum starts its line with "\" when the file
+  # name holds a backslash, as a Windows path can.
   if command -v git >/dev/null 2>&1; then
     git hash-object -- "$1" 2>/dev/null && return 0
   fi
-  sha1sum "$1" 2>/dev/null | cut -d' ' -f1
+  sha1_stdin < "$1" 2>/dev/null | cut -d' ' -f1
 }
 
 norm_path() {
@@ -147,7 +177,7 @@ section_spans() {
 
 section_hash() { # <file> <start> <end>
   # Mirrors hash_file above, and for the same reason it was written that way.
-  # This called bare `sha1sum`, which is GNU coreutils and absent on macOS. The
+  # This called bare `sha1sum`, which is GNU coreutils and absent on older macOS. The
   # failure was not a visible error: sha1sum missing makes this return EMPTY,
   # an empty `cur` compares EQUAL to an empty stored hash, and the check below
   # then prints SECTION-UNCHANGED for every section however it was edited.
@@ -158,9 +188,10 @@ section_hash() { # <file> <start> <end>
   if command -v git >/dev/null 2>&1; then
     _sec=$(sed -n "$2,$3p" "$1" | git hash-object --stdin 2>/dev/null)
   fi
-  [ -n "$_sec" ] || _sec=$(sed -n "$2,$3p" "$1" | sha1sum 2>/dev/null | cut -d' ' -f1)
+  [ -n "$_sec" ] || _sec=$(sed -n "$2,$3p" "$1" | sha1_stdin 2>/dev/null | cut -d' ' -f1)
   # Never empty. An unhashable section must be visible in the receipt rather
-  # than silently equal to the next unhashable one.
+  # than silently equal to the next unhashable one -- and sections-check never
+  # reads this placeholder as UNCHANGED, since it matches every section.
   [ -n "$_sec" ] || _sec="NO-HASH-TOOL"
   printf '%s' "$_sec"
 }
@@ -217,6 +248,7 @@ case "$mode" in
         continue
       fi
       current=$(hash_file "$f")
+      [ -n "$current" ] || warn_no_hash
       if [ "$current" = "$stored" ]; then
         printf 'UNCHANGED: %s\n' "$p"
       else
@@ -233,7 +265,9 @@ case "$mode" in
     p=$(norm_path "$f")
     while IFS=$(printf '\t') read -r s e h; do
       [ -n "$h" ] || continue
-      printf 'Reviewed-Section-Hash: %s#%s %s\n' "$p" "$h" "$(section_hash "$f" "$s" "$e")"
+      sec_hash=$(section_hash "$f" "$s" "$e")
+      [ "$sec_hash" = "NO-HASH-TOOL" ] && warn_no_hash
+      printf 'Reviewed-Section-Hash: %s#%s %s\n' "$p" "$h" "$sec_hash"
     done <<EOF_SH
 $(section_spans "$f")
 EOF_SH
@@ -300,6 +334,12 @@ EOF_SC
       # stamp recorded with an empty hash reads NEW, not UNCHANGED.
       if [ -z "$sv" ]; then
         printf 'SECTION-NEW: %s\n' "$h"
+      elif [ "$cur" = "NO-HASH-TOOL" ]; then
+        # Nothing could hash this section, so nothing can call it unchanged --
+        # least of all a stored placeholder, which equals every other one. A
+        # wasted re-review is safe; a changed section skipped is not.
+        warn_no_hash
+        printf 'SECTION-CHANGED: %s\n' "$h"
       elif [ "$cur" = "$sv" ]; then
         printf 'SECTION-UNCHANGED: %s\n' "$h"
       else

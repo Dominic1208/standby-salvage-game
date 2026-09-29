@@ -27,9 +27,16 @@ else
 fi
 [ -n "$CCGS_ROOT" ] && cd "$CCGS_ROOT" 2>/dev/null || true
 
-# Claude Code PreCompact hook: Dump session state before context compression
-# This output appears in the conversation right before compaction, ensuring
-# critical state survives the summarization process.
+# Claude Code PreCompact hook: log the compaction, and summarise session state.
+#
+# THIS OUTPUT DOES NOT REACH CLAUDE. Claude Code writes PreCompact stdout to the
+# debug log and discards its systemMessage (hooks documentation). What survives
+# a compaction is the file on disk: SessionStart fires again with source
+# `compact`, and session-start.sh shows the CHECKPOINT then. The one effect
+# here that lands is the compaction-log line at the end; the summary stays
+# bounded for anyone reading the debug log. The notes below were written when
+# the output was believed to reach the context -- the bounds still hold, the
+# "into the context" reasoning does not.
 
 # features.session_state: off => this hook is a no-op. Default `on`; see
 # session_state_enabled() in yaml-helper.sh.
@@ -49,11 +56,11 @@ echo "Timestamp: $(date)"
 # of them was 12.7 KB (~3,200 tokens) -- injected at the one moment context is
 # scarcest, and growing with the file.
 #
-# Second, and worse: content emitted here goes INTO the context that is about to
-# be compacted, so it is summarised like everything else rather than preserved.
-# We were paying full price for a lossy copy of a file that is already on disk
-# -- while post-compact.sh, which fires after, already tells the agent to read
-# that file. Pointer + a bounded checkpoint beats a dump on both cost and
+# Second: this was written believing hook output goes INTO the context that is
+# about to be compacted. It does not (see the top of this file) -- PreCompact
+# output reaches the debug log only, so a dump bought nothing, and
+# session-start.sh, which runs after every compaction, is what restores the
+# file. Pointer + a bounded checkpoint beats a dump on both cost and
 # fidelity.
 #
 # So: emit only the region between the CHECKPOINT markers (bounded by the schema
@@ -91,8 +98,9 @@ echo ""
 echo "## Files Modified (git working tree)"
 
 # BOUNDED. These three lists must never be emitted in full, one line per
-# file, with no cap -- and this output goes INTO the context that is about to be
-# compacted. The checkpoint above was redesigned to be by-reference for exactly
+# file, with no cap. (They were bounded believing this output goes into the
+# compacting context; it reaches the debug log, where an unbounded dump still
+# costs time and log size.) The checkpoint above was redesigned to be by-reference for exactly
 # that reason (see the note at the top of this file); the lists below were left
 # unbounded, so the hook still dumped whatever the working tree happened to
 # contain at the moment context was scarcest. Measured on a tree with ~5k

@@ -154,7 +154,7 @@ Example:
 └──────────────────────────────────────────────┘
 ```
 
-**Worked example — zone definitions table (5.2)**:
+**Worked example — layout zones table (5.2)**:
 
 | Zone Name | Description | Approximate Size | Scrollable? | Overflow Behavior |
 |-----------|-------------|-----------------|-------------|-------------------|
@@ -286,7 +286,7 @@ Example:
 
 ---
 
-## Section 10 — Transition & Animation
+## Section 10 — Transitions & Animations
 
 > **Why this section exists**: Transitions are not decoration — they communicate
 > hierarchy and causality. A screen that slides in from the right implies the
@@ -320,7 +320,7 @@ Example:
 
 ---
 
-## Section 12 — Screen-Level Accessibility Requirements
+## Section 12 — Accessibility
 
 > **Why this section exists**: Accessibility requirements must be specified at design
 > time because retrofitting them is expensive and often architecturally impractical.
@@ -437,7 +437,7 @@ and independently verifiable:
 
 | Question | Owner | Deadline | Resolution |
 |----------|-------|----------|-----------|
-| [e.g., Should item comparison be automatic (always showing equipped stats) or player-triggered (press Compare)?] | [ui-designer] | [Sprint 4, Day 3] | [Pending] |
-| [e.g., Do we support controller cursor (free aim) in the item grid, or d-pad-only grid navigation?] | [lead-programmer + ui-designer] | [Sprint 4, Day 3] | [Pending — depends on ADR-0015 input model decision] |
+| [e.g., Should item comparison be automatic (always showing equipped stats) or player-triggered (press Compare)?] | [ux-designer] | [Sprint 4, Day 3] | [Pending] |
+| [e.g., Do we support controller cursor (free aim) in the item grid, or d-pad-only grid navigation?] | [lead-programmer + ux-designer] | [Sprint 4, Day 3] | [Pending — depends on ADR-0015 input model decision] |
 | [e.g., What is the game's item drop policy — permanent loss or drop-to-world?] | [systems-designer] | [Requires GDD update] | [Blocked on inventory GDD Edge Cases section] |
 | [e.g., Maximum inventory size — does the grid have a hard cap or is it infinite-scroll?] | [economy-designer] | [Sprint 3, Day 5] | [Pending] |

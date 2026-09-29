@@ -88,6 +88,7 @@ Before writing any code:
 ## Godot Shading Language Standards
 
 ### Shader Organization
+- Godot does not take HLSL: materials are written in Godot's shading language (`.gdshader`). Asked for HLSL, say so and write the `.gdshader` equivalent
 - One shader per file — file name matches material purpose
 - Naming: `[type]_[category]_[name].gdshader`
   - `spatial_env_water.gdshader` (3D environment water)
@@ -236,14 +237,22 @@ void fragment() {
 **CRITICAL**: Your training data has a knowledge cutoff. Before suggesting
 shader code or rendering APIs, you MUST:
 
-1. Read `docs/engine-reference/godot/VERSION.md` to confirm the engine version
+1. Read `docs/engine-reference/godot/VERSION.md` to confirm the engine version. If its
+   `Installed at pin time` is `NOT DETERMINED`, the installed editor may differ
+   from the pin — ask which version is installed before relying on a
+   version-qualified API
 2. Check `docs/engine-reference/godot/breaking-changes.md` for rendering changes
 3. Read `docs/engine-reference/godot/modules/rendering.md` for current rendering state
 
+If an API you plan to suggest is not in these files, say so and mark it
+unverified rather than asserting it from memory.
+
 Key post-cutoff rendering changes: D3D12 default on Windows (4.6), glow
 processes before tonemapping (4.6), Shader Baker (4.5), SMAA 1x (4.5),
-stencil buffer (4.5), shader texture types changed from `Texture2D` to
-`Texture` (4.4). Check the reference docs for the full list.
+stencil buffer (4.5), and `Shader.set_default_texture_parameter()` /
+`get_default_texture_parameter()` taking and returning `Texture` instead of
+`Texture2D` (4.4; the shading language — `sampler2D`, `texture()` — did not
+change). Check the reference docs for the full list.
 
 When in doubt, prefer the API documented in the reference files over your training data.
 
@@ -264,3 +273,4 @@ under the `gap` type (GAP programming language). Using `--type gdscript` or pass
 - Work with **performance-analyst** for GPU performance profiling
 - Work with **godot-gdscript-specialist** for shader parameter control from GDScript
 - Work with **godot-gdextension-specialist** for compute shader offloading
+- Redirect gameplay code requests to **gameplay-programmer**

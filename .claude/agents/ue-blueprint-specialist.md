@@ -97,11 +97,13 @@ Before writing any code:
 
 ### Graph Cleanliness
 - Maximum 20 nodes per function graph — if larger, extract to a sub-function or move to C++
+- A node budget the project states (in its coding standards or the request) applies alongside this per-function limit — cite both, and when the project states none, say you are applying your own
 - Every function must have a comment block explaining its purpose
 - Use Reroute nodes to avoid crossing wires
 - Group related logic with Comment boxes (color-coded by system)
 - No "spaghetti" — if a graph is hard to read, it is wrong
 - Collapse frequently-used patterns into Blueprint Function Libraries or Macros
+- Put shared calculations in a Blueprint Function Library as pure functions (no execution pins, no side effects) — library functions are static, so any Blueprint can call them
 
 ### Naming Conventions
 - Blueprint classes: `BP_[Type]_[Name]` (e.g., `BP_Character_Warrior`, `BP_Weapon_Sword`)
@@ -140,9 +142,29 @@ Before writing any code:
 - [ ] All functions have comment blocks
 - [ ] No direct asset references that could cause loading issues (use Soft References)
 - [ ] Event flow is clear: inputs on left, outputs on right
-- [ ] Error/failure paths are handled (not just the happy path)
+- [ ] Error/failure paths are handled (not just the happy path) — an `IsValid()` check, with the invalid branch handled, before using any Actor or object reference that can be null (`GetOwner()` included)
 - [ ] No Blueprint casting where an interface would work
 - [ ] Variables have proper categories and tooltips
+
+When reviewing, name the Performance Rule or checklist item each finding breaks, and the pattern that replaces it.
+
+## Version Awareness
+
+**CRITICAL**: Your training data has a knowledge cutoff. Before suggesting engine
+API code, you MUST:
+
+1. Read `docs/engine-reference/unreal/VERSION.md` to confirm the engine version. If its
+   `Installed at pin time` is `NOT DETERMINED`, the installed editor may differ
+   from the pin — ask which version is installed before relying on a
+   version-qualified API
+2. Check `docs/engine-reference/unreal/deprecated-apis.md` for any APIs you plan to use
+3. Check `docs/engine-reference/unreal/breaking-changes.md` for relevant version transitions
+4. Read `docs/engine-reference/unreal/current-best-practices.md` and the `modules/*.md` file for the system the Blueprint touches
+
+If an API you plan to suggest is not in these files, say so and mark it
+unverified rather than asserting it from memory.
+
+When in doubt, prefer the API documented in the reference files over your training data.
 
 ## Coordination
 - Work with **unreal-specialist** for C++/BP boundary architecture decisions

@@ -13,7 +13,7 @@
   <a href=".claude/skills"><img src="https://img.shields.io/badge/skills-74-green" alt="74 Skills"></a>
   <a href=".claude/hooks"><img src="https://img.shields.io/badge/hooks-12-orange" alt="12 Hooks"></a>
   <a href=".claude/rules"><img src="https://img.shields.io/badge/rules-13-red" alt="13 Rules"></a>
-  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/built%20for-Claude%20Code-f5f5f5?logo=anthropic" alt="Built for Claude Code"></a>
+  <a href="https://code.claude.com/docs"><img src="https://img.shields.io/badge/built%20for-Claude%20Code-f5f5f5?logo=anthropic" alt="Built for Claude Code"></a>
   <a href="https://www.buymeacoffee.com/donchitos3"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support%20this%20project-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee"></a>
   <a href="https://github.com/sponsors/Donchitos"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Support%20this%20project-ea4aaa?logo=githubsponsors&logoColor=white" alt="GitHub Sponsors"></a>
 </p>
@@ -85,7 +85,7 @@ Tier 3 — Specialists
 ```
 
 Each agent declares a model in its frontmatter: the three directors ask for
-Opus, sixteen specialists name Sonnet or Haiku, and the remaining thirty
+Opus, `lead-programmer` and fifteen specialists name Sonnet, and the remaining thirty
 **inherit your session's model**. Treat the tiers as seniority of role, not as
 a billing plan — most of the studio runs on whatever model you are already using.
 
@@ -173,10 +173,12 @@ clutter, not evidence.
 ### Prerequisites
 
 - [Git](https://git-scm.com/)
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`npm install -g @anthropic-ai/claude-code`)
-- **Recommended**: [jq](https://jqlang.github.io/jq/) (for hook validation) and Python 3 (for JSON validation)
+- [Claude Code](https://code.claude.com/docs/en/setup) — the native installer is recommended (`npm install -g @anthropic-ai/claude-code` also works, on Node.js 22+)
+- [Python 3](https://www.python.org/) — reads `project.yaml` for every skill and hook; without it every setting silently falls back to its default
+- Bash — runs every hook; built into macOS and Linux, and on Windows it comes with [Git for Windows](https://git-scm.com/downloads/win)
+- **Recommended**: [jq](https://jqlang.github.io/jq/) (for hook validation)
 
-All hooks fail gracefully if optional tools are missing — nothing breaks, you just lose validation.
+Hooks fail gracefully if optional tools are missing — you just lose validation — with one deliberate exception: a commit that stages data JSON is blocked when there is no Python to validate it.
 
 ### Setup
 
@@ -212,7 +214,7 @@ which GDD sections are required, `docs.density`, `qa.level`,
 `story_granularity`, `review_mode` — how many director agents review your work,
 and `team.size`), so `/start` asks it once instead of six times:
 
-- **`minimal`** (default) — jam-game speed. No GDDs required, terse docs, minimal QA evidence, solo review. `/start` → `/setup-engine` → `/dev-story` in a handful of steps.
+- **`minimal`** (default) — jam-game speed. No GDDs required, terse docs, minimal QA evidence, solo review. `/start` → `/setup-engine` → `/brainstorm` (a one-page brief) → `/create-stories` → `/dev-story` ↔ `/story-done`.
 - **`standard`** — 5 required GDD sections, balanced doc depth, standard QA evidence, lean review.
 - **`full`** — all 8 GDD sections, thorough docs, full QA evidence on every story type, full director review.
 
@@ -328,29 +330,31 @@ You stay in control. The agents provide structure and expertise, not autonomy.
 
 | Hook | Trigger | What It Does |
 |------|---------|--------------|
-| `validate-commit.sh` | PreToolUse (Bash) | Checks for hardcoded values, TODO format, JSON validity, design doc sections — exits early if the command is not `git commit` |
-| `validate-push.sh` | PreToolUse (Bash) | Warns on pushes to protected branches — exits early if the command is not `git push` |
-| `validate-assets.sh` | PostToolUse (Write/Edit) | Validates naming conventions and JSON structure — exits early if the file is not in `assets/` |
+| `validate-commit.sh` | PreToolUse (Bash, PowerShell) | Checks for hardcoded values, TODO format, JSON validity, design doc sections — exits early if the command is not `git commit` |
+| `validate-push.sh` | PreToolUse (Bash, PowerShell) | Warns on pushes to protected branches — exits early if the command is not `git push` |
+| `validate-assets.sh` | PostToolUse (Write/Edit) | Checks data-file JSON under `assets/`, `Assets/` or `Content/`, and asset naming in Godot's `assets/` only — exits early if the file is under none of them |
 | `session-start.sh` | Session open | Shows current branch and recent commits for orientation |
 | `detect-gaps.sh` | Session open | Detects fresh projects (suggests `/start`) and missing design docs when code or prototypes exist |
-| `pre-compact.sh` | Before compaction | Preserves session progress notes |
-| `post-compact.sh` | After compaction | Reminds Claude to restore session state from `active.md` |
+| `pre-compact.sh` | Before compaction | Logs the compaction (its output does not reach Claude — `session-start.sh` restores context afterwards) |
+| `post-compact.sh` | After compaction | Debug-log reminder only (its output does not reach Claude) |
 | `notify.sh` | Notification event | Shows Windows toast notification via PowerShell |
-| `session-stop.sh` | Session close | Archives `active.md` to session log and records git activity |
+| `session-stop.sh` | Every response end | Archives `active.md` to session log and records git activity |
 | `log-agent.sh` | Agent spawned | Audit trail start — logs subagent invocation |
 | `log-agent-stop.sh` | Agent stops | Audit trail stop — completes subagent record |
 | `validate-skill-change.sh` | PostToolUse (Write/Edit) | Advises running `/skill-test` after any `.claude/skills/` change |
 
-> **Note**: `validate-commit.sh`, `validate-assets.sh`, and `validate-skill-change.sh` fire on every Bash/Write tool call and exit immediately (exit 0) when the command or file path is not relevant. This is normal hook behavior — not a performance concern.
+> **Note**: `validate-commit.sh`, `validate-assets.sh`, and `validate-skill-change.sh` fire on every Bash, PowerShell or Write tool call and exit immediately (exit 0) when the command or file path is not relevant. This is normal hook behavior — not a performance concern.
 
-**Permission rules** in `settings.json` auto-allow safe operations (git status, test runs) and block dangerous ones (force push, `rm -rf`, reading `.env` files).
+**Permission rules** in `settings.json` auto-allow safe operations (git status, test runs) and block dangerous ones (force push, `rm -rf`, reading `.env` files) in both the Bash and PowerShell tools. The `git` rules match anywhere after `git`, so a git command whose text only mentions `push` followed later by ` +` or ` -f`, `clean` followed by ` -f`, or `reset` followed by `--hard` — a commit message such as `git commit -m "push + pull"` included — is denied too: reword the message.
 
 ### Path-Scoped Rules
 
 Coding standards are automatically enforced based on file location. The paths
-below show the Godot code root; on Unity read `src/` as `Assets/`, and on
-Unreal as `Source/<Module>/` — the engine's toolchain fixes that choice, and
-`/setup-engine` resolves it for you.
+below are Godot's. Each rule also matches the Unity and Unreal layouts: the code
+rules match C# under `Assets/**/Gameplay/` and C++ under `Source/**/Gameplay/` (and `Core`,
+`AI`, `Networking`, `UI`), data matches JSON under `Assets/**/Data/` and
+`Content/**/Data/`, shaders match by file type, and tests match
+C# under `Assets/Tests/` and C++ under `Source/**/Tests/`.
 
 | Path | Enforces |
 |------|----------|
@@ -361,7 +365,7 @@ Unreal as `Source/<Module>/` — the engine's toolchain fixes that choice, and
 | `src/ui/**` | No game state ownership, localization-ready, accessibility |
 | `design/gdd/**` | Required sections per `modes.workflow`, formula format, edge cases |
 | `design/narrative/**` | Lore consistency, character voice, canon levels |
-| `assets/data/**` | JSON validity, naming conventions, schema rules |
+| `assets/data/**/*.json` | JSON validity, naming conventions, schema rules |
 | `assets/shaders/**` | Naming conventions, performance targets, cross-platform rules |
 | `tests/**` | Test naming, coverage requirements, fixture patterns |
 | `prototypes/**` | Relaxed standards, README required, hypothesis documented |
@@ -390,7 +394,7 @@ This is a **template**, not a locked framework. Everything is meant to be custom
 
 ## Platform Support
 
-Primary development and testing on **Windows 10** with Git Bash. All hooks use POSIX-compatible patterns (`grep -E`, not `grep -P`) and include fallbacks for missing tools, so they should run on macOS and Linux. The `notify.sh` hook uses PowerShell for Windows toast notifications and is a no-op elsewhere — desktop notifications on macOS/Linux are not yet wired. Cross-platform testing is ongoing; please file issues for any platform-specific breakage.
+Primary development on **Windows 10** with Git Bash. The hooks and scripts are also tested on **macOS** — its stock bash 3.2 and BSD tools, with and without `jq` — and on **Linux**. All hooks use POSIX-compatible patterns (`grep -E`, not `grep -P`) and include fallbacks for missing tools. The `notify.sh` hook uses PowerShell for Windows toast notifications and is a no-op elsewhere — desktop notifications on macOS/Linux are not yet wired. Please file issues for any platform-specific breakage.
 
 ## Community
 

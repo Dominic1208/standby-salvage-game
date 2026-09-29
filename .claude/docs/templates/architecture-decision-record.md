@@ -42,7 +42,7 @@ chosen approach.]
 
 | Field | Value |
 |-------|-------|
-| **Engine** | [e.g. Godot 4.6 / Unity 6 / Unreal Engine 5.4] |
+| **Engine** | [e.g. Godot 4.6 / Unity 6 / Unreal Engine 5.7] |
 | **Domain** | [Physics / Rendering / UI / Audio / Navigation / Animation / Networking / Core / Input / Scripting] |
 | **Layer** | [Foundation / Core / Feature / Presentation] |
 | **Knowledge Risk** | [LOW — in training data / MEDIUM — near cutoff, verify / HIGH — post-cutoff, must verify] |
@@ -54,12 +54,13 @@ chosen approach.]
 > project upgrades engine versions. Flag it as "Superseded" and write a new ADR.
 
 > **`Layer` is the ADR's own layer, not the referencing epic's — and it is a
-> different taxonomy from `Domain`.** Four sites branch on whether an ADR is
+> different taxonomy from `Domain`.** Several sites branch on whether an ADR is
 > *critical (Foundation-layer)*: `/create-stories`, `/create-epics`,
-> `/architecture-decision`, and `gate-pre-production.md`. At `standard`,
+> `/architecture-decision`, `/story-readiness`, `/propagate-design-change` and
+> `gate-pre-production.md`; a missing row counts as critical. At `standard`,
 > `/create-stories` **stops** for a missing critical ADR and only **warns** for a
 > non-critical one, so this row decides whether a run halts. Earlier revisions of
-> this template recorded no layer at all, leaving those four sites to infer one from
+> this template recorded no layer at all, leaving those sites to infer one from
 > the referencing epic — which gives the wrong answer whenever a Foundation-layer
 > ADR is referenced by a Core-layer epic, the common case.
 >

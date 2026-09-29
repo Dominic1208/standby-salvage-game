@@ -296,20 +296,28 @@ fi
 
 # --- Check 6: project.stage is behind what is actually on disk ---
 #
-# On the `minimal` path nothing ever advances the stage. Only
-# /gate-check writes it, and the four-step jam route never invokes one -- so a
-# project with stories and running game code keeps reporting `Concept` to the
-# status line, to /help, and to every gate checklist that branches on stage.
+# Only a /gate-check PASS (or a CONCERNS whose risks you accepted) advances
+# the stage. A project that writes stories and game code without running one
+# keeps reporting `Concept` to the status line, to /help, and to every gate
+# checklist that branches on stage.
 #
 # This is an OBSERVATION, never a write. CLAUDE.md is explicit that the stage
-# advances on a /gate-check PASS with the user confirming, so a hook that
-# advanced it silently would be the worse bug. Say what is inconsistent and name
+# advances on a /gate-check PASS (or a CONCERNS whose risks you accepted) with
+# the user confirming, so a hook that advanced it silently would be the worse
+# bug. Say what is inconsistent and name
 # the skill that resolves it.
+#
+# Not at `minimal`: nothing on that path runs /gate-check, so a stage that never
+# moves is the design, not a gap. The status line shows story progress there
+# instead, and /help routes by the brief -- telling the user to run /gate-check
+# contradicted both.
 STAGE=""
-if [ -f .claude/hooks/yaml-helper.sh ]; then
-    STAGE=$(get_yaml_key project.stage 2>/dev/null)
+if [ "$WORKFLOW" != "minimal" ] && [ -f .claude/hooks/yaml-helper.sh ]; then
+    # get_yaml_key takes the file first; called with the key alone it returned
+    # nothing, and only the legacy stage.txt was ever read.
+    STAGE=$(get_yaml_key project.yaml project.stage 2>/dev/null)
 fi
-[ -z "$STAGE" ] && [ -f production/stage.txt ] && STAGE=$(head -1 production/stage.txt 2>/dev/null | tr -d '
+[ "$WORKFLOW" != "minimal" ] && [ -z "$STAGE" ] && [ -f production/stage.txt ] && STAGE=$(head -1 production/stage.txt 2>/dev/null | tr -d '
 ' | tr -d ' ')
 
 if [ -n "$STAGE" ]; then
@@ -318,8 +326,8 @@ if [ -n "$STAGE" ]; then
       Concept|concept|Pre-Production|"Pre-Production")
         if [ "$STORY_COUNT" -gt 0 ] && [ "$SRC_FILES" -gt 0 ]; then
             echo "⚠️  GAP: project.stage says '$STAGE', but $STORY_COUNT stories and $SRC_FILES source files exist"
-            echo "    The stage only advances on a /gate-check PASS, and nothing on the"
-            echo "    minimal path runs one -- so the status line can sit at '$STAGE' indefinitely."
+            echo "    The stage only advances on a /gate-check PASS (or a CONCERNS whose risks you accepted),"
+            echo "    and none has moved it yet -- so the status line can sit at '$STAGE' indefinitely."
             echo "    Suggested action: /gate-check  (it asks before advancing; this hook never writes the stage)"
         fi
         ;;

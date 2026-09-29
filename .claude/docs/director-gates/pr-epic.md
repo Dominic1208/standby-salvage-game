@@ -9,8 +9,9 @@ broken out — validates the epic structure is producible before `/create-storie
 is invoked
 
 **Context to pass**:
-- Epic definition file paths (all epics just created)
-- Epic index path (`production/epics/index.md`)
+- The epic structure for the layer, inline — every epic's scope summary and
+  governing-ADR count. `/create-epics` runs this gate *before* writing any epic
+  file, so there are no paths yet.
 - Milestone timeline and target dates
 - Team capacity (solo / small team / size)
 - Layer being epiced (Foundation / Core / Feature / etc.)

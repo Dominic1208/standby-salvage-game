@@ -5,6 +5,34 @@ These show what runs before and after each skill, and what artifacts flow betwee
 
 ---
 
+## Default Path: Rigor Minimal (Four Steps to Code)
+
+`modes.rigor: minimal` is the default. The one-page brief is the design record and
+its build order is the plan, so there is no epic planning, sprint or phase gate to run.
+Every skill below still runs at any tier; rigor changes what is required, not what
+is allowed. `/help` follows this route at `minimal`.
+
+```
+MINIMAL PATH (modes.rigor: minimal — the default; no /gate-check, stage stays Concept)
+  /setup-engine ───────────────────────────────────────────────► project.yaml + CLAUDE.md
+  /brainstorm ─────────────────────────────────────────────────► design/game-brief.md (one page)
+        │                                                          (replaces concept doc, systems index, GDDs)
+        ▼
+  /create-stories ─────────────────────────────────────────────► production/epics/[slug]/story-*.md
+        │                                                          (brief's build order is the plan —
+        │                                                           no /create-epics, no /sprint-plan)
+        ▼ (one story at a time, in build order)
+  /dev-story [story] ──────────────────────────────────────────► routes to correct programmer agent
+  /story-done [story] ─────────────────────────────────────────► story closed + next story named
+        │
+        └── back to /dev-story until every story is Complete, then:
+              play the build · /create-stories for more · /settings to raise rigor
+```
+
+The overview below is the `standard`/`full` pipeline.
+
+---
+
 ## Full Pipeline Overview (Zero to Ship)
 
 ```
@@ -16,11 +44,13 @@ PHASE 1: CONCEPT
         │ PROCEED                                                  (validate idea BEFORE writing GDDs)
         ▼
   /design-review [game-concept.md] ────────────────────────────► concept validated
+  /art-bible ──────────────────────────────────────────────────► design/art/art-bible.md
+  /map-systems ────────────────────────────────────────────────► design/gdd/systems-index.md
   /gate-check ─────────────────────────────────────────────────► PASS → advance to systems-design
         │
         ▼
 PHASE 2: SYSTEMS DESIGN
-  /map-systems ────────────────────────────────────────────────► design/gdd/systems-index.md
+  /map-systems next ───────────────────────────────────────────► picks the next system to design
         │
         ▼ (for each system, in dependency order)
   /design-system [name] ──────────────────────────────────────► design/gdd/[system].md
@@ -32,30 +62,30 @@ PHASE 2: SYSTEMS DESIGN
         │
         ▼
 PHASE 3: TECHNICAL SETUP
-  /create-architecture ────────────────────────────────────────► docs/architecture/master.md
+  /create-architecture ────────────────────────────────────────► docs/architecture/architecture.md
   /architecture-decision (×N) ─────────────────────────────────► docs/architecture/[adr-nnn].md
   /architecture-review ────────────────────────────────────────► review report + docs/architecture/tr-registry.yaml
   /create-control-manifest ────────────────────────────────────► docs/architecture/control-manifest.md
+  /test-setup ─────────────────────────────────────────────────► test framework + CI/CD pipeline
+  /test-helpers ───────────────────────────────────────────────► tests/helpers/ (engine-specific library)
+  /ux-design accessibility ─────────────────────────────────────► design/accessibility-requirements.md
+  /ux-design patterns ──────────────────────────────────────────► design/ux/interaction-patterns.md
   /gate-check ─────────────────────────────────────────────────► PASS → advance to pre-production
         │
         ▼
 PHASE 4: PRE-PRODUCTION
   [UX — before epics, so specs exist when stories are written]
-  /ux-design [screen/hud/patterns] ────────────────────────────► design/ux/*.md
+  /ux-design [screen/hud] ──────────────────────────────────────► design/ux/*.md
   /ux-review ──────────────────────────────────────────────────► UX specs approved (HARD gate for /team-ui)
-
-  [Test infrastructure — scaffold before stories reference tests]
-  /test-setup ─────────────────────────────────────────────────► test framework + CI/CD pipeline
-  /test-helpers ───────────────────────────────────────────────► tests/helpers/[engine-specific].gd
 
   [Vertical slice — before epics, validate full game loop]
   /vertical-slice ─────────────────────────────────────────────► prototypes/[name]-vertical-slice/REPORT.md
-  /playtest-report ────────────────────────────────────────────► production/playtests/
+  /playtest-report ────────────────────────────────────────────► production/qa/playtests/
 
   [Stories + sprint plan — only after vertical slice PROCEEDS]
   /create-epics [layer] ───────────────────────────────────────► production/epics/*/EPIC.md
   /create-stories [epic-slug] ─────────────────────────────────► production/epics/*/story-*.md
-  /sprint-plan new ────────────────────────────────────────────► production/sprints/sprint-01.md
+  /sprint-plan new ────────────────────────────────────────────► production/sprints/sprint-001.md
   /gate-check ─────────────────────────────────────────────────► PASS → advance to production
         │
         ▼
@@ -70,14 +100,14 @@ PHASE 5: PRODUCTION (repeating sprint loop)
   /code-review ────────────────────────────────────────────────► code review report
   /scope-check ────────────────────────────────────────────────► scope creep detected / clear
   /content-audit ──────────────────────────────────────────────► GDD content gaps identified
-  /bug-report ─────────────────────────────────────────────────► production/qa/bugs/bug-NNN.md
+  /bug-report ─────────────────────────────────────────────────► production/qa/bugs/BUG-NNNN.md
   /bug-triage ─────────────────────────────────────────────────► bugs re-prioritized + assigned
 
   [Team skills for feature areas — spawn when working a full feature]
   /team-combat / /team-narrative / /team-ui / /team-level / /team-audio
 
   [QA cycle per sprint]
-  /qa-plan ────────────────────────────────────────────────────► production/qa/qa-plan-sprint-NN.md
+  /qa-plan ────────────────────────────────────────────────────► production/qa/qa-plan-[sprint-slug]-[date].md
   /smoke-check ────────────────────────────────────────────────► smoke test gate (PASS/FAIL)
   /regression-suite ───────────────────────────────────────────► coverage gaps + missing regression tests
   /test-evidence-review ───────────────────────────────────────► evidence quality report
@@ -98,17 +128,18 @@ PHASE 6: POLISH
   /asset-audit ────────────────────────────────────────────────► asset compliance report
   /tech-debt ──────────────────────────────────────────────────► docs/tech-debt-register.md
   /soak-test ──────────────────────────────────────────────────► soak test protocol + results
-  /localize ───────────────────────────────────────────────────► localization readiness report
   /team-polish ────────────────────────────────────────────────► polish sprint orchestrated
   /team-qa ────────────────────────────────────────────────────► full QA cycle sign-off
+  /security-audit ─────────────────────────────────────────────► production/security/security-audit-[date]-[scope].md
+  /localize qa ────────────────────────────────────────────────► production/localization/loc-qa-[locale]-[date].md
+  /release-checklist ──────────────────────────────────────────► production/releases/release-checklist-[version].md
+  /changelog ──────────────────────────────────────────────────► docs/CHANGELOG.md
+  /patch-notes ────────────────────────────────────────────────► docs/patch-notes/[version].md (draft)
   /gate-check ─────────────────────────────────────────────────► PASS → advance to release
         │
         ▼
 PHASE 7: RELEASE
   /launch-checklist ───────────────────────────────────────────► launch readiness report
-  /release-checklist ──────────────────────────────────────────► platform-specific checklist
-  /changelog ──────────────────────────────────────────────────► CHANGELOG.md
-  /patch-notes ────────────────────────────────────────────────► player-facing notes
   /team-release ───────────────────────────────────────────────► release pipeline orchestrated
         │
         ▼ (post-launch, ongoing)
@@ -155,8 +186,11 @@ upstream GDDs (input, if any)
 
 ## Skill Chain: UX / UI Pipeline in Detail
 
-UX specs are authored in Phase 4 (Pre-Production), before epics are written, so
-that story acceptance criteria can reference specific UX artifacts.
+Screen and HUD specs are authored in Phase 4 (Pre-Production), before epics are
+written, so that story acceptance criteria can reference specific UX artifacts.
+Accessibility and interaction-pattern specs are authored earlier, in Phase 3
+(Technical Setup), since at `full` the Technical Setup → Pre-Production gate
+requires them (at `standard` they are recommended; at `minimal` they drop).
 
 ```
 design/gdd/*.md (UI/UX requirements extracted)
@@ -183,8 +217,10 @@ design/player-journey.md (emotional arc, if authored)
                 ├── Phase 4: accessibility audit (accessibility-specialist)
                 └── Phase 5: final review
 
-Note: /ux-design and /ux-review belong in Phase 4 (Pre-Production).
-      /team-ui belongs in Phase 5 (Production) when a UI feature is being built.
+Note: /ux-design accessibility and /ux-design patterns belong in Phase 3
+      (Technical Setup); /ux-design screen/hud and /ux-review belong in Phase 4
+      (Pre-Production). /team-ui belongs in Phase 5 (Production) when a UI
+      feature is being built.
 ```
 
 ---
@@ -251,9 +287,9 @@ How a story gets from backlog to closed (summary view):
 ## Skill Chain: QA Pipeline in Detail
 
 ```
-[Phase 4 — one-time infrastructure setup]
+[Phase 3 — one-time infrastructure setup]
 /test-setup ────────────────────────────────────────────────────► test framework scaffolded + CI/CD wired
-/test-helpers ──────────────────────────────────────────────────► tests/helpers/[engine].gd (GDUnit4, NUnit, etc.)
+/test-helpers ──────────────────────────────────────────────────► tests/helpers/ (GDUnit4, NUnit, etc.)
 
 [Phase 5 — per-sprint QA cycle]
 /qa-plan [sprint or feature]
@@ -266,7 +302,7 @@ How a story gets from backlog to closed (summary view):
         │     UI → retained screenshot of each screen (BLOCKING by default)
         │     Config/Data → smoke check (ADVISORY by default)
         │     (gate levels are overridable per type via testing.strict in project.yaml)
-        └── Output: production/qa/qa-plan-sprint-NN.md
+        └── Output: production/qa/qa-plan-[sprint-slug]-[date].md
                 │
                 ▼
         /smoke-check
@@ -294,7 +330,7 @@ How a story gets from backlog to closed (summary view):
 /team-qa ───────────────────────────────────────────────────────► full QA cycle sign-off for release gate
 
 [Ongoing — bug management]
-/bug-report ────────────────────────────────────────────────────► production/qa/bugs/bug-NNN.md
+/bug-report ────────────────────────────────────────────────────► production/qa/bugs/BUG-NNNN.md
 /bug-triage ────────────────────────────────────────────────────► open bugs re-prioritized + assigned
 
 [Meta — harness validation]

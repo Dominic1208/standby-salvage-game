@@ -3,13 +3,14 @@
 > Authoring guidance: .claude/docs/templates/guidance/hud-design-guide.md (load per-section as you author — do not read entirely).
 
 > **Status**: Draft | In Review | Approved | Implemented
-> **Author**: [Name or agent — e.g., ui-designer]
+> **Author**: [Name or agent — e.g., ux-designer]
 > **Last Updated**: [Date]
 > **Game**: [Game name — this is a single document per game, not per element]
 > **Platform Targets**: [All platforms this HUD must work on — e.g., PC, PS5, Xbox Series X, Steam Deck]
 > **Related GDDs**: [Every system that exposes information through the HUD — e.g., `design/gdd/combat.md`, `design/gdd/progression.md`, `design/gdd/quests.md`]
 > **Accessibility Tier**: Basic | Standard | Comprehensive | Exemplary
-> **Style Reference**: [Link to art bible HUD section if it exists — e.g., `design/art/art-bible.md § HUD Visual Language`]
+> **Style Reference**: [Link to art bible HUD section if it exists — e.g., `design/art/art-bible.md § 7. UI/HUD Visual Direction`]
+> **Template**: HUD Design
 
 > **Note — Scope boundary**: This document specifies all elements that overlay the
 > game world during active gameplay — health bars, ammo counters, minimaps, quest
@@ -204,7 +205,7 @@ Repositioning saves to player profile, not to a single slot. Applies across play
 
 ---
 
-## 10. Accessibility — HUD Specific
+## 10. Accessibility
 
 > HUD-specific requirements only — refer to the project's
 > `design/accessibility-requirements.md` for the full project standard.

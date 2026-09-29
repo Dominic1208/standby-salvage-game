@@ -16,6 +16,14 @@ implementation and produces a READY / NEEDS WORK / BLOCKED / NOT ASSESSED verdic
 | `docs/architecture/adr-NNNN-[slug].md` (all ADRs referenced in stories) | `Status:` field | Yes |
 | `design/gdd/systems-index.md` | Which systems have approved GDDs | Yes |
 
+> **Tier.** The manifest, TR registry, ADR and systems-index rows are
+> `standard`/`full` inputs. At `workflow: minimal` the skill is not on the path
+> (`/dev-story` follows `/create-stories` directly); run anyway, it checks
+> acceptance criteria and scope only and treats Architecture Completeness as N/A
+> except the referenced-ADR rule: an ADR the story references that is missing,
+> `Proposed`, `Deprecated` or `Superseded` BLOCKS at every tier (SKILL.md, the tier note above Design
+> Completeness).
+
 ### Preconditions
 - The story file being validated was produced by `/create-stories` (or follows the same format)
 - For `sprint` scope: a sprint file exists in `production/sprints/` with story path references
@@ -30,7 +38,7 @@ None. This skill is strictly read-only and produces no file modifications under 
 - A verdict of READY, NEEDS WORK, BLOCKED or NOT ASSESSED is produced for every story file evaluated. `NOT ASSESSED` is not a synonym for `BLOCKED`: BLOCKED names a real, listable obstacle, while NOT ASSESSED means the story could not be evaluated at all. An empty scope yields `NOT ASSESSED — no stories in scope`, never a `Ready: 0 / Needs Work: 0 / Blocked: 0` summary over an empty list
 - Every non-READY verdict includes a specific gap list with fix instructions for each failing checklist item
 - Every BLOCKED verdict names the specific blocker (missing dependency story path, Proposed ADR ID, or unresolved design question marker)
-- For `sprint` scope: a sprint-level escalation warning is prepended if any Must Have story is not READY
+- For `sprint` scope: a sprint-level escalation warning is prepended if any Must Have story is not READY (NEEDS WORK, BLOCKED or NOT ASSESSED)
 - The skill offers to draft missing sections in conversation but never uses Write or Edit tools
 
 ## Immutability Rules
@@ -40,7 +48,7 @@ None. This skill is strictly read-only and produces no file modifications under 
 ## Hard Constraints (Never Violate)
 - Never use Write or Edit tools under any circumstances
 - Never draft corrections directly into files — offer drafts in conversation only
-- Never mark a story READY if its governing ADR has `Status: Proposed`
+- Never mark a story READY if its governing ADR has `Status: Proposed`, `Deprecated` or `Superseded`, at any tier
 - Never mark a story READY if a dependency story file is missing or has `Status: Draft`
 - Never re-read the same ADR file multiple times in one run — cache ADR statuses after the first read
 - Never penalize a story for missing `Manifest Version:` if `control-manifest.md` does not exist
@@ -51,7 +59,7 @@ None. This skill is strictly read-only and produces no file modifications under 
 
 It will rely on this skill's verdict as follows:
 - If verdict is READY: `/dev-story` proceeds with implementation using the story file as its source of truth
-- If verdict is NEEDS WORK or BLOCKED: `/dev-story` must not be run until the story is corrected and re-validated
+- If verdict is NEEDS WORK, BLOCKED or NOT ASSESSED: `/dev-story` must not be run until the story is corrected (or, for NOT ASSESSED, made readable) and re-validated — a story nobody could evaluate has not been shown ready
 - `/dev-story` reads the same story fields this skill validates — a READY verdict is an implicit guarantee that those fields are present, parseable, and internally consistent:
   - `Type:` field is set to a valid story type
   - `## Acceptance Criteria` contains specific, testable checkbox items

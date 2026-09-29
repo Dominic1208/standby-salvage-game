@@ -2,7 +2,7 @@
 
 # AD-VISUAL — Art Director Visual Consistency Review
 
-Agent: `art-director` | Model tier: Sonnet (Tier 2 lead — invoked when a domain specialist's feasibility sign-off is needed)
+Agent: `art-director` | Model tier: session (inherit)
 
 **Trigger**: After art direction decisions are made, when new asset types are
 introduced, or when a tech art decision affects visual style

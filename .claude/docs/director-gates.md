@@ -19,10 +19,10 @@ context window.**
 
 ## Gate Index
 
-Agent by prefix: `CD-` creative-director (Opus) · `TD-` technical-director (Opus)
-· `PR-` producer (Opus) · `AD-` art-director (Sonnet) · `LP-` lead-programmer ·
-`QL-` qa-lead · `ND-` narrative-director (Tier 2 leads: Sonnet).
-Definition files below are in `.claude/docs/director-gates/`.
+Agent by prefix: `CD-` creative-director · `TD-` technical-director ·
+`PR-` producer · `AD-` art-director · `LP-` lead-programmer · `QL-` qa-lead ·
+`ND-` narrative-director. Definition files below are in
+`.claude/docs/director-gates/`; each one's header names its agent's model tier.
 
 | Gate ID | Purpose | Definition file |
 |---------|---------|-----------------|
@@ -51,7 +51,7 @@ Definition files below are in `.claude/docs/director-gates/`.
 | LP-FEASIBILITY | Implementation feasibility of the architecture | lp-feasibility.md |
 | LP-CODE-REVIEW | Code review of an implemented story | lp-code-review.md |
 | QL-STORY-READY | Acceptance-criteria testability before sprint | ql-story-ready.md |
-| QL-TEST-COVERAGE | Test coverage review before epic done / advance | ql-test-coverage.md |
+| QL-TEST-COVERAGE | Test coverage review for one story before it closes (`/story-done`) | ql-test-coverage.md |
 | ND-CONSISTENCY | Narrative consistency of writer deliverables | nd-consistency.md |
 | AD-VISUAL | Visual consistency of art/tech-art decisions | ad-visual.md |
 
@@ -63,8 +63,10 @@ Review intensity controls whether gates run.
 
 **Global config**: `modes.review_mode` in `project.yaml` — one word: `full`,
 `lean`, or `solo`. Legacy fallback: `production/review-mode.txt` (single line,
-same values); `project.yaml` wins when both are present. Set once during
-`/start`, or change it any time with `/settings modes.review_mode=<value>`.
+same values); `project.yaml` wins when both are present. `/start` never writes
+it: left unset, it follows `modes.rigor` (`minimal` → `solo`, `standard` →
+`lean`, `full` → `full`). Set it explicitly only with
+`/settings modes.review_mode=<value>`.
 
 **Per-run override**: any gate-using skill accepts `--review [full|lean|solo]`,
 overriding the global config for that run only.
@@ -72,8 +74,12 @@ overriding the global config for that run only.
 | Mode | What runs |
 |------|-----------|
 | `full` | All gates active — every workflow step reviewed |
-| `lean` | PHASE-GATEs only (`/gate-check`) — per-skill gates skipped. **Default** |
-| `solo` | No director gates anywhere (game jams, prototypes, max speed) |
+| `lean` | PHASE-GATEs only (`/gate-check`) — per-skill gates skipped. The `rigor: standard` value |
+| `solo` | No director gates anywhere (game jams, prototypes, max speed). **Default** — the `rigor: minimal` value |
+
+**One exception:** `/team-narrative` runs ND-CONSISTENCY in every review mode
+whenever narrative-director is on the team — it is that pipeline's only
+narrative consistency check, not an optional review.
 
 ---
 
@@ -122,16 +128,34 @@ calls before waiting for any result; collect all verdicts before proceeding.
 
 ## Standard Verdict Format
 
-All gates return one of three verdicts. Skills must handle all three:
+Every gate returns one of its three verdicts — or NOT ASSESSED when it could not
+judge. Skills must handle all four. The three judgement words are each gate's
+own — its definition file's **Verdicts** line is the authority — and the rows
+below are their meanings (TD-FEASIBILITY's VIABLE / CONCERNS / HIGH RISK,
+PR-MILESTONE's ON TRACK / AT RISK / OFF TRACK). NOT ASSESSED is the same word at
+every gate, so no Verdicts line lists it:
 
 | Verdict | Meaning | Default action |
 |---------|---------|----------------|
 | **APPROVE / READY** | No issues. Proceed. | Continue the workflow |
-| **CONCERNS [list]** | Issues present but not blocking. | Surface to user via `AskUserQuestion` — options: `Revise flagged items` / `Accept and proceed` / `Discuss further` |
+| **CONCERNS [list]** | Issues present but not blocking. | Surface to user via `AskUserQuestion` — options: `Revise flagged items` / `Accept and proceed` / `Discuss further`. Revise flagged items: the specialist who drafted the section re-drafts it; the revision goes through the skill's normal approve-then-write step, and the header records `REVISED [date]`. |
 | **REJECT / NOT READY [blockers]** | Blocking issues. Do not proceed. | Surface blockers to user. Do not write files or advance stage until resolved. |
+| **NOT ASSESSED [what was missing]** | An input the gate names was missing or unreadable, so no judgement was made. | Name what was missing. Never treat it as APPROVE/READY: supply the input and re-run the gate, or record NOT ASSESSED and let the skill's own verdict reflect it. |
+
+**Rank**: NOT ASSESSED sits below REJECT / NOT READY and CONCERNS, and above
+APPROVE / READY — a known problem is more actionable than an unknown, and a gate
+that could not look has approved nothing. A director that found a problem and
+also lacked an input answers with the problem's word and names the missing
+input in its rationale. An artifact the skill reports as absent is information,
+not a missing input. At a phase gate,
+a missing artifact the target phase requires is a finding (NOT READY or
+CONCERNS); one `/gate-check` passes as "not expected before [phase]" or "not
+required at `workflow: [tier]`" is not a finding — a phase gate judges
+readiness for the phase being entered, not a later one.
 
 **Escalation rule**: When multiple directors are spawned in parallel, apply the
-strictest verdict — one NOT READY overrides all READY verdicts.
+strictest verdict by that rank — one NOT READY overrides all READY verdicts, and
+one NOT ASSESSED keeps the result from being READY.
 
 ---
 
@@ -140,7 +164,7 @@ strictest verdict — one NOT READY overrides all READY verdicts.
 After a gate resolves, record the verdict in the relevant document's status header:
 
 ```markdown
-> **[Director] Review ([GATE-ID])**: APPROVED [date] / CONCERNS (accepted) [date] / REVISED [date]
+> **[Director] Review ([GATE-ID])**: APPROVED [date] / CONCERNS (accepted) [date] / REVISED [date] / NOT ASSESSED [date] — [missing input]
 ```
 
 For phase gates, record in `docs/architecture/architecture.md` or
@@ -157,9 +181,10 @@ Spawn in parallel (issue all `Agent` calls before waiting for any result):
 creative-director → CD-PHASE-GATE, technical-director → TD-PHASE-GATE,
 producer → PR-PHASE-GATE, art-director → AD-PHASE-GATE
 
-Collect all four verdicts, then apply escalation rules:
+Collect every verdict from the directors that ran, then apply escalation rules:
 - Any NOT READY / REJECT → overall verdict minimum FAIL
 - Any CONCERNS → overall verdict minimum CONCERNS
+- Any NOT ASSESSED (and no NOT READY / REJECT or CONCERNS) → overall verdict at best NOT ASSESSED
 - All READY / APPROVE → eligible for PASS (still subject to artifact checks)
 ```
 
@@ -185,7 +210,7 @@ Collect all four verdicts, then apply escalation rules:
 | **Concept** | CD-PILLARS, AD-CONCEPT-VISUAL | TD-FEASIBILITY, PR-SCOPE |
 | **Systems Design** | TD-SYSTEM-BOUNDARY, CD-SYSTEMS, PR-SCOPE, CD-GDD-ALIGN (per GDD) | ND-CONSISTENCY, AD-VISUAL, TD-CHANGE-IMPACT (on GDD revision) |
 | **Technical Setup** | TD-ARCHITECTURE, TD-ADR (per ADR), TD-MANIFEST, LP-FEASIBILITY, AD-ART-BIBLE | TD-ENGINE-RISK |
-| **Pre-Production** | PR-EPIC, QL-STORY-READY (per story), PR-SPRINT, all four PHASE-GATEs (via gate-check) | CD-PLAYTEST |
-| **Production** | LP-CODE-REVIEW (per story), QL-STORY-READY, PR-SPRINT (per sprint), QL-TEST-COVERAGE (per sprint close-out) | PR-MILESTONE, AD-VISUAL, TD-CHANGE-IMPACT (on GDD revision) |
-| **Polish** | QL-TEST-COVERAGE, CD-PLAYTEST, PR-MILESTONE | AD-VISUAL |
-| **Release** | All four PHASE-GATEs (via gate-check) | QL-TEST-COVERAGE |
+| **Pre-Production** | PR-EPIC, QL-STORY-READY (per story), PR-SPRINT, the PHASE-GATE panel (via gate-check — PR at `minimal`, TD + PR at `standard`, all four at `full`) | CD-PLAYTEST |
+| **Production** | LP-CODE-REVIEW (per story), QL-STORY-READY, PR-SPRINT (per sprint), QL-TEST-COVERAGE (per story, via `/story-done`) | PR-MILESTONE, AD-VISUAL, TD-CHANGE-IMPACT (on GDD revision) |
+| **Polish** | CD-PLAYTEST, PR-MILESTONE | AD-VISUAL |
+| **Release** | The PHASE-GATE panel (via gate-check — PR at `minimal`, TD + PR at `standard`, all four at `full`) | — |

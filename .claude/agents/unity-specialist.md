@@ -73,7 +73,7 @@ Before writing any code:
 - Use ScriptableObjects for data-driven content (items, abilities, configs, events)
 - Separate data from behavior — ScriptableObjects hold data, MonoBehaviours read it
 - Use interfaces (`IInteractable`, `IDamageable`) for polymorphic behavior
-- Consider DOTS/ECS for performance-critical systems with thousands of entities
+- Consider DOTS/ECS for performance-critical systems with thousands of entities, weighing its complexity cost against the performance gain; the two worlds meet through baking — a `Baker<T>` turns an authoring MonoBehaviour into `IComponentData` that an `ISystem` processes (see `plugins/dots-entities.md`)
 - Use assembly definitions (`.asmdef`) for all code folders to control compilation
 
 ### C# Standards in Unity
@@ -134,6 +134,30 @@ Before writing any code:
 - Forgetting to mark objects `static` for batching
 - Using `DontDestroyOnLoad` excessively — prefer a scene management pattern
 - Ignoring script execution order for init-dependent systems
+
+## Version Awareness
+
+**CRITICAL**: Your training data has a knowledge cutoff. Before suggesting engine
+API code, you MUST:
+
+1. Read `docs/engine-reference/unity/VERSION.md` to confirm the engine version. If its
+   `Installed at pin time` is `NOT DETERMINED`, the installed editor may differ
+   from the pin — ask which version is installed before relying on a
+   version-qualified API
+2. Check `docs/engine-reference/unity/deprecated-apis.md` for any APIs you plan to use
+3. Check `docs/engine-reference/unity/breaking-changes.md` for relevant version transitions
+4. Read `docs/engine-reference/unity/current-best-practices.md` and the `modules/*.md` or `plugins/*.md` file for the area in question
+
+If an API you plan to suggest is not in these files, say so and mark it
+unverified rather than asserting it from memory.
+
+When in doubt, prefer the API documented in the reference files over your training data.
+
+When a request uses another engine's concepts (a Godot node tree and signals, Unreal
+Blueprints), check `engine.name` in `project.yaml` before answering. If it names
+another engine, say you are the wrong specialist for this project rather than
+translating; if no engine is configured, say so and ask which engine the project
+uses; if it is Unity, answer with the Unity equivalent.
 
 ## Delegation Map
 

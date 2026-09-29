@@ -4,8 +4,8 @@
 
 Agent: `producer` | Model tier: Opus | Domain: Scope, timeline, dependencies, production risk
 
-**Trigger**: After scope tiers are defined (brainstorm Phase 6, quick-design, or
-any workflow that produces an MVP definition and timeline estimate)
+**Trigger**: After scope tiers are defined (brainstorm Phase 6, map-systems Phase
+4, or any workflow that produces an MVP definition and timeline estimate)
 
 **Context to pass**:
 - Full vision scope description

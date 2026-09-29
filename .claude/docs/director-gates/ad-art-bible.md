@@ -2,7 +2,7 @@
 
 # AD-ART-BIBLE — Art Bible Sign-Off
 
-Agent: `art-director` | Model tier: Sonnet | Domain: Visual identity, art bible, visual production readiness
+Agent: `art-director` | Model tier: session (inherit) | Domain: Visual identity, art bible, visual production readiness
 
 **Trigger**: After the art bible is drafted (`/art-bible`), before asset production begins
 
@@ -10,7 +10,7 @@ Agent: `art-director` | Model tier: Sonnet | Domain: Visual identity, art bible,
 - Art bible path (`design/art/art-bible.md`)
 - Game pillars and core fantasy
 - Platform and performance constraints (`platform.*` and `performance.*` from `project.yaml`, falling back to `.claude/docs/technical-preferences.md`)
-- Visual identity anchor chosen during brainstorm (from `design/gdd/game-concept.md`)
+- Visual identity anchor chosen during brainstorm (from `design/gdd/game-concept.md`; if there is no `design/gdd/game-concept.md`, pass the "Art & audio direction" line of `design/game-brief.md` instead)
 
 **Prompt**:
 > "Review this art bible for completeness and internal consistency. Does the color

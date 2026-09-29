@@ -4,12 +4,12 @@
 
 Agent: `creative-director` | Model tier: Opus | Domain: Vision, pillars, player experience
 
-**Trigger**: After a system GDD is authored (design-system, quick-design, or any
-workflow that produces a GDD)
+**Trigger**: After a system GDD is authored (design-system, or any workflow that
+produces a GDD)
 
 **Context to pass**:
 - GDD file path
-- Game pillars (from `design/gdd/game-concept.md` or `design/gdd/game-pillars.md`)
+- Game pillars (from `design/gdd/game-concept.md` or `design/gdd/game-pillars.md`; if there is neither, `design/game-brief.md` has no pillars — pass its pitch and "what they feel" line)
 - MDA aesthetics target for this game
 - System's stated Player Fantasy section
 

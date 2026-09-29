@@ -44,7 +44,7 @@ points, not verdicts — the user can always override.
 |---|---|---|---|
 | Weekend jam / prototype / throwaway | `minimal` | Shipping beats recording; design lives in the maker's head | Bump one deep system: `workflow_overrides.system_overrides: {combat: full}` |
 | Small solo / hobby game (arcade, puzzle, short narrative) | `minimal` → `standard` if it grows | Start light; add rigor when scope proves real | — |
-| Focused commercial indie (platformer, roguelike, tactics, deckbuilder) | `standard` *(default)* | One well-understood loop; enough design to build correctly | "Comprehensive but compact": `rigor: full` + `docs.density: terse` |
+| Focused commercial indie (platformer, roguelike, tactics, deckbuilder) | `standard` | One well-understood loop; enough design to build correctly | "Comprehensive but compact": `rigor: full` + `docs.density: terse` |
 | Systems-heavy / long-haul (open-world RPG, colony sim, immersive sim, 4X, survival) | `full` | Many interacting systems; a design mistake costs weeks | Solo dev: keep `full` on disk, set `review_mode: solo` locally |
 | Live-service / competitive multiplayer | `full` + domain emphasis | Full pipeline *plus* netcode/security/live-ops | Raise `qa.level` / `testing.strict.*` for the online-critical types |
 
@@ -63,7 +63,7 @@ an archetype and **pre-select** the recommendation rather than asking cold. Sign
 | open-world, RPG, sim, sandbox, faction, crafting, economy, MMO, multiplayer, "systems" | `full` |
 | jam, weekend, prototype, "first game", small, "just trying", experiment | `minimal` |
 | "release", "commercial", "on Steam", a single clear core loop | `standard` |
-| *ambiguous / nothing above* | `standard` (the documented default) |
+| *ambiguous / nothing above* | `minimal` (the documented default) |
 
 **Rules:** these are heuristics, never locks. Always confirm the pre-selection with
 the user in their own terms ("Sounds like a big systems game — I'd suggest `full`
@@ -86,7 +86,7 @@ modes exist to eliminate.
 
 | Trigger (crossing) | Direction | Detectable signal | Suggested action |
 |---|---|---|---|
-| Project grew past its band | ↑ raise | System-GDD count crosses ~9, or `src/` crosses the Production threshold, while rigor is `minimal` | "You're at N systems on `rigor: minimal` — most projects this size run `standard`. Revisit? → `/settings`" |
+| Project grew past its band | ↑ raise | System-GDD count crosses ~9, or the code root (`src/`, `Assets/` or `Source/`) crosses the Production threshold, while rigor is `minimal` | "You're at N systems on `rigor: minimal` — most projects this size run `standard`. Revisit? → `/settings`" |
 | Stage advanced into Production | ↑ raise | `/gate-check` PASS into Production while rigor is `minimal` | Same, offered once at the gate |
 | User sounds overwhelmed by process | ↓ lower | Phrases like "too many steps", "so much documentation", "overwhelmed" — *and* rigor is not already `minimal` | "If the required-doc list feels heavy, a lower rigor trims it → `/settings modes.rigor=standard`" |
 | Chosen rigor mismatches described scope | flag once | Onboarding pick contradicts the Phase-2 description | State it in one sentence, offer `/settings`, do not re-ask |

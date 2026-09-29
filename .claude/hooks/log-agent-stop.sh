@@ -47,6 +47,14 @@ fi
 
 INPUT=$(cat)
 
+# SubagentStop also fires when Claude Code's own internal agents finish (prompt
+# suggestions, /btw side questions). Those arrive with agent_type set to an
+# empty string -- not a CCGS spawn, and each one was logged as "unknown". A
+# MISSING agent_type is different and still logs as "unknown" below.
+if printf '%s' "$INPUT" | grep -qE '"agent_type"[[:space:]]*:[[:space:]]*""'; then
+    exit 0
+fi
+
 # Parse agent name -- use jq if available, fall back to grep
 if command -v jq >/dev/null 2>&1; then
     AGENT_NAME=$(echo "$INPUT" | jq -r '.agent_type // "unknown"' 2>/dev/null)

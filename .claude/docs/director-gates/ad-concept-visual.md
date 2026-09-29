@@ -2,7 +2,7 @@
 
 # AD-CONCEPT-VISUAL — Visual Identity Anchor
 
-Agent: `art-director` | Model tier: Sonnet | Domain: Visual identity, art bible, visual production readiness
+Agent: `art-director` | Model tier: session (inherit) | Domain: Visual identity, art bible, visual production readiness
 
 **Trigger**: After game pillars are locked (brainstorm Phase 4), in parallel with CD-PILLARS
 
@@ -22,4 +22,4 @@ Agent: `art-director` | Model tier: Sonnet | Domain: Visual identity, art bible,
 > primary design pillar. Name each direction. Recommend which best serves the stated
 > pillars and explain why."
 
-**Verdicts**: CONCEPTS (multiple valid options — user selects) / STRONG (one direction clearly dominant) / CONCERNS (pillars don't provide enough direction to differentiate visual identity yet)
+**Verdicts**: CONCEPTS (multiple valid options — user selects) / STRONG (one direction clearly dominant) / CONCERNS (pillars don't provide enough direction to differentiate visual identity yet — name each pillar that gives none, and which of the four elements above it leaves open)

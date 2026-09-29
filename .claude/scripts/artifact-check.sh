@@ -14,16 +14,20 @@
 # particular this script never says PASS or FAIL, and never decides that an
 # ABSENT artifact is a blocker — at `minimal` most of them are not.
 #
-# Usage: bash .claude/scripts/artifact-check.sh [--phase <id>] [project-root]
+# Usage: bash .claude/scripts/artifact-check.sh [--phase <id> | --path <id>] [project-root]
 #   --phase <id>  restrict output to one phase (concept, systems-design, ...)
+#   --path <id>   report one tier path instead of the phase ladder (`minimal`).
+#                 Paths live under the catalog's top-level `paths:` key with the
+#                 same step schema. Without --path they are never reported, so
+#                 the ladder's consumers see exactly what they saw before paths.
 #   project-root  defaults to the repo root; an explicit path is taken as-is
 #                 (used by the test suite against fixtures).
 #
 # Output:
 #   CATALOG: <path>            the catalog actually read
 #   ROOT: <path>               the tree evaluated against
-#   PHASES: <n> / STEPS: <n>   denominators — see below
-#   PHASE: <id>
+#   PHASES: <n> / STEPS: <n>   denominators — see below (PATHS: with --path)
+#   PHASE: <id>                (PATH: <id> with --path)
 #     STEP: <id> required=<bool> repeatable=<bool> check=<kind> status=<status> ...
 #
 # status values (observations):
@@ -48,21 +52,34 @@
 set -u
 
 PHASE_FILTER=""
+PATH_FILTER=""
 ROOT_ARG=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --phase) PHASE_FILTER="${2:-}"; shift 2 ;;
+    # A trailing flag with no value used to loop forever: `shift 2` with one
+    # argument left fails without shifting anything.
+    --phase|--path)
+      [ $# -ge 2 ] || { echo "artifact-check: $1 needs a value" >&2; exit 2; }
+      if [ "$1" = "--phase" ]; then PHASE_FILTER="$2"; else PATH_FILTER="$2"; fi
+      shift 2 ;;
     --phase=*) PHASE_FILTER="${1#--phase=}"; shift ;;
-    -h|--help) sed -n '2,40p' "$0"; exit 0 ;;
+    --path=*) PATH_FILTER="${1#--path=}"; shift ;;
+    -h|--help) sed -n '2,/^$/p' "$0"; exit 0 ;;
     *) ROOT_ARG="$1"; shift ;;
   esac
 done
+if [ -n "$PHASE_FILTER" ] && [ -n "$PATH_FILTER" ]; then
+  echo "artifact-check: --phase and --path are exclusive (a path is a tier's whole route, not a phase)" >&2
+  exit 2
+fi
 
 if [ -n "$ROOT_ARG" ]; then
   ROOT="$ROOT_ARG"
 else
   cd "$(dirname "$0")/../.." || { echo "artifact-check: cannot reach repo root" >&2; exit 1; }
-  ROOT="$(pwd)"
+  # `pwd -W` (Git Bash) gives C:/... . A /c/... path reaches the Windows Python
+  # below only through MSYS path conversion, which MSYS_NO_PATHCONV=1 turns off.
+  ROOT="$(pwd -W 2>/dev/null || pwd)"
 fi
 
 CATALOG="$ROOT/.claude/docs/workflow-catalog.yaml"
@@ -85,13 +102,14 @@ if [ -z "$PYBIN" ]; then
   exit 1
 fi
 
-"$PYBIN" - "$CATALOG" "$ROOT" "$PHASE_FILTER" <<'PYEOF'
+"$PYBIN" - "$CATALOG" "$ROOT" "$PHASE_FILTER" "$PATH_FILTER" <<'PYEOF'
 import glob as globmod
 import os
 import subprocess
 import sys
+import tempfile
 
-catalog_path, root, phase_filter = sys.argv[1], sys.argv[2], sys.argv[3]
+catalog_path, root, phase_filter, path_filter = sys.argv[1:5]
 
 # A gate's own output path is part of the gate: the catalog's `note:` fields
 # contain em-dashes, and on a cp1252 console an unreconfigured stdout raises
@@ -123,10 +141,11 @@ with open(catalog_path, encoding="utf-8", errors="replace") as fh:
     lines = [ln.rstrip("\n").rstrip("\r") for ln in fh]
 
 phases = []            # [(phase_id, [step, ...])]
+paths = []             # [(path_id, [step, ...])] — same shape, top-level `paths:`
 cur_phase = None
 cur_step = None
 ctx = None             # None | "artifact" | "any_of"
-in_phases = False
+section = None         # the list the current top-level key feeds, or None
 
 for raw in lines:
     if not raw.strip() or raw.lstrip().startswith("#"):
@@ -135,14 +154,15 @@ for raw in lines:
     s = raw.strip()
 
     if ind == 0:
-        in_phases = (s == "phases:")
+        section = {"phases:": phases, "paths:": paths}.get(s)
+        cur_phase = cur_step = ctx = None
         continue
-    if not in_phases:
+    if section is None:
         continue
 
     if ind == 2 and s.endswith(":"):
         cur_phase = (s[:-1].strip(), [])
-        phases.append(cur_phase)
+        section.append(cur_phase)
         cur_step = None
         ctx = None
         continue
@@ -207,18 +227,40 @@ def match_files(pat):
 
 def pattern_hits(files, pattern):
     """POSIX ERE via grep -E. Python's re cannot parse [[:space:]], and grep -P
-    is unavailable on Windows Git Bash."""
+    is unavailable on Windows Git Bash.
+
+    The pattern goes to grep via a pattern FILE (-f <path>), never as an
+    argument and never on stdin: on Windows an argv element is re-quoted into
+    a command line and re-split by MSYS grep, and a `"` in the pattern did not
+    survive the round trip — the step read ABSENT against a file that matched
+    (the quoted `name: "Godot"`). Stdin (-f -) was tried next, but BSD grep's
+    reading of `-f -` is unconfirmed, and a build that does not read stdin
+    there exits 2, which this function would have to treat as UNKNOWN anyway
+    — so it writes the pattern to a real file instead, which every grep reads
+    the same way."""
     if not pattern:
         return files
     hits = []
-    for f in files:
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".grep", delete=False) as pf:
+            pf.write(pattern + "\n")
+            pattern_path = pf.name
+    except OSError:
+        return None               # no writable temp location — caller reports UNKNOWN
+    try:
+        for f in files:
+            try:
+                rc = subprocess.run(["grep", "-qE", "-f", pattern_path, f],
+                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+            except OSError:
+                return None        # no grep — caller reports UNKNOWN rather than a false miss
+            if rc == 0:
+                hits.append(f)
+    finally:
         try:
-            rc = subprocess.call(["grep", "-qE", "--", pattern, f],
-                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            os.unlink(pattern_path)
         except OSError:
-            return None          # no grep — caller reports UNKNOWN rather than a false miss
-        if rc == 0:
-            hits.append(f)
+            pass
     return hits
 
 
@@ -262,23 +304,27 @@ def evaluate(art):
     return "PRESENT", "glob", d
 
 
-sel = [(pid, steps) for pid, steps in phases if not phase_filter or pid == phase_filter]
+if path_filter:
+    label, pool, flt = "PATH", paths, path_filter
+else:
+    label, pool, flt = "PHASE", phases, phase_filter
+sel = [(pid, steps) for pid, steps in pool if not flt or pid == flt]
 
-if phase_filter and not sel:
-    known = ", ".join(pid for pid, _ in phases) or "(none parsed)"
-    sys.stderr.write("artifact-check: unknown phase '%s' (known: %s)\n" % (phase_filter, known))
+if flt and not sel:
+    known = ", ".join(pid for pid, _ in pool) or "(none parsed)"
+    sys.stderr.write("artifact-check: unknown %s '%s' (known: %s)\n" % (label.lower(), flt, known))
     sys.exit(2)
 
 total_steps = sum(len(s) for _, s in sel)
 print("CATALOG: %s" % os.path.relpath(catalog_path, root).replace(os.sep, "/"))
 print("ROOT: %s" % root.replace(os.sep, "/"))
-print("PHASES: %d" % len(sel))
+print("%sS: %d" % (label, len(sel)))
 print("STEPS: %d" % total_steps)
 
 no_check = 0
 rows = []
 for pid, steps in sel:
-    rows.append("PHASE: %s" % pid)
+    rows.append("%s: %s" % (label, pid))
     for st in steps:
         status, kind, det = evaluate(st["artifact"])
         if status == "NO_CHECK":

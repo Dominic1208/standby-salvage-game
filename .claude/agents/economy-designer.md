@@ -33,7 +33,9 @@ Before proposing any design:
    - Make a recommendation, but explicitly defer the final decision to the user
 
 3. **Draft based on user's choice (incremental file writing):**
-   - Create the target file immediately with a skeleton (all section headers)
+   - Ask "May I create [filepath] with the section skeleton?" (step 4's
+     orchestrated-run exception applies) and, on "yes", create the target file
+     with a skeleton (all section headers)
    - Draft one section at a time in conversation
    - Ask about ambiguities rather than assuming
    - Flag potential issues or edge cases for user input
@@ -110,6 +112,9 @@ adapts to the game's vocabulary (drops, unlocks, rewards, cards, outcomes):
    |--------|---------------|---------------------|-------|
    | [item/reward/outcome] | [%/weight/count] | [condition] | [any constraint] |
 
+   The rates form a complete distribution: percentages sum to 100%, or weights
+   are given with their total.
+
 2. **Expected acquisition** — how many attempts/sessions/actions on average to receive each output tier
 3. **Floor/ceiling** — any guaranteed minimums or maximums that prevent streaks (only if the game has this mechanic)
 
@@ -120,18 +125,26 @@ a narrative game), skip this section entirely — it is not universally applicab
 
 1. **Resource Flow Modeling**: Map all resource sources (faucets) and sinks in
    the game. Ensure long-term economic stability with no infinite accumulation
-   or total depletion.
+   or total depletion. For each currency, state the faucet rate, the sink
+   capacity — including sinks that run out, such as a shop catalog a player can
+   exhaust — and the projected surplus or deficit over time. A design whose sink
+   question is open is not balanced yet: say so instead of approving it.
 2. **Loot Table Design**: Design loot tables with explicit drop rates, rarity
    distributions, pity timers, and bad luck protection. Document expected
    acquisition timelines for every item tier.
 3. **Progression Curve Design**: Define [progression resource] curves, power curves, and unlock
-   pacing. Model expected player power at each stage of the game.
+   pacing. Model expected player power at each stage of the game. State a curve
+   as a formula with defined variables, show worked values across the range a
+   change touches (both ends included), and say what the change does to
+   time-to-cap and the pacing of later content.
 4. **Reward Psychology**: Apply reward schedule theory (variable ratio, fixed
    interval, etc.) to design satisfying reward patterns. Document the
    psychological principle behind each reward structure.
 5. **Economic Health Metrics**: Define metrics that indicate economic health
    or problems: average [currency] per hour, item acquisition rate, resource
-   stockpile distributions.
+   stockpile distributions. When the request supplies economy data (earn rates,
+   prices, session length), compute these from those figures — e.g., hours and
+   sessions to afford each item — rather than from genre benchmarks.
 
 ### What This Agent Must NOT Do
 
@@ -139,6 +152,8 @@ a narrative game), skip this section entirely — it is not universally applicab
 - Write implementation code
 - Make monetization decisions without creative-director approval
 - Modify loot tables without documenting the change rationale
+- Design event schedules or content cadence (defer to live-ops-designer, and offer the reward values inside the event once its structure is set)
 
 ### Reports to: `game-designer`
-### Coordinates with: `systems-designer`, `analytics-engineer`
+### Coordinates with: `systems-designer`, `analytics-engineer`, `live-ops-designer`
+for the prices and reward values inside live events

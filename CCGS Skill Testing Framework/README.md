@@ -18,12 +18,10 @@ you write. Driven by `/skill-test` and `/skill-improve`.
 > | `/skill-test audit` | **Degrades** — reports that no catalog exists |
 > | `/skill-test spec` | **Breaks** — the behavioral specs live here |
 > | `/skill-test category` | **Breaks** — reads `quality-rubric.md` from here |
-> | `/skill-improve` | **Degrades** — its test-fix-retest loop loses the spec pass |
+> | `/skill-improve` | **Degrades** — its test-fix-retest loop loses the category pass |
 >
-> Earlier revisions of this file called the folder "optional" and said "nothing
-> in `.claude/` depends on it." That was wrong — `/skill-test` references this
-> directory 16 times and `/skill-improve` once. Removing it is a real trade, not
-> a free cleanup, so the table above states the actual cost.
+> `/skill-test` and `/skill-improve` read this folder by path, so removing it is a
+> real trade, not a free cleanup — the table above states the actual cost.
 
 ---
 
@@ -36,7 +34,7 @@ CCGS Skill Testing Framework/
 ├── catalog.yaml           ← master registry: all 74 skills + 49 agents, coverage tracking
 ├── quality-rubric.md      ← category-specific pass/fail metrics for /skill-test category
 │
-├── skills/                ← behavioral spec files for skills (one per skill)
+├── skills/                ← behavioral spec files for skills (73 of 74 — settings has none yet)
 │   ├── gate/              ← gate category specs
 │   ├── review/            ← review category specs
 │   ├── authoring/         ← authoring category specs
@@ -62,7 +60,7 @@ CCGS Skill Testing Framework/
 │   ├── skill-test-spec.md ← template for skill behavioral specs
 │   └── agent-test-spec.md ← template for agent behavioral specs
 │
-└── results/               ← test run outputs (written by /skill-test spec, gitignored)
+└── results/               ← test run outputs (written by /skill-test spec; not gitignored — add it to .gitignore to keep them out of commits)
 ```
 
 ---
@@ -83,13 +81,15 @@ All testing is driven by two skills already in the framework:
 ```
 /skill-test spec gate-check         # Evaluate a skill against its written spec
 /skill-test spec design-review
+/skill-test spec creative-director  # Agents too: evaluates agents/directors/creative-director.md
 ```
 
 ### Check against category rubric
 
 ```
 /skill-test category gate-check     # Evaluate one skill against its category metrics
-/skill-test category all            # Run rubric checks across all categorized skills
+/skill-test category art-director   # Or one agent, against its agent category
+/skill-test category all            # Run rubric checks across every categorized skill and agent
 ```
 
 ### See full coverage picture
@@ -154,16 +154,21 @@ All testing is driven by two skills already in the framework:
 3. Update the `spec:` field in `catalog.yaml` to point to the new file
 4. Run `/skill-test spec [skill-name]` to validate it
 
+For an agent, copy `templates/agent-test-spec.md` to `agents/[tier]/[agent-name].md`,
+set the `spec:` field on its entry under `agents:` in `catalog.yaml`, and run
+`/skill-test spec [agent-name]`.
+
 ---
 
 ## Removing this framework
 
-This folder has no hooks into the main project. To remove:
+No hook or import in the main project depends on this folder, but `/skill-test`
+and `/skill-improve` read it by path. To remove:
 
 ```bash
 rm -rf "CCGS Skill Testing Framework"
 ```
 
-The skills `/skill-test` and `/skill-improve` will still function — they'll simply
-report that `catalog.yaml` is missing and suggest running `/skill-test audit` to
-initialize it.
+Afterwards `/skill-test static` works as before, `spec` and `category` stop
+working, `audit` reports that no catalog exists, and `/skill-improve` skips its
+category checks — the table at the top of this file lists the cost per mode.

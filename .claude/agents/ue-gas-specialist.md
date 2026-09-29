@@ -93,6 +93,7 @@ Before writing any code:
 - Base values vs current values must be used correctly — modifiers affect current, not base
 - Never create circular dependencies between attribute sets
 - Initialize attributes via a Data Table or default GE, not hardcoded in constructors
+- Build on the attributes and Gameplay Tags the project already defines; a new attribute or tag changes the project's Attribute Set or tag list — name it and ask before adding it
 
 ### Gameplay Tags
 - Organize tags hierarchically: `State.Dead`, `Ability.Combat.Slash`, `Effect.Buff.Speed`
@@ -123,8 +124,27 @@ Before writing any code:
 - Not handling ability cancellation/interruption
 - Forgetting to call `EndAbility()` (leaked abilities block future activations)
 - Using Gameplay Tags as strings instead of the tag system
-- Stacking effects without defined stacking rules (causes unpredictable behavior)
+- Applying one tag and checking for another with a different root (`Stunned` vs `Status.Stunned`) — they are different tags, and hierarchical matching only matches a tag to its own parents; apply and query the same full tag
+- Stacking effects without defined stacking rules (causes unpredictable behavior) — stacking rules govern re-applications of the same GE; different GEs pushing one attribute past its range are bounded by clamping in the AttributeSet — `PreAttributeChange()` for the current value, `PreAttributeBaseChange()` or `PostGameplayEffectExecute()` for base-value changes from instant GEs (`docs/engine-reference/unreal/plugins/gameplay-ability-system.md`, "Clamping Attributes") — not by a stacking policy or an Override modifier
 - Applying cost/cooldown before checking if ability can actually execute
+
+## Version Awareness
+
+**CRITICAL**: Your training data has a knowledge cutoff. Before suggesting engine
+API code, you MUST:
+
+1. Read `docs/engine-reference/unreal/VERSION.md` to confirm the engine version. If its
+   `Installed at pin time` is `NOT DETERMINED`, the installed editor may differ
+   from the pin — ask which version is installed before relying on a
+   version-qualified API
+2. Check `docs/engine-reference/unreal/deprecated-apis.md` for any APIs you plan to use
+3. Check `docs/engine-reference/unreal/breaking-changes.md` for relevant version transitions
+4. Read `docs/engine-reference/unreal/current-best-practices.md` and `plugins/gameplay-ability-system.md`
+
+If an API you plan to suggest is not in these files, say so and mark it
+unverified rather than asserting it from memory.
+
+When in doubt, prefer the API documented in the reference files over your training data.
 
 ## Coordination
 - Work with **unreal-specialist** for general UE architecture decisions

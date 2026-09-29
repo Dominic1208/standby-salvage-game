@@ -33,8 +33,8 @@ fi
 # `.claude/rules/*.md` files carry `paths:` frontmatter, and a path-scoped rule
 # loads only when Claude READS a file matching the pattern -- not on every tool
 # use, and not when it CREATES one. This framework's agents predominantly create
-# files: a new GDD, a new source file, a new test. So "does the rule for
-# src/gameplay/** ever actually reach the model?" has a real answer, and before
+# files: a new GDD, a new source file, a new test. So "does the gameplay-code
+# rule ever actually reach the model?" has a real answer, and before
 # this hook the only way to get it was to infer it from behaviour afterwards.
 #
 # That inference was made once here, expensively: a data-file rule specified one

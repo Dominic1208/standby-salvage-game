@@ -673,7 +673,8 @@ EOF
 #   checkpoint that `.claude/docs/context-management.md` tells users to rely on.
 #   Shipping `off` as the default would have silently removed crash recovery,
 #   the session archive and the subagent spawn tally from every existing
-#   project. Users who want the ~2-5k tokens per session opt out explicitly.
+#   project. Users who want the checkpoint preview's tokens back (at most ~750
+#   per session start) opt out explicitly.
 #
 #   Deliberately awk, not get_effective_yaml_key: this runs in log-agent.sh on
 #   EVERY subagent spawn, and get_effective_yaml_key shells out to Python twice.
@@ -1240,9 +1241,14 @@ resolve_code_root() {
   esac
 
   # 3. No usable engine value — believe the tree, but only if it is unambiguous.
+  #    Names are compared exactly, against the directory listing: `[ -d Assets ]`
+  #    is also true for Godot's own `assets/` on a case-insensitive filesystem
+  #    (Windows, default macOS), which made src/ + assets/ "ambiguous" and a lone
+  #    assets/ a Unity project.
   if [ -z "$root" ]; then
-    for d in src Assets Source; do
-      if [ -d "$_YH_ROOT/$d" ]; then found="$d"; n=$((n + 1)); fi
+    for d in "$_YH_ROOT"/*/; do
+      d="${d%/}"; d="${d##*/}"
+      case "$d" in src|Assets|Source) found="$d"; n=$((n + 1)) ;; esac
     done
     if [ "$n" = 1 ]; then root="$found"; src="detected"; else root=""; src=""; fi
   fi
@@ -1464,7 +1470,8 @@ resolve_config() {
   #      "use as-is", while the notes line simultaneously claimed it had been
   #      "ignored, chain continued". resolve_setting falls invalid values
   #      through to the default, which is what every other knob already did --
-  #      `review_mode: nonsense` resolves to `lean (rigor:standard)`.
+  #      `review_mode: nonsense` resolves to the rigor value, `solo (rigor:minimal)`
+  #      by default.
   #   2. No provenance. Every other line names its source; this one printed a
   #      bare value with a `${pe:+}` suffix that expands to nothing -- a
   #      provenance tag someone started and never finished. The key is on the
@@ -1546,6 +1553,28 @@ EOF
   return 0
 }
 
+# --- hook_warn: an advisory warning that someone actually sees ---------------
+#
+#   hook_warn <PreToolUse|PostToolUse> "<message>"
+#
+# A hook that writes a warning to stderr and exits 0 is writing to the debug
+# log: Claude Code shows that text to neither the user nor Claude. Hook JSON on
+# stdout reaches both -- systemMessage is shown to the user, additionalContext
+# is given to Claude next to the tool result. It sets no permissionDecision:
+# "allow" would skip the user's permission prompt. stdout must hold ONLY this
+# object, so call it once, as the hook's last output, then exit 0.
+#
+# There is no jq to lean on, so the string is escaped here: backslash and quote
+# by sed, tab and newline by awk. CR and other control characters are dropped.
+hook_warn() {
+  local m
+  m=$(printf '%s' "$2" | tr -d '\000-\010\013-\037' \
+      | sed 's/\\/\\\\/g; s/"/\\"/g' \
+      | awk '{ gsub(/\t/, "\\t"); if (NR > 1) printf "\\n"; printf "%s", $0 }')
+  printf '{"systemMessage":"%s","hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' \
+    "$m" "$1" "$m"
+}
+
 # --- Direct execution: the skill-bootstrap entry point -----------------------
 #
 #   bash "${CLAUDE_SKILL_DIR}/../../hooks/yaml-helper.sh" resolve_config --keys a,b
@@ -1559,7 +1588,7 @@ EOF
 # `${CLAUDE_SKILL_DIR}` is substituted as text before the check, so one plain
 # `bash <path> resolve_config …` call is approvable by the matching grant in the
 # skill's own `allowed-tools`. That is also what lets a Bash-less agent preload
-# the skill (GitHub issue #128).
+# the skill.
 #
 # Only resolve_config is dispatchable: the bootstrap is the one caller, and
 # every name added here widens what a skill grant can reach.

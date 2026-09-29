@@ -45,9 +45,9 @@ fi
 # If that ever recurs, the diagnostic that works is a FIRE/DONE pair appended
 # to a gitignored log at the top and bottom of this script -- "did it run at
 # all" and "did it get here" are opposite failures with opposite fixes, and
-# nothing else distinguishes them. /compact in particular CANNOT be used as
-# evidence: PostCompact runs post-compact.sh, which prints the checkpoint
-# independently, so seeing the checkpoint proves nothing about this script.
+# nothing else distinguishes them. /compact is good evidence: SessionStart runs
+# again with source `compact`, and PostCompact output never reaches the
+# conversation, so a checkpoint seen after /compact came from this script.
 
 echo "=== Claude Code Game Studios — Session Context ==="
 
@@ -79,8 +79,11 @@ fi
 if [ -z "$REVIEW_MODE" ] && [ -f "production/review-mode.txt" ]; then
     REVIEW_MODE=$(head -1 production/review-mode.txt 2>/dev/null | tr -d '[:space:]')
 fi
+# With nothing configured, rigor defaults to `minimal`, which resolves
+# review_mode to `solo` -- what every skill runs. `lean` here named a review
+# mode no skill was using.
 if [ -z "$REVIEW_MODE" ]; then
-    REVIEW_MODE="lean"
+    REVIEW_MODE="solo"
 fi
 echo ""
 echo "Review mode: $REVIEW_MODE"
@@ -121,9 +124,10 @@ fi
 # including detect-gaps.sh and yaml-helper.sh -- so when the two disagree, part
 # of the system acts on one stage and part on the other, silently.
 #
-# Warn, never reconcile. Only /gate-check on a PASS may change a stage, so a
-# hook that "helpfully" rewrote the mirror would be advancing a phase gate
-# nobody passed. Helpers emit observations, never verdicts (CLAUDE.md).
+# Warn, never reconcile. Only /gate-check should change a stage (on a PASS, or
+# a CONCERNS whose risks you accepted), so a hook that "helpfully" rewrote the
+# mirror would be advancing a phase gate nobody passed. Helpers emit
+# observations, never verdicts (CLAUDE.md).
 STAGE_YAML=""
 STAGE_TXT=""
 if [ -f "project.yaml" ] && command -v get_yaml_key >/dev/null 2>&1; then
@@ -138,8 +142,9 @@ if [ -n "$STAGE_YAML" ] && [ -n "$STAGE_TXT" ] && [ "$STAGE_YAML" != "$STAGE_TXT
     echo "      project.yaml  project.stage : $STAGE_YAML   (authoritative)"
     echo "      production/stage.txt        : $STAGE_TXT   (legacy mirror)"
     echo "    Twelve consumers read the mirror, so part of the system is acting on"
-    echo "    each value. Only /gate-check on a PASS should change a stage — do not"
-    echo "    hand-edit either file to silence this."
+    echo "    each value. Only /gate-check should change a stage (on a PASS, or a"
+    echo "    CONCERNS whose risks you accepted) — do not hand-edit either file to"
+    echo "    silence this."
 fi
 
 # Current sprint (find most recent sprint file)
@@ -184,12 +189,47 @@ if command -v resolve_code_root >/dev/null 2>&1; then
 else
     CODE_ROOT=""
 fi
+# Source files only, binaries skipped. Unity's code root is Assets/, which also
+# holds every texture, model and audio file: an unfiltered grep read all of
+# them, twice, inside this hook's 10s budget -- ahead of the session-state
+# block below, so a timeout here lost the recovery too -- and counted each
+# "Binary file ... matches" line as a TODO.
 if [ -n "$CODE_ROOT" ] && [ -d "$CODE_ROOT" ]; then
-    TODO_COUNT=$(grep -r "TODO" "$CODE_ROOT/" 2>/dev/null | wc -l)
-    FIXME_COUNT=$(grep -r "FIXME" "$CODE_ROOT/" 2>/dev/null | wc -l)
+    _SS_SRC=(--include='*.gd' --include='*.cs' --include='*.cpp' --include='*.h' --include='*.hpp'
+             --include='*.c' --include='*.py' --include='*.rs' --include='*.lua')
+    # tr: BSD wc (macOS) right-aligns its count, and these are printed as-is.
+    TODO_COUNT=$(grep -rI "${_SS_SRC[@]}" "TODO" "$CODE_ROOT/" 2>/dev/null | wc -l | tr -d ' ')
+    FIXME_COUNT=$(grep -rI "${_SS_SRC[@]}" "FIXME" "$CODE_ROOT/" 2>/dev/null | wc -l | tr -d ' ')
     if [ "$TODO_COUNT" -gt 0 ] || [ "$FIXME_COUNT" -gt 0 ]; then
         echo ""
         echo "Code health: ${TODO_COUNT} TODOs, ${FIXME_COUNT} FIXMEs in ${CODE_ROOT}/"
+    fi
+fi
+
+# --- engine reference vs configured engine -----------------------------------
+# /setup-engine is the only thing that rewrites CLAUDE.md's ENGINE-REFERENCE-IMPORT
+# line. Edit engine.name in project.yaml by hand and the import keeps loading the
+# previous engine's reference as project instructions -- every session, silently.
+# An OBSERVATION, never an action (CLAUDE.md): it reports, the user decides.
+# Printed BEFORE the session state: hook output past 10,000 characters is cut
+# to a preview, so a warning below a long checkpoint could be lost.
+if [ -f project.yaml ] && [ -f CLAUDE.md ]; then
+    ERI=$(grep -m1 -E '^@docs/engine-reference/[a-z]+/VERSION\.md' CLAUDE.md 2>/dev/null \
+          | sed -n 's|^@docs/engine-reference/\([a-z]*\)/VERSION\.md.*|\1|p')
+    # engine.name, not the first `name:` line: `project.name: Marrow` above the
+    # engine block read as engine "marrow" and warned on a correct project. The
+    # first word only, so "Unreal Engine 5" is the unreal reference folder.
+    CFG=$(awk '/^engine:/ { e = 1; next } e && /^[^[:space:]#]/ { exit }
+               e && /^[[:space:]]+name:/ { sub(/^[[:space:]]+name:[[:space:]]*/, ""); gsub(/["'"'"']/, "");
+                                           split($0, w, /[[:space:]#]/); print w[1]; exit }' \
+          project.yaml 2>/dev/null | tr '[:upper:]' '[:lower:]')
+    if [ -n "$ERI" ] && [ -n "$CFG" ] && [ "$ERI" != "$CFG" ]; then
+        echo ""
+        echo "!! ENGINE REFERENCE MISMATCH"
+        echo "   project.yaml engine.name : $CFG"
+        echo "   CLAUDE.md imports        : docs/engine-reference/$ERI/VERSION.md"
+        echo "   Every session is loading the $ERI reference on a $CFG project."
+        echo "   Fix: re-run /setup-engine, or edit the ENGINE-REFERENCE-IMPORT line."
     fi
 fi
 
@@ -215,7 +255,7 @@ if [ -f "$STATE_FILE" ] && { ! command -v session_state_enabled >/dev/null 2>&1 
     echo "A previous session left state at: $STATE_FILE"
     echo "Read this file to recover context and continue where you left off."
     echo ""
-    # The CHECKPOINT region -- the same region pre-compact.sh injects.
+    # The CHECKPOINT region -- the same region pre-compact.sh reads.
     #
     # Previewing `tail -20` here while pre-compact takes `head -100` would put two
     # consumers on opposite ends of one file, so which slice you got would
@@ -245,8 +285,19 @@ if [ -f "$STATE_FILE" ] && { ! command -v session_state_enabled >/dev/null 2>&1 
         echo "      Re-create from .claude/docs/templates/session-state.md."
         echo "  ... ($TOTAL_LINES total lines — read the full file to continue)"
     elif [ -n "$CHECKPOINT" ]; then
+        # Capped at 25 lines / 3,000 characters. Claude Code keeps 10,000
+        # characters of hook output and shows only a 2,000-character preview
+        # past that, so an uncapped checkpoint could cut itself -- and anything
+        # printed after it -- out of what Claude sees.
         echo "Checkpoint:"
-        printf '%s\n' "$CHECKPOINT"
+        printf '%s\n' "$CHECKPOINT" | awk '
+            { n++; c += length($0) + 1 }
+            n > 25 || c > 3000 { cut = 1; exit }
+            { print }
+            END { if (cut) exit 3 }'
+        if [ $? -eq 3 ]; then
+            echo "  ... checkpoint truncated ($(printf '%s\n' "$CHECKPOINT" | wc -l | tr -d ' ') lines) — read $STATE_FILE for the rest"
+        fi
         echo "  ... ($TOTAL_LINES total lines — read the full file for detail)"
     else
         echo "Quick summary (first 20 lines — no CHECKPOINT block in this file):"
@@ -262,26 +313,6 @@ if [ -f "$STATE_FILE" ] && { ! command -v session_state_enabled >/dev/null 2>&1 
         echo "        production/session-logs/ — bash .claude/scripts/rotate-session-state.sh"
     fi
     echo "=== END SESSION STATE PREVIEW ==="
-fi
-
-# --- engine reference vs configured engine -----------------------------------
-# /setup-engine is the only thing that rewrites CLAUDE.md's ENGINE-REFERENCE-IMPORT
-# line. Edit engine.name in project.yaml by hand and the import keeps loading the
-# previous engine's reference as project instructions -- every session, silently.
-# An OBSERVATION, never an action (CLAUDE.md): it reports, the user decides.
-if [ -f project.yaml ] && [ -f CLAUDE.md ]; then
-    ERI=$(grep -m1 -E '^@docs/engine-reference/[a-z]+/VERSION\.md' CLAUDE.md 2>/dev/null \
-          | sed -n 's|^@docs/engine-reference/\([a-z]*\)/VERSION\.md.*|\1|p')
-    CFG=$(sed -n 's/^[[:space:]]*name:[[:space:]]*"\{0,1\}\([A-Za-z]*\)"\{0,1\}[[:space:]]*$/\1/p' \
-          project.yaml 2>/dev/null | head -1 | tr '[:upper:]' '[:lower:]')
-    if [ -n "$ERI" ] && [ -n "$CFG" ] && [ "$ERI" != "$CFG" ]; then
-        echo ""
-        echo "!! ENGINE REFERENCE MISMATCH"
-        echo "   project.yaml engine.name : $CFG"
-        echo "   CLAUDE.md imports        : docs/engine-reference/$ERI/VERSION.md"
-        echo "   Every session is loading the $ERI reference on a $CFG project."
-        echo "   Fix: re-run /setup-engine, or edit the ENGINE-REFERENCE-IMPORT line."
-    fi
 fi
 
 echo "==================================="

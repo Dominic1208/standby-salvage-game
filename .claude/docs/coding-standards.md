@@ -74,7 +74,7 @@ falling back to the defaults above when it is absent.
 
 ## Automated Test Rules
 
-- **Naming**: `[system]_[feature]_test.[ext]` for files; `test_[scenario]_[expected]` for functions
+- **Naming**: per engine — `.claude/rules/test-standards.md`
 - **Determinism**: Tests must produce the same result every run — no random seeds, no time-dependent assertions
 - **Isolation**: Each test sets up and tears down its own state; tests must not depend on execution order
 - **No hardcoded data**: Test fixtures use constant files or factory functions, not inline magic numbers
@@ -94,6 +94,6 @@ falling back to the defaults above when it is absent.
 - No merge if tests fail — tests are a blocking gate in CI
 - Never disable or skip failing tests to make CI pass — fix the underlying issue
 - Engine-specific CI commands:
-  - **Godot**: `godot --headless --script tests/gdunit4_runner.gd`
+  - **Godot**: `godot --headless -s -d --remote-debug tcp://127.0.0.1:0 res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests --ignoreHeadlessMode`
   - **Unity**: `game-ci/unity-test-runner@v4` (GitHub Actions)
   - **Unreal**: headless runner with `-nullrhi` flag

@@ -12,7 +12,7 @@
 
 **Quality Checks:**
 - [ ] All MVP GDDs pass individual design review (8 required sections, no MAJOR REVISION NEEDED verdict)
-- [ ] `/review-all-gdds` verdict is not FAIL (cross-GDD consistency and design theory checks pass)
+- [ ] `/review-all-gdds` verdict is not FAIL (cross-GDD consistency and design theory checks pass). A NOT ASSESSED verdict does not satisfy this: that review could not compare the GDDs, so this item is NOT ASSESSED for the gate
 - [ ] All cross-GDD consistency issues flagged by `/review-all-gdds` are resolved or explicitly accepted
 - [ ] System dependencies are mapped in the systems index and are bidirectionally consistent
 - [ ] MVP priority tier is defined
@@ -33,4 +33,6 @@ only thing that adds one.
 > has no meaning at `minimal` (no GDDs exist by design). Return a PASS verdict
 > with the note: *"No design gate at minimal workflow — minimal skips the
 > Systems Design phase; advancing brief → code."* The Section 6 stage write still
-> applies on user confirmation. Do NOT flag absent GDDs as blockers.
+> applies on user confirmation. Do NOT flag absent GDDs as blockers. This is the
+> named exception to Section 2b's rule that a gate with no required artifacts left
+> may not PASS; the director panel does not run for it.

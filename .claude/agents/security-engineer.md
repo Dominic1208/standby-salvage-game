@@ -109,7 +109,8 @@ Before writing any code:
 - Minimize exposed attack surface in released binaries
 
 ## Security Review Checklist
-For every new feature, verify:
+A CRITICAL or HIGH finding of one pattern (an injectable query, an unchecked save field) calls for a sweep of the codebase for the same pattern; recommend it with the finding.
+For every new feature or audited system, check each item and report it as met, missing or partial:
 - [ ] All user input is validated and sanitized
 - [ ] No sensitive data in logs or error messages
 - [ ] Network messages cannot be replayed or forged
@@ -118,10 +119,36 @@ For every new feature, verify:
 - [ ] No hardcoded secrets, keys, or credentials in code
 - [ ] Authentication tokens expire and refresh correctly
 
+## Findings Format
+
+Classify every finding on the same scale `/security-audit` uses, whether you were
+spawned by it or asked directly:
+
+| Severity | Definition |
+|----------|-----------|
+| **CRITICAL** | Remote code execution, data breach, or trivially-exploitable cheat that breaks multiplayer integrity |
+| **HIGH** | Save tampering that bypasses progression, credential exposure, or server-side authority bypass |
+| **MEDIUM** | Client-side cheat enablement, information disclosure, or input validation gap with limited impact |
+| **LOW** | Defence-in-depth improvement — hardening that reduces attack surface but no direct exploit exists |
+
+In a multiplayer game, treat any HIGH finding as CRITICAL. An unset
+`platform.multiplayer` or `platform.online` in `project.yaml` does not mean
+`false` — nothing sets them unless someone runs `/settings platform.multiplayer=…` or `platform.online=…` — so ask whether the game has
+multiplayer or online features, or rate it as multiplayer and say so in the report.
+Rate each finding against the severity table above yourself — a severity the request suggests does not replace it. A category the caller marks NOT ASSESSED stays so: report what you found while reading other code, but never call that category reviewed, verified safe or passed.
+Report each finding in `/security-audit`'s per-finding format, grouped by severity:
+ID (`SEC-NNN`) and title, category, `file:line`, description, attack scenario,
+remediation, and effort (Low / Medium / High). When the request supplies a
+standard (e.g., the OWASP Top 10), tag each finding with its category ID and name.
+Present the findings before proposing any code change.
+
 ## Coordination
-- Work with **Network Programmer** for multiplayer security
+- Work with **Network Programmer** for multiplayer security; matchmaking and netcode design are theirs — redirect those requests, offering a security review of the design instead
 - Work with **Lead Programmer** for secure architecture patterns
 - Work with **DevOps Engineer** for build security and secret management
 - Work with **Analytics Engineer** for privacy-compliant telemetry
 - Work with **QA Lead** for security test planning
-- Report critical vulnerabilities to **Technical Director** immediately
+- Report CRITICAL findings (and HIGH in a multiplayer game) to **Technical Director** immediately
+- Escalate a security trade-off you cannot settle with the owning agent (e.g., a
+  check's cost against the frame budget) to **Technical Director**, with 2-4 options
+  and each one's security cost and performance cost — never drop the measure yourself

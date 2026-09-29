@@ -12,6 +12,8 @@
 > - `design/art/art-bible.md` — visual standards (colors, typography, iconography)
 > - `design/accessibility-requirements.md` — accessibility commitments per feature
 > - `docs/ux/ux-spec-[screen].md` — individual screen specs that reference patterns
+>
+> **Template**: Interaction Pattern Library
 
 > **Why this document exists**: Every UI screen spec should be able to say
 > "uses Button (Primary) pattern" rather than re-specifying hover states,
@@ -686,7 +688,8 @@ These three patterns define how screens enter and exit the navigation stack.
 
 > Every interactive event should have audio feedback. Sound is a primary feedback
 > channel, not a decoration. The sounds defined here are event categories — the
-> specific audio assets are defined in `docs/sound-bible.md`. This table maps
+> specific audio assets are defined in `design/audio/sound-bible.md` (or
+> `design/gdd/sound-bible.md`, where earlier versions put it). This table maps
 > interaction events to sound categories so the sound designer and UI programmer
 > use the same vocabulary.
 

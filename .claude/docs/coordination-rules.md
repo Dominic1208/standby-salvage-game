@@ -17,11 +17,11 @@
 Read `.claude/docs/model-tiers.md` on demand. It carries the tier table, the
 per-skill assignments and the authoring rule.
 
-**One line of it is load-bearing enough to restate here:** a skill's `model:`
-frontmatter is **declared but not applied** — Claude Code reads it and serves the
-skill from the session model regardless. Never tell a user that a skill's tier
-is saving them money. The agent-side `model:` is a different mechanism and is
-untested, not known-broken.
+**Load-bearing enough to restate here:** whether a skill's `model:` is used
+depends on how the skill starts. Typed as `/skill-name`: yes, except a `haiku`
+pin in auto mode. Started by Claude through the Skill tool: no. Never tell a
+user a `haiku` skill saves money; an `opus` skill typed in a Sonnet session
+costs more. The agent-side `model:` is a different mechanism, and is applied.
 
 ## Subagents vs Agent Teams
 

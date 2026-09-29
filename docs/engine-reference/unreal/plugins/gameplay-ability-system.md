@@ -176,6 +176,21 @@ void UMyAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) {
 // Implement other OnRep functions similarly...
 ```
 
+### Clamping Attributes
+
+Attribute Sets have no built-in clamping: the Data Table `Min Value` and
+`Max Value` columns have no effect. Clamp in the Attribute Set:
+- `PreAttributeChange()` is called just before any modification to an
+  attribute, and is the hook for rules like
+  `Health = Clamp(Health, 0, MaxHealth)` — its `NewValue` is mutable.
+- `PreAttributeBaseChange()` is called just before a change to an attribute's
+  **base** value when an aggregator exists, and `PostGameplayEffectExecute()`
+  just after a Gameplay Effect is executed to modify the base value — clamp
+  base-value changes from instant effects there.
+
+Stacking rules govern re-applications of the same Gameplay Effect; they do not
+bound one attribute pushed by different effects.
+
 ---
 
 ## Gameplay Abilities
@@ -391,4 +406,5 @@ void AMyCharacter::OnHealthChanged(const FOnAttributeChangeData& Data) {
 
 ## Sources
 - https://docs.unrealengine.com/5.7/en-US/gameplay-ability-system-for-unreal-engine/
+- Clamping: *Gameplay Attributes and Attribute Sets* https://dev.epicgames.com/documentation/en-us/unreal-engine/gameplay-attributes-and-attribute-sets-for-the-gameplay-ability-system-in-unreal-engine ; `UAttributeSet` API https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/GameplayAbilities/UAttributeSet ; `PreAttributeChange` https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/GameplayAbilities/UAttributeSet/PreAttributeChange
 - https://github.com/tranek/GASDocumentation (community guide)

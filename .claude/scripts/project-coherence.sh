@@ -69,6 +69,9 @@ summarise() {
   exit 0
 }
 
+# major.minor of the first version in $1, with Unity's 6000.N read as 6.N.
+vmm() { printf '%s' "$1" | grep -oE '[0-9]+\.[0-9]+' | head -1 | sed -E 's/^6000\./6./'; }
+
 say "=== project coherence ==="
 
 if [ ! -f project.yaml ]; then
@@ -107,11 +110,15 @@ else
   fi
 
   # --- 2. project.yaml version vs the pinned reference ------------------------
+  # Compared on major.minor, as check 3 does: engine.version is usually the full
+  # release (4.6.1, 6000.3.23f1) and the pin the series (Godot 4.6, Unity 6.3
+  # LTS). Unity numbers the same editor two ways -- 6000.3 is marketed as 6.3.
+  WANT2="$(vmm "$VERSION")"; GOT2="$(vmm "$PINNED")"
   if [ -z "$PINNED" ]; then
     skipped "project.yaml version vs pinned reference — no Engine Version row in $VERFILE"
   elif [ -z "$VERSION" ]; then
     skipped "project.yaml version vs pinned reference — project.yaml has no engine.version"
-  elif printf '%s' "$PINNED" | grep -qF "$VERSION"; then
+  elif printf '%s' "$PINNED" | grep -qF "$VERSION" || { [ -n "$WANT2" ] && [ "$WANT2" = "$GOT2" ]; }; then
     match "engine.version ($VERSION) agrees with $VERFILE ($PINNED)"
   else
     differs "engine.version is '$VERSION' but $VERFILE pins '$PINNED'. Agents consult the reference file, so they will answer for a version the project does not declare."
@@ -122,26 +129,61 @@ fi
 PROBE=""
 case "$ENGINE_LC" in
   godot)
-    if command -v godot >/dev/null 2>&1; then
-      PROBE="$(godot --version 2>/dev/null | head -1)"
-    fi
+    # The executable named in commands.test (quoted, or its first word), else
+    # engine.path, else `godot` on PATH -- the same fallback order dev-story
+    # and smoke-check use. commands.* now carries the full editor path once
+    # /setup-engine has run, so a bare `command -v godot` alone reported "no
+    # Godot binary found on PATH" even on a correctly configured project.
+    GEXE=""
+    for GCAND in \
+      "$(yaml_block_value commands test | grep -oE '"[^"]*"' | head -1 | tr -d '"')" \
+      "$(yaml_block_value commands test | awk '{print $1}')" \
+      "$(yaml_block_value engine path)" \
+      "godot"; do
+      [ -n "$GCAND" ] || continue
+      if command -v "$GCAND" >/dev/null 2>&1 || [ -x "$GCAND" ]; then
+        GEXE="$GCAND"
+        break
+      fi
+    done
+    [ -n "$GEXE" ] && PROBE="$("$GEXE" --version 2>/dev/null | head -1)"
     ;;
-  unity)   command -v Unity >/dev/null 2>&1 && PROBE="$(Unity -version 2>/dev/null | head -1)" ;;
+  unity)
+    # The editor named in commands.test (/setup-engine writes its full, quoted
+    # path), else the Hub folder for engine.version, picked by OS -- Unity's
+    # Hub installs to a different path on each. Never bare `Unity`: on PATH
+    # that is often Unity's separate CLI, which rejects -version with exit 2.
+    UEXE="$(yaml_block_value commands test | grep -oE '"[^"]*/Unity(\.exe)?"' | head -1 | tr -d '"')"
+    if [ -z "$UEXE" ] && [ -n "$VERSION" ]; then
+      case "$(uname -s)" in
+        Darwin) UEXE="/Applications/Unity/Hub/Editor/$VERSION/Unity.app/Contents/MacOS/Unity" ;;
+        Linux)  UEXE="$HOME/Unity/Hub/Editor/$VERSION/Editor/Unity" ;;
+        *)      UEXE="C:/Program Files/Unity/Hub/Editor/$VERSION/Editor/Unity.exe" ;;
+      esac
+    fi
+    [ -n "$UEXE" ] && [ -x "$UEXE" ] && PROBE="$("$UEXE" -version 2>/dev/null | head -1)"
+    ;;
   unreal)  command -v UnrealEditor-Cmd >/dev/null 2>&1 && PROBE="$(UnrealEditor-Cmd -version 2>/dev/null | head -1)" ;;
 esac
 
 if [ -z "$PROBE" ]; then
-  skipped "declared version vs installed binary — no $ENGINE binary found on PATH. A probe that could not run has not established absence."
+  if [ "$ENGINE_LC" = "unity" ]; then
+    skipped "declared version vs installed binary — no Unity editor at the path in commands.test or in the Hub folder for engine.version. A probe that could not run has not established absence."
+  elif [ "$ENGINE_LC" = "godot" ]; then
+    skipped "declared version vs installed binary — no Godot executable found (commands.test, engine.path, PATH). A probe that could not run has not established absence."
+  else
+    skipped "declared version vs installed binary — no $ENGINE binary found on PATH. A probe that could not run has not established absence."
+  fi
 elif [ -z "$VERSION" ]; then
   skipped "declared version vs installed binary — project.yaml has no engine.version"
 else
   # Compare on major.minor: a patch difference is normal and not worth a flag.
-  WANT="$(printf '%s' "$VERSION" | grep -oE '^[0-9]+\.[0-9]+')"
-  GOT="$(printf '%s' "$PROBE"  | grep -oE '[0-9]+\.[0-9]+' | head -1)"
+  WANT="$(vmm "$VERSION")"
+  GOT="$(vmm "$PROBE")"
   if [ -n "$WANT" ] && [ "$WANT" = "$GOT" ]; then
     match "engine.version $VERSION matches the installed binary ($PROBE)"
   else
-    differs "engine.version is '$VERSION' but the binary on PATH is '$PROBE'. Build, test and smoke commands all target the declared version."
+    differs "engine.version is '$VERSION' but the installed binary reports '$PROBE'. Build, test and smoke commands all target the declared version."
   fi
 fi
 
@@ -205,12 +247,20 @@ else
     fi
   fi
 
-  RUNNER="$(printf '%s' "$TEST_CMD" | grep -oE '[A-Za-z0-9_/.-]+\.(gd|cs|py|sh)' | head -1)"
+  # Godot names its runner as res://addons/gdUnit4/bin/GdUnitCmdTool.gd. Match the
+  # res:// prefix and strip it: a class that stops at the colon checked
+  # //addons/... and reported a present runner as missing.
+  RUNNER="$(printf '%s' "$TEST_CMD" | grep -oE '(res://)?[A-Za-z0-9_/.-]+\.(gd|cs|py|sh)' | head -1)"
+  RUNNER="${RUNNER#res://}"
   if [ -n "$RUNNER" ]; then
     if [ -f "$RUNNER" ]; then
       match "commands.test runner exists ($RUNNER)"
     else
-      differs "commands.test is '$TEST_CMD' but '$RUNNER' does not exist. At qa.level: minimal nothing ever creates it, so this command is unrunnable as written."
+      case "$RUNNER" in
+        addons/gdUnit4/*) HINT=" gdUnit4 is not installed at addons/gdUnit4/ (capital U) — see /test-setup." ;;
+        *)                HINT="" ;;
+      esac
+      differs "commands.test is '$TEST_CMD' but '$RUNNER' does not exist, so this command cannot run as written.$HINT"
     fi
   fi
 fi

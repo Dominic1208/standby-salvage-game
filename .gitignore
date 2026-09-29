@@ -37,6 +37,9 @@ docs/consistency-failures.md
 build/
 builds/
 bin/
+# ...but not an addon's own scripts: gdUnit4's test runner lives in
+# addons/gdUnit4/bin/, and without it neither /smoke-check nor CI can run tests.
+!addons/gdUnit4/bin/
 obj/
 out/
 dist/
@@ -162,3 +165,9 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.lnk
+
+# === Test Output ===
+# gdUnit4 writes reports/ and Unity's -testResults writes test-results/, both at
+# the project root. Anchored so a reports/ folder elsewhere stays tracked.
+/reports/
+/test-results/

@@ -8,7 +8,7 @@
 **Required Artifacts:**
 - [ ] Vertical slice exists in `prototypes/` with a REPORT.md (run `/vertical-slice`) — **recommended, not blocking**; if absent, surface as CONCERNS
 - [ ] First sprint plan exists in `production/sprints/`
-- [ ] Art bible is complete (all 9 sections) and AD-ART-BIBLE sign-off verdict is recorded in `design/art/art-bible.md`
+- [ ] Art bible is complete (all 9 sections) and AD-ART-BIBLE sign-off verdict is recorded in `design/art/art-bible.md` — where `review_mode` skips that gate (`lean`, `solo`), a `SKIPPED` sign-off line `/art-bible` records stands in for it, and a header still reading `[Not yet reviewed]` on such a project reads "sign-off skipped — [mode] mode", never missing
 - [ ] Entity inventory exists at `design/assets/entity-inventory.md` (recommended — run `/asset-spec` with no arguments to generate collaboratively from GDDs + art bible)
 - [ ] All MVP-tier GDDs from systems index are complete
 - [ ] Master architecture document exists at `docs/architecture/architecture.md`
@@ -51,6 +51,10 @@
 > **Verdict rules for Vertical Slice:**
 > - **Slice was built AND any validation item is NO** → verdict is automatically FAIL. A broken
 >   or unfun vertical slice should not advance to Production.
+> - **Slice was built but its report says NOT ASSESSED** (nobody has played it) → it is not a
+>   PROCEED, and its validation items were not checked (they are not NO): the Vertical Slice
+>   Validation block does not run, so the FAIL rule above does not apply. The gate item is NOT
+>   ASSESSED, never passed — and a "not yet" to "a human has played it" means the same.
 > - **Slice was not built (skipped)** → downgrade to CONCERNS only, not FAIL. Surface the risk
 >   clearly: "Advancing without a validated Vertical Slice increases the risk of late-stage design
 >   pivots. Recommended before committing full production scope." The user decides.
@@ -63,16 +67,20 @@ reduction for the resolved tier; items not named keep their status above.
 Reductions only ever *relax* a requirement — `workflow_overrides` is the
 only thing that adds one.
 
-- **`full`** — sprint plan + complete (9-section) art bible + epics + 3+ playtests + UX specs + control manifest all required; **Vertical Slice keeps its Section 2 status** (see note)
-- **`standard`** — **1+ playtest** required (not 3); epics + sprint plan required; art bible complete + UX specs + control manifest → recommended
-- **`minimal`** — only **sprint plan** required (the minimal floor); epics, playtests, art bible, UX, control manifest all **drop**
+- **`full`** — sprint plan + complete (9-section) art bible + epics + UX specs + control manifest all required; **Vertical Slice keeps its Section 2 status** (see note) — its playtest is recommended, 1 documented session with 3+ better
+- **`standard`** — epics + sprint plan required; art bible complete + UX specs + control manifest → recommended; **Vertical Slice keeps its Section 2 status**
+- **`minimal`** — the minimal floor only: a filled **`design/game-brief.md`** with its build order, and **stories** under `production/epics/` (`workflow-modes.md` — the brief's build order is the plan, so there is **no sprint plan**); everything else **drops** — sprint plan, epics, playtests, art bible, entity inventory, MVP GDDs, the master architecture document, both ADR items, control manifest, the UX items (key screen specs, HUD document, `/ux-review`), and the Vertical Slice items (the slice, its playtest, and the Vertical Slice Validation block) — the two current-build checks below replace them
+  **Quality checks at `minimal`:** every check that reads a dropped artifact drops with it — the sprint-plan, architecture, both ADR, GDD-coherence, UX and accessibility checks, and the Player Fantasy check (no GDD holds one). Two still apply, to the current build instead of a slice: **the core loop is fun** (ask the user, or read a playtest note if one exists) and **it runs end to end** — one complete start → challenge → resolution cycle. A "no" to either is FAIL, as a NO on a built slice is at the other tiers; a "not yet" to the fun question means nobody has played the build — NOT ASSESSED.
 
-> **The Vertical Slice keeps its Section 2 status at every tier.** The
+> **The Vertical Slice keeps its Section 2 status at `full` and `standard`.** The
 > Pre-Production → Production "prototype/Vertical Slice" floor is NOT upgraded to
 > blocking by the tier table — the Vertical Slice artifacts stay *recommended,
 > not blocking* (absent → CONCERNS, not FAIL) exactly as Section 2 defines, at
-> `full`, `standard`, and `minimal` alike. The genuinely-required floor item at
-> this gate is the **sprint plan**. The one hard rule that binds at every tier:
-> if a Vertical Slice *was built* and any of its validation items is NO, the
-> verdict is FAIL regardless of tier — tier reductions relax what must *exist*,
-> never what must *work*.
+> `full` and `standard` alike. At `minimal` they drop — the minimal route never
+> builds a slice — and the two current-build checks replace them. The
+> genuinely-required floor item at this gate is the **sprint plan** at `standard`
+> and `full`, and the **brief's build order plus stories** at `minimal`. The one
+> hard rule that binds at every tier: if a Vertical Slice *was built* and any of
+> its validation items is NO (at `minimal`, if the current build fails either of
+> its two checks), the verdict is FAIL regardless of tier — tier reductions relax
+> what must *exist*, never what must *work*.

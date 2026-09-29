@@ -3,7 +3,7 @@
 > Authoring guidance: .claude/docs/templates/guidance/accessibility-requirements-guide.md (load per-section as you author — do not read entirely).
 
 > **Status**: Draft | Committed | Audited | Certified
-> **Author**: [ux-designer / producer]
+> **Author**: [user + ux-designer]
 > **Last Updated**: [Date]
 > **Accessibility Tier Target**: [Basic / Standard / Comprehensive / Exemplary]
 > **Platform(s)**: [PC / Xbox / PlayStation 5 / Nintendo Switch / iOS / Android]
@@ -19,10 +19,12 @@
 > **Why this document exists**: Per-screen accessibility annotations belong in
 > UX specs. This document captures the project-wide accessibility commitments,
 > the feature matrix across all systems, the test plan, and the audit history.
-> It is created once during Technical Setup by the UX designer and producer,
-> then updated as features are added and audits are completed. If a feature
-> conflicts with a commitment made here, this document wins — change the feature,
-> not the commitment, unless the producer approves a formal revision.
+> It is created once during Technical Setup by the UX designer with
+> `/ux-design accessibility` — you pick the tier, against the criteria
+> accessibility-specialist sets and audits against — then updated as features
+> are added and audits are completed. If a feature conflicts with a commitment
+> made here, this document wins — change the feature, not the commitment,
+> unless the producer approves a formal revision.
 >
 > **When to update**: After each `/gate-check` pass, after any accessibility
 > audit, and whenever a new game system is added to `systems-index.md`.

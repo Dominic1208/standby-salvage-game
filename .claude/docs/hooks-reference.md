@@ -4,18 +4,23 @@ Hooks are configured in `.claude/settings.json` and fire automatically:
 
 | Hook | Event | Trigger | Action |
 | ---- | ----- | ------- | ------ |
-| `validate-commit.sh` | PreToolUse (Bash) | `git commit` commands | Validates design doc sections, JSON data files, hardcoded values, TODO format |
-| `validate-push.sh` | PreToolUse (Bash) | `git push` commands | Warns on pushes to protected branches (develop/main) |
-| `validate-assets.sh` | PostToolUse (Write/Edit) | Asset file changes | Checks naming conventions and JSON validity for files in `assets/` |
+| `validate-commit.sh` | PreToolUse (Bash, PowerShell) | `git commit` commands | Validates design doc sections, JSON data files, hardcoded values, TODO format |
+| `validate-push.sh` | PreToolUse (Bash, PowerShell) | `git push` commands | Warns on pushes to protected branches (`main`, `master` and `release/*`) |
+| `validate-assets.sh` | PostToolUse (Write/Edit) | Asset file changes | Checks data-file JSON under `assets/`, `Assets/` or `Content/`, and asset naming in Godot's `assets/` only |
 | `session-start.sh` | SessionStart | Session begins | Loads sprint context, milestone, git activity; detects and previews active session state file for recovery |
 | `detect-gaps.sh` | SessionStart | Session begins | Detects fresh projects (suggests /start) and missing documentation when code/prototypes exist, suggests /reverse-document or /project-stage-detect |
-| `pre-compact.sh` | PreCompact | Context compression | Dumps session state (active.md, modified files, WIP design docs) into conversation before compaction so it survives summarization |
-| `post-compact.sh` | PostCompact | After compaction | Reminds Claude to restore session state from `active.md` checkpoint |
+| `pre-compact.sh` | PreCompact | Context compression | Logs the compaction to `production/session-logs/compaction-log.txt`. Its state summary goes to the debug log only: Claude Code does not add PreCompact output to the conversation. `session-start.sh`, which runs again after every compaction, is what restores context |
+| `post-compact.sh` | PostCompact | After compaction | Prints a re-read reminder to the debug log. PostCompact output never reaches Claude; recovery comes from `session-start.sh` |
 | `notify.sh` | Notification | Notification event | Shows Windows toast notification via PowerShell |
 | `session-stop.sh` | Stop | **Every response ends** — not once per session | Summarizes accomplishments, updates session log, and writes the subagent spawn tally to `production/session-logs/session-cost.md`. Archives `active.md` only when its content hash changed; without that guard a long session appended the whole file on every turn. |
-| `log-agent.sh` | SubagentStart | Agent spawned | Audit trail start — logs subagent invocation with timestamp and session id |
-| `log-agent-stop.sh` | SubagentStop | Agent stops | Audit trail stop — completes subagent record |
+| `log-agent.sh` | SubagentStart | Agent spawned, resumed, or a teammate handles a new message | Audit trail start — logs subagent invocation with timestamp and session id. SubagentStart fires for a resume and for each agent-team message too, so the spawn tally counts those |
+| `log-agent-stop.sh` | SubagentStop | Agent stops | Audit trail stop — completes subagent record. Skips Claude Code's internal agents (prompt suggestions, `/btw`), which arrive with an empty `agent_type` |
 | `validate-skill-change.sh` | PostToolUse (Write/Edit) | Skill file changes | Advises running `/skill-test` after any `.claude/skills/` file is written or edited |
+
+Warnings from the four `validate-*` hooks are shown to you and passed to Claude
+as hook JSON (`hook_warn` in `yaml-helper.sh`); only a problem that must be fixed
+now exits 2. See `hooks-reference/hook-input-schemas.md` for why stderr is not
+enough.
 
 ### Subagent cost visibility
 
@@ -47,7 +52,7 @@ Three constraints that must not be "tidied" later:
 
 ## Events considered and deliberately not added
 
-Claude Code offers many more hook events than the eleven above. These were
+Claude Code offers many more hook events than the nine the hooks above use. These were
 evaluated and rejected. Recorded so a future review does not re-propose them
 from the event list alone.
 

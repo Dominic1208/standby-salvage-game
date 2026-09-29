@@ -68,7 +68,7 @@ categorization from Section B.
 
 ---
 
-#### Section D: HUD Elements
+#### Section D: HUD Element Specifications
 
 For each element in the layout, specify:
 - Element name and category (Must Show / Contextual / On Demand)
@@ -83,14 +83,16 @@ exist for status displays, resource bars, or cooldown indicators.
 
 ---
 
-#### Sections E, F, G: Dynamic Behaviors, Platform Variants, Accessibility
+#### Sections E–L: HUD States, Information Hierarchy, Visual Budget, Feedback & Notification, Platform Adaptation, Accessibility, Tuning Knobs, Acceptance Criteria
 
 These parallel the UX spec's States, Interaction, and Accessibility sections.
 The guidance you need is below — **do not load `sections-ux-spec.md`; one mode
 file applies per invocation.** For the HUD, apply it as follows.
 
-**Dynamic Behaviors (states over time).** Beyond the happy path, capture what
-changes the HUD mid-gameplay and present it as a table for approval:
+**HUD States by Gameplay Context (states over time).** Cover at least
+exploration, combat, dialogue/cutscene and paused — `/ux-review` checks for all
+four. Beyond the happy path, capture what changes the HUD mid-gameplay and present
+it as a table for approval:
 
 | State / Variant | Trigger | What Changes |
 |-----------------|---------|--------------|
@@ -102,7 +104,22 @@ changes the HUD mid-gameplay and present it as a table for approval:
 Ask specifically: what causes the HUD to change density mid-gameplay
 (combat vs. exploration), and what fades, pulses, or slams in on each transition?
 
-**Platform Variants.** Does mobile/console require different element sizes or
+**Information Hierarchy.** Give every element in HUD Element Specifications a
+priority tier — MUST KEEP, SHOULD KEEP, CAN HIDE or ALWAYS HIDE — with the reason,
+and what carries its information when it is hidden (a sound, a diegetic cue, or
+nothing). This is the order the Visual Budget below drops elements in.
+
+**Visual Budget.** State the maximum number of simultaneous HUD elements and
+the maximum share of the screen the HUD may cover, and which elements are dropped
+first when a state would exceed it.
+
+**Feedback & Notification Systems.** One row per transient notification type
+(pickup, XP gain, objective update, achievement) — trigger system, screen position,
+duration, max simultaneous, priority and **queue behavior**: what happens when two
+arrive at once, which are held during combat, and which are never queued.
+`/ux-review` checks that every notification has queue/priority behavior defined.
+
+**Platform Adaptation.** Does mobile/console require different element sizes or
 positions? Note per-platform overrides — touch targets, safe-area insets, and
 whether any element moves or is dropped on a given platform.
 
@@ -118,3 +135,14 @@ exists, then walk this checklist for the HUD:
 If no accessibility tier has been defined for this project, note the gap in the
 HUD design's Open Questions section (WCAG-AA is a reasonable baseline) and
 continue without stopping.
+
+**Tuning Knobs.** List every player-adjustable HUD setting — overall scale,
+opacity, per-element show/hide, subtitle size — with its range and default.
+
+**Acceptance Criteria.** At least 5 checkbox criteria a QA tester can verify
+without reading another document — `/story-done` closes HUD stories against
+them. Cover at least: safe-zone margins on every target platform, the correct
+elements in each gameplay context above, the visual budget (screen share in
+exploration and in combat), one accessibility criterion for the committed tier,
+and notification queueing. Section 12 of `.claude/docs/templates/hud-design.md`
+has worked examples.

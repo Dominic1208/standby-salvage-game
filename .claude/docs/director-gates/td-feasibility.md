@@ -5,7 +5,7 @@
 Agent: `technical-director` | Model tier: Opus | Domain: Architecture, engine risk, performance
 
 **Trigger**: After biggest technical risks are identified during scope/feasibility
-(brainstorm Phase 6, quick-design, or any early-stage concept with technical unknowns)
+(brainstorm Phase 6, or any early-stage concept with technical unknowns)
 
 **Context to pass**:
 - Concept's core loop description

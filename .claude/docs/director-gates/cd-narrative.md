@@ -4,9 +4,9 @@
 
 Agent: `creative-director` | Model tier: Opus | Domain: Vision, pillars, player experience
 
-**Trigger**: After narrative GDDs, lore documents, dialogue specs, or world-building
-documents are authored (team-narrative, design-system for story systems, writer
-deliverables)
+**Trigger**: Invoked directly, after narrative GDDs, lore documents, dialogue specs
+or world-building documents are authored — no skill spawns it; `/team-narrative`
+runs its own review, ND-CONSISTENCY
 
 **Context to pass**:
 - Document file path(s)

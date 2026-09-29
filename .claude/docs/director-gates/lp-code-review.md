@@ -2,7 +2,7 @@
 
 # LP-CODE-REVIEW — Lead Programmer Code Review
 
-Agent: `lead-programmer` | Model tier: Sonnet (Tier 2 lead — invoked when a domain specialist's feasibility sign-off is needed)
+Agent: `lead-programmer` | Model tier: Sonnet
 
 **Trigger**: After a dev story is implemented (`/dev-story`, `/story-done`), or
 as part of `/code-review`

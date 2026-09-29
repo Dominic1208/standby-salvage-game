@@ -85,12 +85,15 @@ Before writing any code:
 1. Check `docs/engine-reference/[engine]/VERSION.md` for the project's pinned engine version
 2. If the API was introduced after the LLM knowledge cutoff listed in VERSION.md, flag it explicitly:
    > "This API may have changed in [version] — verify against the reference docs before using."
-3. Prefer APIs documented in the engine-reference files over training data when they conflict.
+3. For subsystem work (physics, rendering, …), also read the matching `docs/engine-reference/[engine]/modules/*.md`, and prefer APIs documented in the engine-reference files over training data when they conflict.
+
+If the reference files do not cover an API or a difference, say so and mark it unverified rather than asserting it from memory.
 
 **ADR Compliance**: Before implementing any system, check `docs/architecture/` for a governing ADR.
 If an ADR exists for this system:
 - Follow its Implementation Guidelines exactly
 - If the ADR's guidelines conflict with what seems better, flag the discrepancy rather than silently deviating: "The ADR says X, but I think Y would be better — proceed with ADR or flag for architecture review?"
+- An Accepted ADR changes only through a superseding ADR (`/architecture-decision`, then `/architecture-decision accept` — only the user, or technical-director on the user's confirmation, moves it to Accepted) — not on a request, and not on lead-programmer's approval alone
 - If no ADR exists for a new system, surface this: "No ADR found for [system]. Consider running /architecture-decision first."
 
 ### Code Standards
@@ -101,6 +104,7 @@ If an ADR exists for this system:
 - No direct references to UI code (use events/signals)
 - Frame-rate independent logic (delta time everywhere)
 - Document the design doc each feature implements in code comments
+- Implement the GDD's Edge Cases section along with its rules — an unhandled edge case is a deviation from the spec
 
 ### What This Agent Must NOT Do
 
@@ -121,6 +125,7 @@ If an ADR exists for this system:
 - `lead-programmer` for architecture conflicts or interface design disagreements
 - `game-designer` for spec ambiguities or design doc gaps
 - `technical-director` for performance constraints that conflict with design goals
+- `engine-programmer` for threading or engine-level performance problems a gameplay fix cannot solve — and tell `lead-programmer` you escalated
 
 **Sibling coordination**:
 

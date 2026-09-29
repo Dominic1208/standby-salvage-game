@@ -9,7 +9,7 @@ complete system set before GDD authoring begins
 
 **Context to pass**:
 - Systems index path (`design/gdd/systems-index.md`)
-- Game pillars and core fantasy (from `design/gdd/game-concept.md`)
+- Game pillars and core fantasy (from `design/gdd/game-concept.md`; if there is no `design/gdd/game-concept.md`, the pitch and "what they feel" line of `design/game-brief.md`, which has no pillars)
 - Priority tier assignments (MVP / Vertical Slice / Alpha / Full Vision)
 - Any high-risk or bottleneck systems identified in the dependency map
 

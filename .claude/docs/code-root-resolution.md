@@ -26,7 +26,11 @@ code. This file is the procedure for applying it.
    does not count.
 3. Derivation from the tree, but **only when it is unambiguous**. Exactly one of
    `src/`, `Assets/` or `Source/` present means that is the root. Two or more
-   present means the project is genuinely undecidable — do not guess.
+   present means the project is genuinely undecidable — do not guess. Compare the
+   names exactly as the directory listing spells them: on Windows and default
+   macOS an existence test for `Assets/` also succeeds on Godot's own `assets/`,
+   which would make `src/` + `assets/` look ambiguous and a lone `assets/` look
+   like Unity.
 4. Otherwise: **unresolved.**
 
 The hooks already implement exactly this as `resolve_code_root()` in

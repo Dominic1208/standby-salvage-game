@@ -4,7 +4,7 @@
 THE ONE-PAGE BRIEF. At the `minimal` workflow tier this is the ENTIRE design doc —
 it replaces the full concept doc, systems decomposition, and per-system GDDs.
 Keep it to one screen. If a field needs a second paragraph, you're writing a GDD,
-not a brief. Fill every REQUIRED field; the two RECOMMENDED one-liners are cheap
+not a brief. Fill every REQUIRED field; the three RECOMMENDED one-liners are cheap
 but optional. Engine is set separately (project.yaml / /setup-engine) — don't restate it.
 
 Field set grounded in industry practice — Tim Ryan (*Anatomy of a Design Document*),
@@ -39,3 +39,5 @@ thinking and cuts ceremony), and lean/agile GDD practice.
 **Who it's for / what they feel:** [One line: the player and the feeling. e.g. "solo puzzle fans who want a cozy 20-minute sitting."]
 
 **Art & audio direction:** [One line of aesthetic intent — drives asset choices. e.g. "flat pastel vector art, lo-fi ambient."]
+
+**Reference game:** [One shipped game this is closest to, and the ~10% of it the MVP keeps. e.g. "Vampire Survivors — the auto-attack loop on one map; no meta-progression." Scoping against a real game is the fastest honest MVP check.]

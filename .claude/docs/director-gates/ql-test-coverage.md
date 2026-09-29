@@ -2,10 +2,10 @@
 
 # QL-TEST-COVERAGE — QA Lead Test Coverage Review
 
-Agent: `qa-lead` | Model tier: Sonnet (Tier 2 lead — invoked when a domain specialist's feasibility sign-off is needed)
+Agent: `qa-lead` | Model tier: session (inherit)
 
-**Trigger**: After implementation stories are complete, before marking an epic
-done, or at `/gate-check` Production → Polish
+**Trigger**: After implementation stories are complete — `/story-done` runs it for
+each story before marking it Complete
 
 **Context to pass**:
 - List of implemented stories with story types (Logic / Integration / Visual / UI / Config)

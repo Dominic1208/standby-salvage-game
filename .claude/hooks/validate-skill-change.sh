@@ -60,20 +60,42 @@ fi
 # for either input because rule 1 finds nothing to do on unescaped text.
 FILE_PATH=$(printf '%s' "$FILE_PATH" | sed 's|\\\\|/|g; s|\\|/|g')
 
-# Only act on files inside .claude/skills/
-if ! echo "$FILE_PATH" | grep -qE '(^|/)\.claude/skills/'; then
-    exit 0
-fi
+# Make the path project-relative, as validate-assets.sh does. Claude Code sends
+# it ABSOLUTE, and a match on `/.claude/skills/` anywhere in it also fired on
+# the user's own skills in ~/.claude/skills/, naming a skill this project does
+# not have. Strip the project root in either spelling Git Bash gives it; a path
+# still absolute is outside the project.
+_VS_ROOT=$(pwd); _VS_ROOT_W=$(pwd -W 2>/dev/null || printf '%s' "$_VS_ROOT")
+shopt -s nocasematch
+case "$FILE_PATH" in
+    "$_VS_ROOT"/*)   REL_PATH="${FILE_PATH:${#_VS_ROOT}+1}" ;;
+    "$_VS_ROOT_W"/*) REL_PATH="${FILE_PATH:${#_VS_ROOT_W}+1}" ;;
+    /*|[A-Za-z]:/*)  exit 0 ;;
+    *)               REL_PATH="${FILE_PATH#./}" ;;
+esac
+shopt -u nocasematch
+
+# Only act on files inside this project's .claude/skills/
+case "$REL_PATH" in
+    .claude/skills/*) ;;
+    *) exit 0 ;;
+esac
 
 # Extract skill name from path (.claude/skills/[skill-name]/SKILL.md)
-SKILL_NAME=$(echo "$FILE_PATH" | grep -oE '\.claude/skills/[^/]+' | sed 's|\.claude/skills/||')
+SKILL_NAME=$(echo "$REL_PATH" | grep -oE '^\.claude/skills/[^/]+' | sed 's|\.claude/skills/||')
 
 if [ -z "$SKILL_NAME" ]; then
     exit 0
 fi
 
-echo "=== Skill Modified: $SKILL_NAME ===" >&2
-echo "Run /skill-test static $SKILL_NAME to validate structural compliance." >&2
-echo "====================================" >&2
+# Advisory, so exit 0 -- and therefore hook JSON, not stderr, which on exit 0
+# reaches the debug log only. See hook_warn in yaml-helper.sh.
+_VS_MSG="Skill modified: $SKILL_NAME. Run /skill-test static $SKILL_NAME to validate structural compliance."
+[ -f .claude/hooks/yaml-helper.sh ] && . .claude/hooks/yaml-helper.sh 2>/dev/null
+if command -v hook_warn >/dev/null 2>&1; then
+    hook_warn PostToolUse "$_VS_MSG"
+else
+    printf '%s\n' "$_VS_MSG" >&2
+fi
 
 exit 0

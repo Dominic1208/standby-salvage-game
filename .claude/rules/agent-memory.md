@@ -11,7 +11,8 @@ exemption exists because the memory is the agent's own working notes about how t
 do its job, not a project artifact.
 
 It does **not** extend anywhere else. The Collaboration Protocol still governs
-every file under `src/`, `design/`, `docs/`, `production/` and `assets/`: ask
+every file under the code root (`src/`, `Assets/` or `Source/`), `design/`,
+`docs/`, `production/` and `assets/`: ask
 first, naming the path. Writing a memory is never a substitute for asking, and a
 memory must never be used to record something the user declined to have written.
 
@@ -21,7 +22,7 @@ This is the failure this file exists to prevent, and this repo is unusually
 exposed to it.
 
 **CCGS ships as a template the user clones *as their game*.** So on day one every
-agent observes the same things — no `src/`, no GDDs, no engine configured, no
+agent observes the same things — no game code, no GDDs, no engine configured, no
 `tests/performance/` — and every one of those observations is **guaranteed to
 stop being true**. A memory reading *"this repo is the framework, not a game;
 perf requests have no target"* is accurate when written and actively harmful two
@@ -34,7 +35,7 @@ So:
   captured profile exist before profiling; return BLOCKED naming what is missing
   rather than estimating" is durable. "There is no game here" is a timestamp.
 - **If you must record a state, state what invalidates it**, on the same line:
-  `INVALIDATED WHEN: project.yaml declares an engine, or src/ contains game code.`
+  `INVALIDATED WHEN: project.yaml declares an engine, or the code root (src/, Assets/ or Source/) contains game code.`
   A reader with no other context must be able to tell whether the note still
   holds.
 - **Never record absence of a game, of assets, of tests or of config as a

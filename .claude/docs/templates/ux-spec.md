@@ -3,7 +3,7 @@
 > Authoring guidance: .claude/docs/templates/guidance/ux-spec-guide.md (load per-section as you author — do not read entirely).
 
 > **Status**: Draft | In Review | Approved | Implemented
-> **Author**: [Name or agent — e.g., ui-designer]
+> **Author**: [Name or agent — e.g., ux-designer]
 > **Last Updated**: [Date]
 > **Screen / Flow Name**: [Short identifier used in code and tickets — e.g., `InventoryScreen`, `NewGameFlow`]
 > **Platform Target**: [PC | Console | Mobile | All — list all that this spec covers]
@@ -11,6 +11,7 @@
 > **Related ADRs**: [Any architectural decisions that constrain this screen — e.g., `ADR-0012: UI Framework Selection`]
 > **Related UX Specs**: [Sibling and parent screens — e.g., `ux-spec-pause-menu.md`, `ux-spec-settings.md`]
 > **Accessibility Tier**: Basic | Standard | Comprehensive | Exemplary
+> **Template**: UX Spec
 
 > **Note — Scope boundary**: This template covers discrete screens and flows (menus,
 > dialogs, inventory, settings, cutscene UI, etc.). For persistent in-game overlays
@@ -100,7 +101,7 @@
 
 ## 5. Layout Specification
 
-### 5.1 Wireframe
+### 5.1 ASCII Wireframe
 
 ```
 [Draw the screen layout using ASCII art. Suggested characters:
@@ -114,7 +115,7 @@
 See guide Section 5 for a completed example wireframe.]
 ```
 
-### 5.2 Zone Definitions
+### 5.2 Layout Zones
 
 | Zone Name | Description | Approximate Size | Scrollable? | Overflow Behavior |
 |-----------|-------------|-----------------|-------------|-------------------|
@@ -130,6 +131,11 @@ See guide Section 5 for a completed example wireframe.]
 | [Component] | [Type] | [Zone] | [Purpose] | [Yes/No] | [Yes — pattern/component name, or No — new] |
 
 **Primary focus element on open**: [Element that receives focus when the screen opens, including deep-link and empty-state cases]
+
+### 5.4 Information Hierarchy
+
+[What the player must see first on this screen, what second, and what can wait
+behind a tab, a scroll or a button — in that order, with the reason for each.]
 
 ---
 
@@ -197,7 +203,7 @@ See guide Section 5 for a completed example wireframe.]
 
 ---
 
-## 10. Transition & Animation
+## 10. Transitions & Animations
 
 > Specify at least the screen enter and exit transitions, plus reduced-motion
 > behavior for each. See guide Section 10 for a worked example.
@@ -242,7 +248,7 @@ See guide Section 5 for a completed example wireframe.]
 
 ---
 
-## 12. Screen-Level Accessibility Requirements
+## 12. Accessibility
 
 > Project-wide standards live in `design/accessibility-requirements.md` — consult it
 > before filling this section so you do not duplicate or contradict project-level

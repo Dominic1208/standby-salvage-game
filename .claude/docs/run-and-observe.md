@@ -47,7 +47,7 @@ engine has a native way.
 |---|---|---|---|---|---|
 | Godot 4 | `godot --path . --windowed --resolution 1280x720 <scene>.tscn` | `--write-movie <path>.png --quit-after <N>` | beside the given path, `<name>00000000.png` … | `--headless` | **none** |
 | Unity 6 | built player `.exe -screen-width 1280 -screen-height 720 -screen-fullscreen 0 --scene <Name>` | `ScreenCapture.CaptureScreenshot(<abs path>)` from a bootstrap script | the absolute path you pass | `-batchmode`, `-nographics` | one MonoBehaviour |
-| Unreal 5 | `MSYS_NO_PATHCONV=1 UnrealEditor.exe <Game>.uproject <MapURL> -game -windowed -ResX=1280 -ResY=720` | `HighResShot filename=<path>` console command | `Saved/Screenshots/Windows/` | `-nullrhi`, `-unattended` alone | one actor or `-ExecCmds` |
+| Unreal 5 | `MSYS_NO_PATHCONV=1 "<UE root>/Engine/Binaries/Win64/UnrealEditor.exe" "$(pwd -W 2>/dev/null || pwd)/<Game>.uproject" <MapURL> -game -windowed -ResX=1280 -ResY=720` | `HighResShot 1280x720 filename=<abs path>` console command | the path you pass (else `Saved/Screenshots/WindowsEditor/`) | `-nullrhi`, `-unattended` alone | one actor or `-ExecCmds` |
 
 ### Godot 4 — zero scaffold
 
@@ -77,22 +77,66 @@ Builds/Win64/Game.exe -screen-width 1280 -screen-height 720 -screen-fullscreen 0
 ```
 
 `-screen-*` are Unity's own player arguments. `--scene`, `--screenshot` and
-`--after` are **yours**: a `ScreenshotOnArg` MonoBehaviour in the bootstrap
-scene parses `System.Environment.GetCommandLineArgs()`, loads `--scene`, waits
-`--after` frames, calls `ScreenCapture.CaptureScreenshot(path)`, waits one more
-frame, then `Application.Quit()`. Pass an **absolute** path — the relative base
-differs between editor and player. `CaptureScreenshot` captures the last frame
-*presented*, so it must run after at least one rendered frame.
+`--after` are **yours**, read by the script below. The template does not ship
+it: the first time a Unity story needs a screenshot, `/dev-story` asks to write
+it, verbatim, to `Assets/Scripts/ScreenshotOnArg.cs`. It needs no scene edit — it boots itself, and does nothing unless the player
+was launched with `--screenshot`:
 
-`/test-setup` scaffolds this script under the code root. Building the player
-first costs 1–3 minutes on a small project; that is the price of looking at
-the thing you ship rather than the editor.
+```csharp
+using System.Collections;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+// Run-and-observe capture: Game.exe --scene Shop --screenshot C:/abs/shop.png --after 60
+public class ScreenshotOnArg : MonoBehaviour
+{
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void Boot()
+    {
+        if (Arg("--screenshot") == null) return;
+        var go = new GameObject(nameof(ScreenshotOnArg));
+        DontDestroyOnLoad(go);
+        go.AddComponent<ScreenshotOnArg>();
+    }
+
+    static string Arg(string name)
+    {
+        var args = System.Environment.GetCommandLineArgs();
+        for (int i = 0; i < args.Length - 1; i++)
+            if (args[i] == name) return args[i + 1];
+        return null;
+    }
+
+    IEnumerator Start()
+    {
+        var scene = Arg("--scene");
+        if (!string.IsNullOrEmpty(scene)) yield return SceneManager.LoadSceneAsync(scene);
+        int after = int.TryParse(Arg("--after"), out var n) ? n : 60;
+        for (int i = 0; i < after; i++) yield return null;
+        yield return new WaitForEndOfFrame();
+        ScreenCapture.CaptureScreenshot(Arg("--screenshot"));
+        for (int i = 0; i < 3; i++) yield return null;   // the file is written after the frame
+        Application.Quit();
+    }
+}
+```
+
+Pass an **absolute** path — the relative base differs between editor and
+player. `--scene` must be in the build settings. Building the player first
+costs 1–3 minutes on a small project; that is the price of looking at the thing
+you ship rather than the editor.
 
 ### Unreal 5 — one actor, or `-ExecCmds`
 
 ```
-MSYS_NO_PATHCONV=1 UnrealEditor.exe Game.uproject /Game/Maps/Shop -game -windowed -ResX=1280 -ResY=720
+MSYS_NO_PATHCONV=1 timeout 60 "<UE root>/Engine/Binaries/Win64/UnrealEditor.exe" "$(pwd -W 2>/dev/null || pwd)/Game.uproject" /Game/Maps/Shop -game -windowed -ResX=1280 -ResY=720
 ```
+
+That line is Windows'. On Linux the same arguments go to
+`"<UE root>/Engine/Binaries/Linux/UnrealEditor"` (no `MSYS_NO_PATHCONV` needed);
+on macOS Epic documents only the `UnrealEditor.app` bundle, so run the map from
+the editor or a command you have confirmed (see
+`docs/engine-reference/unreal/current-best-practices.md`, "Command Line").
 
 `-game` runs standalone without the editor UI. The map is a **positional URL
 immediately after the `.uproject`** — not a console command. **The
@@ -100,18 +144,26 @@ immediately after the `.uproject`** — not a console command. **The
 in Git Bash, which rewrites any argument beginning with `/` as a Windows path, so
 `/Game/Maps/Shop` reaches the engine as `C:/Program Files/Git/Game/Maps/Shop`
 and the game stops on a "map not found" dialog nobody can see. Alternatively
-pass the map through `-ExecCmds="open /Game/Maps/Shop"`, which is not converted. Capture is the
+pass the map through `-ExecCmds="open /Game/Maps/Shop"`, which is not converted.
+**The project path must be absolute** — with `MSYS_NO_PATHCONV` set, only
+`$(pwd -W 2>/dev/null || pwd)` gives one: a relative `Game.uproject` is not
+found, and the launch waits on an error dialog forever (verified on 5.7). There
+is no `-unattended` on this line, so every failure is a dialog nobody clicks:
+always run it under `timeout`. Capture is the
 `HighResShot` console command, fired either from a dev actor (`Execute Console
 Command` on BeginPlay after a short delay, then `quit`) or from the launch line:
 
 ```
--ExecCmds="HighResShot filename=C:/abs/path/shop.png,Quit"
+-ExecCmds="HighResShot 1280x720 filename=C:/abs/path/shop.png"
 ```
 
-`-ExecCmds` is comma-separated. Output defaults to `Saved/Screenshots/Windows/`.
-**Do not `Quit` on the same frame as the request** — the file flushes late and
-an immediate quit can leave nothing on disk; a one-second delay before `quit`
-is enough. The Blueprint node `Take High Res Screenshot` is editor-only and
+The size (or a multiplier such as `2`) comes **before** `filename=`:
+`HighResShot filename=…` alone is rejected as bad input and saves nothing.
+Without `filename=` the file lands in `Saved/Screenshots/WindowsEditor/`.
+**Do not put `Quit` in the same `-ExecCmds` list** — it runs on the same
+frame, before the file is written, and leaves nothing on disk. `-ExecCmds` has
+no delay, so let `timeout` end the launch (exit 124 is expected) and check the
+file exists; a dev actor can instead wait a second, then `quit`. The Blueprint node `Take High Res Screenshot` is editor-only and
 does not work in a `-game` launch.
 
 ### Any engine — OS capture fallback
@@ -172,7 +224,8 @@ engine on this machine". Absence of a path is not absence of an engine.
 
 ---
 
-*Commands and APIs above verified against the official Godot 4.7, Unity 6.3 LTS
-and Unreal 5.8 references on 2026-09-14. `docs/engine-reference/<engine>/` is
+*Commands above were run on Windows with Godot 4.6.1 (gdUnit4 6.1.3), Unity
+6000.3.23f1 and Unreal Engine 5.7; the Unreal Linux and macOS notes come from
+Epic's documentation. `docs/engine-reference/<engine>/` is
 the project's pinned authority; check it before trusting a version-qualified
 claim here.*

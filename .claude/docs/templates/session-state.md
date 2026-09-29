@@ -6,7 +6,7 @@
   This file has TWO regions and they are not interchangeable:
 
     1. The CHECKPOINT region below (STATUS + CHECKPOINT blocks) is the part
-       machines read. Hooks inject it verbatim into the context, so it is
+       machines read. session-start.sh shows it verbatim in the context, so it is
        BOUNDED BY CONSTRUCTION: keep it under ~25 lines. It is OVERWRITTEN on
        every update, never appended to.
 
@@ -41,6 +41,7 @@ Task:
 **Next step:** [one line — the very next action, concrete enough to resume cold]
 **Blocked on:** [one line, or `nothing`]
 **Files in progress:** [paths, comma-separated, or `none`]
+**Run result:** [`/dev-story` writes its `Run result:` line here, verbatim, for `/story-done` to read; other writers leave this line out]
 **Open questions:** [one line each, or `none`]
 <!-- /CHECKPOINT -->
 
@@ -64,7 +65,8 @@ or agent picking this up cold.]
 
   CHECKPOINT block
     The recovery payload. `session-start.sh` shows it when a previous session
-    left state; `pre-compact.sh` injects it before compaction. Both read THIS
+    left state, and again after a compaction (SessionStart runs then too).
+    `pre-compact.sh` reads it as well, for the debug log. Both read THIS
     region and nothing else, which is what keeps the cost fixed no matter how
     long the narrative gets.
 

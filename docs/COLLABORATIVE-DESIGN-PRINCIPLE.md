@@ -41,6 +41,11 @@ Users:
 
 ## 🔄 Collaborative Workflow Pattern
 
+> **At `rigor: minimal` (the default), the design record is the one-page
+> `design/game-brief.md`, not a set of GDDs.** `/brainstorm` writes it, and the
+> same question → options → decision → draft → approval protocol applies to it.
+> The GDD examples below show the `standard` and `full` tiers.
+
 Every agent interaction should follow this pattern:
 
 ### Pattern: Question → Options → Decision → Draft → Approval
@@ -685,4 +690,4 @@ This principle has been fully embedded across the project:
 - **All skills** — Updated to require approval before writing
 - **WORKFLOW-GUIDE.md** — Rewritten with collaborative examples
 - **README.md** — Clarifies collaborative (not autonomous) design
-- **AskUserQuestion tool** — Integrated into 16 skills for structured option UI
+- **AskUserQuestion tool** — Used by 68 skills (49 declare it) for structured option UI

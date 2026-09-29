@@ -8,7 +8,8 @@ Agent: `creative-director` | Model tier: Opus | Domain: Vision, pillars, player 
 any session that produces player feedback
 
 **Context to pass**:
-- Playtest report file path
+- Playtest report — its file path, or its content inline when the calling skill
+  reviews before saving (`/playtest-report` does)
 - Game pillars and core fantasy statement
 - The specific hypothesis being tested
 
