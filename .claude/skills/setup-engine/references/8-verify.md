@@ -29,15 +29,11 @@ the line here.
 
 ## 8.5 Read Back What You Just Wrote
 
-This section exists because prose did not hold. Section 5.5.1's rendering/physics
-table already carries an emphatic, source-cited warning naming the two mistakes
-most often made here -- and it is still entirely possible to make **both** of
-them anyway, writing `Forward+` and `Jolt` for a 2D browser game. Section 3's
-`Installed at pin time` row is just as easy to drop silently, because a missing
-row leaves no trace.
-
-Neither is fixed by adding more instructions. They are fixed by verifying the
-files after writing them:
+Section 5.5.1's rendering/physics table warns against the two mistakes most
+often made here, and it is still easy to make **both** of them, writing
+`Forward+` and `Jolt` for a 2D browser game. Section 3's `Installed at pin time`
+row is just as easy to drop silently, because a missing row leaves no trace.
+Catch both by verifying the files after writing them:
 
 ```bash
 bash .claude/scripts/project-coherence.sh
@@ -50,6 +46,11 @@ checks that the files `commands.build` and `commands.test` name exist.
 **Report every `[DIFFERS]` line to the user and resolve it before finishing.**
 Each one means two files this skill just wrote disagree, or describe something
 that is not there.
+
+One is expected on a new Godot project: `commands.test` names the gdUnit4
+runner under `addons/gdUnit4/`, which `/test-setup` installs later. Report that
+line as expected, name `/test-setup` as the step that clears it, and never edit
+`commands.test` to make it go away. Every other `[DIFFERS]` line is resolved here.
 
 **`[NOT CHECKED]` is not a pass.** Each such line names why a comparison could
 not be made -- an absent binary, a missing `project.godot`. Say which ones

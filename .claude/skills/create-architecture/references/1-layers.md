@@ -23,6 +23,10 @@ game architecture layers are:
 └─────────────────────────────────────────────┘
 ```
 
+The Platform layer is the engine and OS the game runs on, not code the project
+writes. No GDD system goes in it, so it has no epic, stories or control-manifest
+rules: a system that wraps a platform or engine API belongs in Foundation.
+
 For each GDD system, ask:
 - Which layer does it belong to?
 - What are its module boundaries?

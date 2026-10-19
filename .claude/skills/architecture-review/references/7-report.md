@@ -8,13 +8,15 @@
 ```
 ## Architecture Review Report
 Date: [date]
-Engine: [name + version]
+Mode: [full / coverage / consistency / engine / single-gdd path/to/gdd.md]
+Workflow: [the resolved workflow tier]
+Engine: [name + version, or "none configured"]
 GDDs Reviewed: [N]
 ADRs Reviewed: [M]
 
-[output of: Bash: bash .claude/scripts/review-receipts.sh hash docs/architecture/adr-*.md design/gdd/*.md
- — one Reviewed-Content-Hash line per file reviewed; Phase 1a's freshness
- check reads these on the next run to skip or scope an unchanged re-review]
+[the receipt — one Reviewed-Content-Hash line per review input, taken in
+ Phase 8 when the report is written, never in this draft. Phase 1a's freshness
+ check reads them, with the Mode and Workflow lines, on the next run]
 
 ---
 

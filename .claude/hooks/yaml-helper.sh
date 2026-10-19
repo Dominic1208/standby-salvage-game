@@ -27,7 +27,8 @@
 #   validate_yaml_enum <file>
 #     Validates known enum-typed keys in <file> against their allowed
 #     value sets (12 enums hardcoded below). Prints one error line per
-#     invalid value to stderr. Returns 1 if any invalid value found,
+#     invalid value to stderr. Also reports tab indentation and repeated
+#     keys (which the parsers merge). Returns 1 if any were found,
 #     0 otherwise. Unknown-key (typo) detection is a future sub-phase —
 #     enum errors are the critical-path block per the spec.
 #
@@ -38,7 +39,7 @@
 #
 #   is_locally_overridable <dotted.path>
 #     Whitelist check for the /settings --local flag. Returns 0 if the
-#     setting is on the personal-experience whitelist (12 settings per
+#     setting is on the personal-experience whitelist (13 settings per
 #     effects-map.md), 1 otherwise. Locked settings cannot be locally
 #     overridden because they affect on-disk artifacts.
 #
@@ -105,20 +106,52 @@ import sys, re
 path_file, dotted = sys.argv[1], sys.argv[2]
 keys = dotted.split('.')
 
+# THE TEXT OF A BLOCK SCALAR IS TEXT, NEVER KEYS.
+#
+# A value of `|` or `>`, with any chomping or indentation indicator (`|-`,
+# `>+`, `|2`) and an optional comment, opens a block scalar: every following
+# line indented deeper than its key, and every blank line among them, is the
+# scalar's text. Read as keys, a note such as
+#   notes: |
+#     review_mode: full
+# set modes.review_mode beside a real `review_mode: lean`, overwrote it, or
+# raised an enum error at session start for a value nobody set. The value kept
+# is still the indicator itself, as before; only the text stops being keys.
+# block_indent gives the indent the text must exceed when a line opens one
+# (the key's own column, or the dash's for a `- |` list item), else None.
+# validate_yaml_enum's duplicate-key walk skips block scalars by the same rule.
+def block_indent(stripped, indent):
+    rest = stripped
+    if rest == '-' or rest.startswith('- '):
+        rest = rest[1:].lstrip(' ')
+        if re.match(r'[|>][-+0-9]*\s*(#.*)?$', rest):
+            return indent
+        indent += len(stripped) - len(rest)
+    m = re.match(r'([^:#\s][^:]*?)\s*:\s*(.*)$', rest)
+    if m and re.match(r'[|>][-+0-9]*\s*(#.*)?$', m.group(2).strip()):
+        return indent
+    return None
+
 def parse(lines):
     root = {}
     stack = [(-1, root)]  # (indent, mapping)
+    block = None          # indent a block scalar's text must exceed
     for raw in lines:
         line = raw.rstrip('\n').rstrip('\r')
         stripped = line.lstrip(' ')
         if not stripped.strip() or stripped.lstrip().startswith('#'):
             continue
         indent = len(line) - len(stripped)
+        if block is not None:
+            if indent > block:
+                continue
+            block = None
         while stack and stack[-1][0] >= indent:
             stack.pop()
         if not stack:
             return root
         parent = stack[-1][1]
+        block = block_indent(stripped, indent)
         m = re.match(r'([^:#\s][^:]*?)\s*:\s*(.*)$', stripped)
         if not m:
             continue
@@ -139,7 +172,20 @@ def parse(lines):
             if hash_pos >= 0:
                 value = value[:hash_pos].strip()
         if value == '':
-            new_map = {}
+            # A REPEATED KEY MERGES INTO THE MAP ALREADY THERE.
+            #
+            # `parent[key] = {}` replaced it: a second `modes:` block further
+            # down the file wiped the first, so `rigor` and `automation` set in
+            # the first block fell back to their defaults and nothing said so.
+            # Two blocks is a realistic file, not a contrived one -- a user or a
+            # skill adding a setting appends a new block rather than finding
+            # the old one. Merging keeps both; a key set in both still takes
+            # the last value, as a scalar always has.
+            #
+            # Merging is not silence: validate_yaml_enum reports every repeated
+            # key, because YAML allows a key once and other YAML tools keep only
+            # the last block. Every parser in this file merges the same way.
+            new_map = parent[key] if isinstance(parent.get(key), dict) else {}
             parent[key] = new_map
             stack.append((indent, new_map))
         else:
@@ -195,9 +241,23 @@ keys = dotted.split('.')
 # Block-dash detection peeks ahead at indented child lines after a key
 # whose own value is empty; if those children start with "- ", they form
 # an array, otherwise they form a sub-map (existing behavior).
+# The text of a block scalar is text, never keys or items (see get_yaml_key).
+def block_indent(stripped, indent):
+    rest = stripped
+    if rest == '-' or rest.startswith('- '):
+        rest = rest[1:].lstrip(' ')
+        if re.match(r'[|>][-+0-9]*\s*(#.*)?$', rest):
+            return indent
+        indent += len(stripped) - len(rest)
+    m = re.match(r'([^:#\s][^:]*?)\s*:\s*(.*)$', rest)
+    if m and re.match(r'[|>][-+0-9]*\s*(#.*)?$', m.group(2).strip()):
+        return indent
+    return None
+
 def parse(lines):
     root = {}
     stack = [(-1, root)]
+    block = None
     i = 0
     while i < len(lines):
         raw = lines[i]
@@ -207,11 +267,17 @@ def parse(lines):
             i += 1
             continue
         indent = len(line) - len(stripped)
+        if block is not None:
+            if indent > block:
+                i += 1
+                continue
+            block = None
         while stack and stack[-1][0] >= indent:
             stack.pop()
         if not stack:
             return root
         parent = stack[-1][1]
+        block = block_indent(stripped, indent)
         m = re.match(r'([^:#\s][^:]*?)\s*:\s*(.*)$', stripped)
         if not m:
             i += 1
@@ -270,6 +336,7 @@ def parse(lines):
             # Peek: block-dash list or sub-map?
             j = i + 1
             items = []
+            pblock = None   # an item's block scalar: its text is skipped
             while j < len(lines):
                 pl = lines[j].rstrip('\n').rstrip('\r')
                 pstripped = pl.lstrip(' ')
@@ -277,9 +344,15 @@ def parse(lines):
                     j += 1
                     continue
                 pindent = len(pl) - len(pstripped)
+                if pblock is not None:
+                    if pindent > pblock:
+                        j += 1
+                        continue
+                    pblock = None
                 if pindent <= indent:
                     break
                 if pstripped.startswith('- '):
+                    pblock = block_indent(pstripped, pindent)
                     # INDENT IS NOT ENFORCED between items, deliberately.
                     #
                     # Requiring every item to sit at the first item's indent
@@ -319,7 +392,9 @@ def parse(lines):
                 i = j
                 continue
             else:
-                new_map = {}
+                # A repeated key merges (see get_yaml_key). A list is not
+                # merged: the last one is used, and validate_yaml_enum says so.
+                new_map = parent[key] if isinstance(parent.get(key), dict) else {}
                 parent[key] = new_map
                 stack.append((indent, new_map))
         else:
@@ -477,10 +552,12 @@ testing.strict.visual::true|false
 testing.strict.ui::true|false
 testing.strict.config::true|false
 features.session_state::on|off
+features.read_guard::on|off|true|false
 platform.online::true|false
 workflow_overrides.edge_cases::true|false
 workflow_overrides.tuning_knobs::true|false
-workflow_overrides.art_bible_strict::true|false"
+workflow_overrides.art_bible_strict::true|false
+updates.check::true|false"
 # The boolean keys above are enumerated for the same reason the string keys are:
 # `resolve_setting` validates every hop and DROPS a value that fails, so a key
 # absent from this table accepts anything. Before they were listed,
@@ -496,7 +573,9 @@ workflow_overrides.art_bible_strict::true|false"
 #   - `features.session_state` is an ON/OFF enum, not a boolean. It is listed
 #     above as `on|off` because `session_state_enabled()` disables only on the
 #     literal `off`, and effects-map documents `on`/`off`. Writing `false` there
-#     means ENABLED, which is why validating it matters.
+#     means ENABLED, which is why validating it matters. `features.read_guard`
+#     is not that case: read-guard.sh reads `true` and `false` as `on` and
+#     `off`, so all four are listed for it.
 #   - `testing.strict` (the parent) is absent because its primary shape is a MAP
 #     of the five type keys; the bare scalar is only a back-compat form. Its
 #     effects-map `**Values:**` line documents the map, so enumerating the parent
@@ -525,7 +604,10 @@ testing.strict.ui
 testing.strict.config
 performance.enforce
 features.session_state
-features.token_budget_warn_at"
+features.token_budget_warn_at
+features.read_guard
+features.read_guard_kb
+updates.check"
 
 is_locally_overridable() {
   local path="$1"
@@ -594,20 +676,39 @@ allowed = set(l.strip() for l in allowed_table.splitlines() if l.strip())
 EXEMPT_EXACT = {'schema_version'}
 EXEMPT_PREFIX = ('framework.',)
 
+# The text of a block scalar is text, never keys (see get_yaml_key).
+def block_indent(stripped, indent):
+    rest = stripped
+    if rest == '-' or rest.startswith('- '):
+        rest = rest[1:].lstrip(' ')
+        if re.match(r'[|>][-+0-9]*\s*(#.*)?$', rest):
+            return indent
+        indent += len(stripped) - len(rest)
+    m = re.match(r'([^:#\s][^:]*?)\s*:\s*(.*)$', rest)
+    if m and re.match(r'[|>][-+0-9]*\s*(#.*)?$', m.group(2).strip()):
+        return indent
+    return None
+
 def parse(lines):
     root = {}
     stack = [(-1, root)]
+    block = None
     for raw in lines:
         line = raw.rstrip('\n').rstrip('\r')
         stripped = line.lstrip(' ')
         if not stripped.strip() or stripped.lstrip().startswith('#'):
             continue
         indent = len(line) - len(stripped)
+        if block is not None:
+            if indent > block:
+                continue
+            block = None
         while stack and stack[-1][0] >= indent:
             stack.pop()
         if not stack:
             return root
         parent = stack[-1][1]
+        block = block_indent(stripped, indent)
         m = re.match(r'([^:#\s][^:]*?)\s*:\s*(.*)$', stripped)
         if not m:
             continue
@@ -624,7 +725,8 @@ def parse(lines):
             if hash_pos >= 0:
                 value = value[:hash_pos].strip()
         if value == '':
-            new_map = {}
+            # A repeated key merges (see get_yaml_key).
+            new_map = parent[key] if isinstance(parent.get(key), dict) else {}
             parent[key] = new_map
             stack.append((indent, new_map))
         else:
@@ -746,20 +848,39 @@ import sys, re
 
 path_file, enum_table = sys.argv[1], sys.argv[2]
 
+# The text of a block scalar is text, never keys (see get_yaml_key).
+def block_indent(stripped, indent):
+    rest = stripped
+    if rest == '-' or rest.startswith('- '):
+        rest = rest[1:].lstrip(' ')
+        if re.match(r'[|>][-+0-9]*\s*(#.*)?$', rest):
+            return indent
+        indent += len(stripped) - len(rest)
+    m = re.match(r'([^:#\s][^:]*?)\s*:\s*(.*)$', rest)
+    if m and re.match(r'[|>][-+0-9]*\s*(#.*)?$', m.group(2).strip()):
+        return indent
+    return None
+
 def parse(lines):
     root = {}
     stack = [(-1, root)]  # (indent, mapping)
+    block = None          # indent a block scalar's text must exceed
     for raw in lines:
         line = raw.rstrip('\n').rstrip('\r')
         stripped = line.lstrip(' ')
         if not stripped.strip() or stripped.lstrip().startswith('#'):
             continue
         indent = len(line) - len(stripped)
+        if block is not None:
+            if indent > block:
+                continue
+            block = None
         while stack and stack[-1][0] >= indent:
             stack.pop()
         if not stack:
             return root
         parent = stack[-1][1]
+        block = block_indent(stripped, indent)
         m = re.match(r'([^:#\s][^:]*?)\s*:\s*(.*)$', stripped)
         if not m:
             continue
@@ -779,7 +900,8 @@ def parse(lines):
             if hash_pos >= 0:
                 value = value[:hash_pos].strip()
         if value == '':
-            new_map = {}
+            # A repeated key merges (see get_yaml_key); reported below.
+            new_map = parent[key] if isinstance(parent.get(key), dict) else {}
             parent[key] = new_map
             stack.append((indent, new_map))
         else:
@@ -810,15 +932,102 @@ data = parse(raw_lines)
 #
 # YAML forbids tabs for indentation, so reporting rather than repairing is
 # correct; doing neither was the defect. Comment lines are exempt: a tab in
-# front of a `#` hides nothing.
+# front of a `#` hides nothing. So is a block scalar's text (parse() skips it
+# by the same rule): a tab after its indentation spaces is part of the text.
 tab_lines = []
+_block = None
 for _n, _raw in enumerate(raw_lines, 1):
     _line = _raw.rstrip('\n').rstrip('\r')
     if not _line.strip() or _line.lstrip(' \t').startswith('#'):
         continue
+    _stripped = _line.lstrip(' ')
+    _indent = len(_line) - len(_stripped)
+    if _block is not None:
+        if _indent > _block:
+            continue
+        _block = None
     _lead = _line[:len(_line) - len(_line.lstrip(' \t'))]
     if '\t' in _lead:
         tab_lines.append(_n)
+    _block = block_indent(_stripped, _indent)
+
+# A REPEATED KEY IS REPORTED, though every parser here now reads through it.
+#
+# Before the parsers merged, a second `modes:` block replaced the first and
+# this validator passed the file: the dropped `rigor: standard` was never read,
+# so it could not be invalid. Merging fixed what the framework reads, but YAML
+# allows a key once and other YAML tools keep only the last block, so the file
+# still means different things to different readers until it is tidied. Same
+# rule as the tab check: say what the parser had to work around.
+#
+# Its own walk, not parse(): the report needs line numbers, and whether an
+# empty-valued key opens a list (the last one is used) or a map (merged).
+# Each `- ` item of a list is a map of its own, named `list[n]`, so the keys of
+# a list of maps (two `- name:` items under specialists) are not repeats of
+# each other; a key twice inside one item still is. An item that is a quoted
+# scalar is not a key, even holding a colon. The text of a block scalar (a
+# value of `|` or `>`, with any indicators) is text: a `Note:` line in it is not
+# a key.
+def repeated_keys(lines):
+    rows = []
+    for n, raw in enumerate(lines, 1):
+        line = raw.rstrip('\n').rstrip('\r')
+        stripped = line.lstrip(' ')
+        if not stripped.strip() or stripped.lstrip().startswith('#'):
+            continue
+        rows.append((n, len(line) - len(stripped), stripped))
+    seen = {}
+    stack = [(-1, '', 'map')]   # (indent, dotted path, map | list | item)
+    items = {}                  # list path -> items seen so far
+    block = None                # indent a block scalar's text must exceed
+    key_re = r'([^:#\s][^:]*?)\s*:\s*(.*)$'
+    for i, (n, indent, stripped) in enumerate(rows):
+        if block is not None:
+            if indent > block:
+                continue
+            block = None
+        if stripped == '-' or stripped.startswith('- '):
+            # A dash at a list key's own indent (a compact list) belongs to it,
+            # so only deeper entries, and the item before this one, close here.
+            while stack[-1][0] > indent or (stack[-1][0] == indent and stack[-1][2] == 'item'):
+                stack.pop()
+            owner = stack[-1][1]
+            items[owner] = items.get(owner, 0) + 1
+            item = '%s[%d]' % (owner, items[owner])
+            stack.append((indent, item, 'item'))
+            rest = stripped[1:].lstrip(' ')
+            key_indent = indent + len(stripped) - len(rest)
+            if not rest or rest[0] in '"\'' or rest.startswith('#'):
+                continue
+            if re.match(r'[|>][-+0-9]*\s*(#.*)?$', rest):
+                block = indent
+                continue
+            m = re.match(key_re, rest)
+            if not m:
+                continue
+            key, value = m.group(1).strip(), m.group(2).strip()
+            indent = key_indent
+            path = item + '.' + key
+        else:
+            while stack[-1][0] >= indent:
+                stack.pop()
+            m = re.match(key_re, stripped)
+            if not m:
+                continue
+            key, value = m.group(1).strip(), m.group(2).strip()
+            path = stack[-1][1] + '.' + key if stack[-1][1] else key
+        kind = 'value'
+        if value == '' or value.startswith('#'):
+            nxt = rows[i + 1] if i + 1 < len(rows) else None
+            if nxt and nxt[1] >= indent and (nxt[2] == '-' or nxt[2].startswith('- ')):
+                kind = 'list'
+            else:
+                kind = 'map'
+            stack.append((indent, path, kind))
+        elif re.match(r'[|>][-+0-9]*\s*(#.*)?$', value):
+            block = indent
+        seen.setdefault(path, []).append((n, kind))
+    return [(p, occ) for p, occ in seen.items() if len(occ) > 1]
 
 def lookup(dotted):
     cur = data
@@ -841,6 +1050,16 @@ if tab_lines:
                "so these lines are invisible to the config parser and their "
                "settings silently fall back to defaults. Replace leading tabs "
                "with spaces." % _shown)
+    errors += 1
+for _path, _occ in repeated_keys(raw_lines):
+    _at = ', '.join(str(n) for n, _ in _occ)
+    if all(k == 'map' for _, k in _occ):
+        out.append("duplicate key `%s` (lines %s): read here as one merged block, "
+                   "but other YAML tools keep only the last. Combine them into "
+                   "one." % (_path, _at))
+    else:
+        out.append("duplicate key `%s` (lines %s): only the last one is used. "
+                   "Delete the others." % (_path, _at))
     errors += 1
 for line in enum_table.splitlines():
     line = line.strip()
@@ -869,6 +1088,15 @@ validate_enum_value() {
   local key="$1"
   local value="$2"
   [ -z "$key" ] && return 0
+  # testing.strict is left out of the enum table on purpose (its shape is a map
+  # of five types; see the note below the table). Written as ONE value it is the
+  # back-compat boolean, so it is checked like each type is: anything else was
+  # written and then read as unset, waiving a gate the user believed was on.
+  if [ "$key" = "testing.strict" ]; then
+    case "$value" in true|false) return 0 ;; esac
+    echo "Invalid value '$value' for '$key'. Allowed: true|false" >&2
+    return 1
+  fi
   local line enum_path enum_values v
   while IFS= read -r line; do
     [ -z "$line" ] && continue
@@ -1279,20 +1507,39 @@ import sys, re
 path_file, dotted = sys.argv[1], sys.argv[2]
 keys = dotted.split('.')
 
+# The text of a block scalar is text, never keys (see get_yaml_key).
+def block_indent(stripped, indent):
+    rest = stripped
+    if rest == '-' or rest.startswith('- '):
+        rest = rest[1:].lstrip(' ')
+        if re.match(r'[|>][-+0-9]*\s*(#.*)?$', rest):
+            return indent
+        indent += len(stripped) - len(rest)
+    m = re.match(r'([^:#\s][^:]*?)\s*:\s*(.*)$', rest)
+    if m and re.match(r'[|>][-+0-9]*\s*(#.*)?$', m.group(2).strip()):
+        return indent
+    return None
+
 def parse(lines):
     root = {}
     stack = [(-1, root)]
+    block = None
     for raw in lines:
         line = raw.rstrip('\n').rstrip('\r')
         stripped = line.lstrip(' ')
         if not stripped.strip() or stripped.lstrip().startswith('#'):
             continue
         indent = len(line) - len(stripped)
+        if block is not None:
+            if indent > block:
+                continue
+            block = None
         while stack and stack[-1][0] >= indent:
             stack.pop()
         if not stack:
             return root
         parent = stack[-1][1]
+        block = block_indent(stripped, indent)
         m = re.match(r'([^:#\s][^:]*?)\s*:\s*(.*)$', stripped)
         if not m:
             continue
@@ -1307,7 +1554,9 @@ def parse(lines):
             if hp >= 0:
                 value = value[:hp].strip()
         if value == '':
-            nm = {}; parent[key] = nm; stack.append((indent, nm))
+            # A repeated key merges (see get_yaml_key).
+            nm = parent[key] if isinstance(parent.get(key), dict) else {}
+            parent[key] = nm; stack.append((indent, nm))
         else:
             parent[key] = value
     return root
@@ -1345,7 +1594,9 @@ PYEOF
 # knobs; a block of just those knobs is the saving.
 # Valid key names are the output labels: rigor, review_mode, automation, workflow,
 # docs.density, story_granularity, qa.level, team.size, project.stage,
-# automation_always_ask, engine, testing.strict, system_overrides.
+# automation_always_ask, engine, testing.strict, system_overrides; and, only when
+# named, the derived lines gate_level, engine_values, specialists, review_gate,
+# input_methods, perf_budgets.
 resolve_config() {
   _yaml_helper_set_root
   local want=""
@@ -1374,9 +1625,23 @@ resolve_config() {
   # Every file below is named under $_YH_ROOT. A bare `project.yaml` is the
   # WORKING directory's, so run from src/ these checks found no file and
   # reported nothing, while the values above them resolved from the root.
-  local enum_err
+  # A repeated key is not "ignored": its blocks were merged and read. Those
+  # lines are split off so the suffix does not contradict them. Bash only, and
+  # only when something was reported -- this runs in every skill bootstrap.
+  local enum_err dup_lines="" bad_lines="" l
   enum_err=$(validate_yaml_enum "$_YH_ROOT/project.yaml" 2>&1 >/dev/null)
-  [ -n "$enum_err" ] && notes="${notes:+$notes; }$(echo "$enum_err" | tr '\n' ';' | sed 's/;$//') — ignored, chain continued"
+  if [ -n "$enum_err" ]; then
+    while IFS= read -r l; do
+      case "$l" in
+        "duplicate key "*) dup_lines="${dup_lines:+$dup_lines;}$l" ;;
+        ?*) bad_lines="${bad_lines:+$bad_lines;}$l" ;;
+      esac
+    done <<EOF
+$enum_err
+EOF
+    [ -n "$dup_lines" ] && notes="${notes:+$notes; }$dup_lines"
+    [ -n "$bad_lines" ] && notes="${notes:+$notes; }$bad_lines — ignored, chain continued"
+  fi
   if [ -f "$_YH_ROOT/project.local.yaml" ]; then
     enum_err=$(validate_yaml_enum "$_YH_ROOT/project.local.yaml" 2>&1 >/dev/null)
     [ -n "$enum_err" ] && notes="${notes:+$notes; }local: $(echo "$enum_err" | tr '\n' ';' | sed 's/;$//')"
@@ -1577,6 +1842,205 @@ EOF
     fi
   fi
 
+  # --- Derived lines: answers six steps that skills used to work out by hand ---
+  # Each is printed ONLY when asked for by name (--keys gate_level,...): a block
+  # without --keys, and every existing --keys call, prints exactly what it did
+  # before and spawns no extra interpreter. Each value carries its source in
+  # parentheses, like every other line. YAML `null` and `~` read back as those
+  # strings, which are not empty, so they are mapped to unset here once rather
+  # than in every skill (a skill once started an agent called "null").
+  _rc_named() { [ -n "$want" ] && _rc_want "$1"; }
+  _rc_tag() { if [ -n "$1" ]; then printf '%s(%s)' "$1" "$2"; else printf unset; fi; }
+  _rc_yaml() {  # _rc_yaml <file> <key>: the value, with null/~ as empty
+    local rv
+    rv=$(get_yaml_key "$1" "$2" 2>/dev/null)
+    case "$rv" in null|Null|NULL|"~") rv="" ;; esac
+    printf '%s' "$rv"
+  }
+  # _rc_tp <label>: a `- **Label**: value` line of the legacy
+  # technical-preferences.md; its `[TO BE CONFIGURED]` placeholder is unset.
+  _rc_tp() {
+    local f="$_YH_ROOT/.claude/docs/technical-preferences.md"
+    [ -f "$f" ] || return 0
+    awk -v lbl="**$1**:" '{ gsub(/\r/, "") }
+      index($0, lbl) { v = substr($0, index($0, lbl) + length(lbl))
+        sub(/^[ \t]+/, "", v); sub(/[ \t]+$/, "", v)
+        if (v !~ /TO BE CONFIGURED/) print v; exit }' "$f"
+  }
+  local tp_src=".claude/docs/technical-preferences.md"
+
+  # gate_level: the gate level per story type, as coding-standards.md's table
+  # defines it: testing.strict.<type> (project.local.yaml, then project.yaml),
+  # then the legacy plain `testing.strict: true|false`, then the default
+  # (blocking, except config/data: advisory). /smoke-check's own unset default
+  # for config is blocking (a build-health gate), so it is named beside config
+  # when config fell to the default. An invalid value is skipped, as in the
+  # testing.strict line above, and that line's notes name it.
+  local gl_all gl_out="" gk gv gsrc
+  if _rc_named gate_level; then
+    gl_all=$(get_yaml_key "$_YH_ROOT/project.yaml" testing.strict 2>/dev/null)
+    if [ -n "$gl_all" ] && ! validate_enum_value testing.strict.logic "$gl_all" 2>/dev/null; then gl_all=""; fi
+    for gk in logic integration visual ui config; do
+      gv=""; gsrc=""
+      if [ -f "$_YH_ROOT/project.local.yaml" ]; then
+        gv=$(get_yaml_key "$_YH_ROOT/project.local.yaml" "testing.strict.$gk" 2>/dev/null)
+        if [ -n "$gv" ] && ! validate_enum_value "testing.strict.$gk" "$gv" 2>/dev/null; then gv=""; fi
+        [ -n "$gv" ] && gsrc="project.local.yaml"
+      fi
+      if [ -z "$gv" ]; then
+        gv=$(get_yaml_key "$_YH_ROOT/project.yaml" "testing.strict.$gk" 2>/dev/null)
+        if [ -n "$gv" ] && ! validate_enum_value "testing.strict.$gk" "$gv" 2>/dev/null; then gv=""; fi
+        [ -n "$gv" ] && gsrc="project.yaml"
+      fi
+      if [ -z "$gv" ] && [ -n "$gl_all" ]; then gv="$gl_all"; gsrc="testing.strict"; fi
+      case "$gv" in
+        true)  gl_out="$gl_out $gk=blocking($gsrc)" ;;
+        false) gl_out="$gl_out $gk=advisory($gsrc)" ;;
+        *) if [ "$gk" = "config" ]; then
+             gl_out="$gl_out config=advisory(default; /smoke-check: blocking)"
+           else
+             gl_out="$gl_out $gk=blocking(default)"
+           fi ;;
+      esac
+    done
+    echo "gate_level:$gl_out"
+  fi
+
+  # engine_values: engine.name, .version and .language from project.yaml, each
+  # falling back to technical-preferences.md, the record a v1.0 project that
+  # never migrated still has. Its Engine line holds name and version together
+  # ("Godot 4.6", "Unreal Engine 5.4"): the last word is the version when it
+  # starts with a digit. Locked keys, so project.local.yaml is not read.
+  local ev_name ev_ver ev_lang ev_line ev_ns ev_vs ev_ls
+  if _rc_named engine_values || _rc_named specialists; then
+    ev_name=$(_rc_yaml "$_YH_ROOT/project.yaml" engine.name); ev_ns="project.yaml"
+    ev_ver=$(_rc_yaml "$_YH_ROOT/project.yaml" engine.version); ev_vs="project.yaml"
+    ev_lang=$(_rc_yaml "$_YH_ROOT/project.yaml" engine.language); ev_ls="project.yaml"
+    if [ -z "$ev_name" ] || [ -z "$ev_ver" ]; then
+      ev_line=$(_rc_tp Engine)
+      if [ -n "$ev_line" ]; then
+        case "${ev_line##* }" in
+          [0-9]*) [ -z "$ev_ver" ] && { ev_ver="${ev_line##* }"; ev_vs="$tp_src"; }
+                  [ -z "$ev_name" ] && { ev_name="${ev_line% *}"; ev_ns="$tp_src"; } ;;
+          *)      [ -z "$ev_name" ] && { ev_name="$ev_line"; ev_ns="$tp_src"; } ;;
+        esac
+      fi
+    fi
+    if [ -z "$ev_lang" ]; then
+      ev_lang=$(_rc_tp Language); ev_ls="$tp_src"
+    fi
+  fi
+  if _rc_named engine_values; then
+    echo "engine_values: name=$(_rc_tag "$ev_name" "$ev_ns") version=$(_rc_tag "$ev_ver" "$ev_vs") language=$(_rc_tag "$ev_lang" "$ev_ls")"
+  fi
+
+  # specialists: the agents a skill starts for engine work. primary is derived
+  # from the engine (Godot -> godot-specialist), else the legacy Primary line.
+  # code, shader, ui and additional come from project.yaml's specialists block;
+  # a member set to null is UNSET, never an agent name. Only when the block is
+  # absent do they fall back to technical-preferences.md (the v1.0 migration
+  # writes the whole block, with null for each member it did not know).
+  local sp_primary sp_psrc sp_src sp_code sp_shader sp_ui sp_add
+  if _rc_named specialists; then
+    case "$(printf '%s' "$ev_name" | tr '[:upper:]' '[:lower:]')" in
+      godot)   sp_primary="godot-specialist" ;;
+      unity)   sp_primary="unity-specialist" ;;
+      unreal*) sp_primary="unreal-specialist" ;;
+      *)       sp_primary="" ;;
+    esac
+    sp_psrc="engine.name"
+    if [ -z "$sp_primary" ]; then sp_primary=$(_rc_tp Primary); sp_psrc="$tp_src"; fi
+    if [ -n "$(get_yaml_child_keys "$_YH_ROOT/project.yaml" specialists 2>/dev/null)" ]; then
+      sp_src="project.yaml"
+      sp_code=$(_rc_yaml "$_YH_ROOT/project.yaml" specialists.code)
+      sp_shader=$(_rc_yaml "$_YH_ROOT/project.yaml" specialists.shader)
+      sp_ui=$(_rc_yaml "$_YH_ROOT/project.yaml" specialists.ui)
+      sp_add=$(get_yaml_array "$_YH_ROOT/project.yaml" specialists.additional 2>/dev/null \
+               | awk '$0 != "" && $0 != "null" && $0 != "~"' | paste -sd, - | sed 's/,/, /g')
+    else
+      sp_src="$tp_src"
+      sp_code=$(_rc_tp "Language/Code Specialist")
+      sp_shader=$(_rc_tp "Shader Specialist")
+      sp_ui=$(_rc_tp "UI Specialist")
+      sp_add=$(_rc_tp "Additional Specialists")
+      [ -z "$sp_code$sp_shader$sp_ui$sp_add" ] && sp_src="no specialists block"
+    fi
+    echo "specialists: primary=$(_rc_tag "$sp_primary" "$sp_psrc") code=${sp_code:-unset} shader=${sp_shader:-unset} ui=${sp_ui:-unset} additional=${sp_add:-none} ($sp_src; unset = skip that specialist)"
+  fi
+
+  # review_gate: whether a skill's own director gate runs, and whether the
+  # PHASE-GATEs run, at the resolved review_mode (director-gates.md): solo runs
+  # none, lean only the PHASE-GATEs, full all. How many PHASE-GATEs run is
+  # /gate-check's own rule (modes.workflow), not this line's.
+  local rg rgs rg_skill rg_phase
+  if _rc_named review_gate; then
+    rg=$(resolve_setting modes.review_mode)
+    rgs="${rg#*$(printf '\t')}"; rg="${rg%%$(printf '\t')*}"
+    case "$rg" in
+      full) rg_skill=run;  rg_phase=run ;;
+      lean) rg_skill=skip; rg_phase=run ;;
+      *)    rg_skill=skip; rg_phase=skip ;;
+    esac
+    echo "review_gate: skill-gates=$rg_skill phase-gates=$rg_phase (review_mode ${rg:-solo}, $rgs; a --review flag overrides)"
+  fi
+
+  # input_methods: the set of supported input methods, derived from project.yaml's
+  # platform block: keyboard/mouse when PC or Web is a target, gamepad and touch
+  # when their support is Full or Partial (Full | Partial | None, in any case:
+  # `full` is how every other value in the file is written), plus the primary
+  # input. Each method is listed once: a primary input spelt Keyboard, Mouse or
+  # Keyboard & Mouse is keyboard/mouse, Controller or Joypad is gamepad,
+  # Touchscreen is touch; any other primary input is added as written, in lower
+  # case. Without a platform block, technical-preferences.md's explicit Input
+  # Methods line. Locked keys, so project.local.yaml is not read.
+  local im_set="" im_t im_g im_to im_p im_pl
+  if _rc_named input_methods; then
+    if [ -n "$(get_yaml_child_keys "$_YH_ROOT/project.yaml" platform 2>/dev/null)" ]; then
+      im_t=$(get_yaml_array "$_YH_ROOT/project.yaml" platform.targets 2>/dev/null | tr '[:upper:]' '[:lower:]')
+      im_g=$(_rc_yaml "$_YH_ROOT/project.yaml" platform.gamepad_support)
+      im_to=$(_rc_yaml "$_YH_ROOT/project.yaml" platform.touch_support)
+      im_p=$(_rc_yaml "$_YH_ROOT/project.yaml" platform.primary_input)
+      printf '%s\n' "$im_t" | grep -qxE 'pc|web' && im_set="keyboard/mouse"
+      case "$im_g" in [Ff][Uu][Ll][Ll]|[Pp][Aa][Rr][Tt][Ii][Aa][Ll]) im_set="${im_set:+$im_set, }gamepad" ;; esac
+      case "$im_to" in [Ff][Uu][Ll][Ll]|[Pp][Aa][Rr][Tt][Ii][Aa][Ll]) im_set="${im_set:+$im_set, }touch" ;; esac
+      im_pl=$(printf '%s' "$im_p" | tr '[:upper:]' '[:lower:]')
+      case "$(printf '%s' "$im_pl" | tr -d ' ')" in
+        keyboard|mouse|keyboard/mouse|mouse/keyboard|keyboard+mouse|mouse+keyboard|keyboard\&mouse|mouse\&keyboard|keyboardandmouse|mouseandkeyboard|keyboard-mouse|kbm|kb/m|kb+m|m+kb|mkb)
+          im_pl="keyboard/mouse" ;;
+        gamepad|controller|gamecontroller|joypad) im_pl="gamepad" ;;
+        touch|touchscreen) im_pl="touch" ;;
+      esac
+      if [ -n "$im_pl" ]; then
+        case ", $im_set," in *", $im_pl,"*) ;; *) im_set="${im_set:+$im_set, }$im_pl" ;; esac
+      fi
+      echo "input_methods: ${im_set:-none} (project.yaml platform; primary: ${im_p:-unset})"
+    else
+      im_set=$(_rc_tp "Input Methods"); im_p=$(_rc_tp "Primary Input")
+      if [ -n "$im_set" ]; then
+        echo "input_methods: $im_set ($tp_src; primary: ${im_p:-unset})"
+      else
+        echo "input_methods: unset (no platform block in project.yaml, no Input Methods line)"
+      fi
+    fi
+  fi
+
+  # perf_budgets: the four committed performance budgets, each spelled out in
+  # full (the dead-settings audit matches whole dotted keys). Locked keys, so
+  # project.yaml only: a budget in project.local.yaml is reported on notes as
+  # not locally overridable and never applied, like every other locked key.
+  local pb_out="" pb_v
+  if _rc_named perf_budgets; then
+    pb_v=$(_rc_yaml "$_YH_ROOT/project.yaml" performance.target_framerate)
+    pb_out="$pb_out target_framerate=${pb_v:-unset}"
+    pb_v=$(_rc_yaml "$_YH_ROOT/project.yaml" performance.frame_budget_ms)
+    pb_out="$pb_out frame_budget_ms=${pb_v:-unset}"
+    pb_v=$(_rc_yaml "$_YH_ROOT/project.yaml" performance.draw_call_limit)
+    pb_out="$pb_out draw_call_limit=${pb_v:-unset}"
+    pb_v=$(_rc_yaml "$_YH_ROOT/project.yaml" performance.memory_ceiling_mb)
+    pb_out="$pb_out memory_ceiling_mb=${pb_v:-unset}"
+    echo "perf_budgets:$pb_out (project.yaml)"
+  fi
+
   if [ "$bare" = "1" ]; then
     # Bare form: values only. notes still surface, because a rejected enum value
     # or a missing interpreter must never be silent.
@@ -1633,8 +2097,10 @@ hook_warn() {
 # skill's own `allowed-tools`. That is also what lets a Bash-less agent preload
 # the skill.
 #
-# Only resolve_config is dispatchable: the bootstrap is the one caller, and
-# every name added here widens what a skill grant can reach.
+# resolve_config is what the bootstrap line runs. A short list of read-only
+# lookups (the second branch below) is dispatchable too, for skills that call
+# one through the Bash tool with a narrow grant. Every name added here widens
+# what a skill grant can reach, so only read-only lookups belong in that list.
 #
 # ROOT. Run from a subdirectory, the skill shell's cwd has no project.yaml and
 # $CLAUDE_PROJECT_DIR is the launch directory, not the repo root, so
@@ -1643,7 +2109,10 @@ hook_warn() {
 # fills CLAUDE_PROJECT_DIR when that has no project.yaml, so rules 1-2 (cwd
 # first, for nested projects) keep their precedence.
 #
-# ALWAYS exits 0: a non-zero exit from an injected command aborts the skill.
+# resolve_config, and a usage error, ALWAYS exit 0: a non-zero exit from an
+# injected command aborts the skill. The lookups exit with their function's
+# status (2 when the project root cannot be found), which is why none of them
+# belongs in an injected line.
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
   case "${1:-}" in
     resolve_config)
@@ -1654,8 +2123,29 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
       fi
       resolve_config "$@"
       ;;
+    resolve_setting|get_yaml_key|get_effective_yaml_key|validate_yaml_enum|validate_enum_value|is_locally_overridable)
+      # Read-only lookups, run as `bash <path>/yaml-helper.sh <function> <args>`,
+      # so a skill can pre-approve them with one narrow grant. A `(cd ... && source
+      # ... && fn)` call matches no specific grant. Runs from the
+      # project root, as that form did, so project.yaml arguments resolve from a
+      # subfolder too; keeps the function's exit status (validate_enum_value and
+      # is_locally_overridable answer with it). is_locally_overridable also
+      # prints its 0 or 1: a caller that appends `; echo $?` to see it builds a
+      # compound command that no grant approves.
+      _yh_fn="$1"; shift
+      _yh_self_root=$(cd "$(dirname "$0")/../.." 2>/dev/null && pwd)
+      if [ -z "$_yh_self_root" ] || ! cd "$_yh_self_root"; then
+        echo "yaml-helper.sh: cannot find the project root from $0" >&2
+        exit 2
+      fi
+      "$_yh_fn" "$@"
+      _yh_rc=$?
+      [ "$_yh_fn" = is_locally_overridable ] && echo "$_yh_rc"
+      exit "$_yh_rc"
+      ;;
     *)
       echo "yaml-helper.sh: usage: bash yaml-helper.sh resolve_config [--keys k1,k2,...] [<system>]"
+      echo "                       bash yaml-helper.sh resolve_setting|get_yaml_key|get_effective_yaml_key|validate_yaml_enum|validate_enum_value|is_locally_overridable <args>"
       ;;
   esac
   exit 0

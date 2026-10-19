@@ -43,19 +43,24 @@ After conflict detection, analyse the dependency graph across all ADRs.
 Bash: bash .claude/scripts/adr-dep-graph.sh
 ```
 
-It collects every `Depends On` edge, runs Kahn's algorithm, and emits
-`ADRS:` / `EDGES:` / `NO_DEPS_SECTION:` / `CYCLE:`. A model tracing A→B→C→A across
+It collects every `Depends On` edge, finds the cycles and the order, and emits
+`ADRS:` / `EDGES:` / `NO_DEPS_SECTION:` / `UNFILLED_DEPS:` / `CYCLE:` /
+`BLOCKED_BY_CYCLE:` / `ORDER:`. A model tracing A→B→C→A across
 a dozen ADRs eventually misses an edge; the algorithm cannot. It reports
 observations, not a verdict — you apply the meaning below.
 
-**`NO_DEPS_SECTION` is load-bearing**: it makes "no cycles because the graph is
-clean" distinguishable from "no cycles because half the ADRs declare no
-dependencies". Report the second case as a structural gap, never as a clean graph.
+**`NO_DEPS_SECTION` and `UNFILLED_DEPS` are load-bearing**: they make "no cycles
+because the graph is clean" distinguishable from "no cycles because half the ADRs
+declare no dependencies, or left the template's placeholder in the row". Report
+the second case as a structural gap, never as a clean graph, and name each
+`UNFILLED_DEPS` ADR as unfilled: what it depends on is unknown, not none.
 
 Then interpret:
 
-1. **Topological sort**: the emitted order — ADRs with no
+1. **Topological sort**: the `ORDER:` row, as emitted — ADRs with no
    dependencies come first (Foundation), ADRs that depend on those come next, etc.
+   Do not re-sort it by hand. An ADR in `NO_DEPS_SECTION` or `UNFILLED_DEPS` sits
+   in it as if it depended on nothing: mark it so.
 2. **Flag unresolved dependencies**: cross the `EDGES:` list against the `## Status`
    values already scanned in Phase 1b. If ADR-A depends on an ADR that is still
    `Proposed` or does not exist, flag it:
@@ -64,7 +69,10 @@ Then interpret:
        ADR-0005 cannot be safely implemented until ADR-0002 is Accepted.
    ```
 3. **Cycle detection**: every `CYCLE:` line the script emitted is a
-   `DEPENDENCY CYCLE` — report each one. Do not re-derive them by hand:
+   `DEPENDENCY CYCLE` — report each one, with the edges its line shows (one of
+   them is the edge to cut). A `BLOCKED_BY_CYCLE:` ADR is on no cycle: it waits
+   for one to break, so list it as blocked, never as part of the cycle, and never
+   suggest cutting its own edges. Do not re-derive them by hand:
    ```
    🔴 DEPENDENCY CYCLE: ADR-0003 → ADR-0006 → ADR-0003
       This cycle must be broken before either can be implemented.

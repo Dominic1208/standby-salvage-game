@@ -20,7 +20,7 @@ Files created:
 - .github/workflows/tests.yml
 
 Next steps:
-1. [Engine-specific install step, e.g., "Install GdUnit4 via AssetLib"]
+1. [Engine-specific install step, e.g., "Install GdUnit4 via the Asset Store (AssetLib before Godot 4.7)"]
 2. Write your first test in the engine's test root:
    tests/unit/[system]/[system]_[feature]_test.gd (Godot),
    Assets/Tests/EditMode/[System]Tests.cs (Unity), or

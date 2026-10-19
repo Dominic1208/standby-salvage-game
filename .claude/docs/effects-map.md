@@ -124,6 +124,9 @@ The rule for deciding which side a setting belongs on:
 | `performance.enforce` | Whether budget violations block your local work (CI enforces project defaults) |
 | `features.session_state` | Your session tracking preference |
 | `features.token_budget_warn_at` | Your personal cost threshold |
+| `features.read_guard` | Whether your whole-file reads of large design docs are refused |
+| `features.read_guard_kb` | The size over which they are |
+| `updates.check` | Whether you see the new-release line; turning it off for you leaves it on for teammates |
 
 **Locked to `project.yaml`** (project-wide — would create artifact divergence if local):
 
@@ -398,7 +401,7 @@ These skills run the same way at `full`, `lean` and `solo`. None of them takes a
 |-------|--------------------------|
 | **review-all-gdds** | Phase 2 consistency pass and Phase 3 design-theory pass, in parallel |
 | **architecture-review** | The primary engine specialist is consulted after the engine audit (recorded as NOT ASSESSED when no engine is configured) |
-| **dev-story** | Core programmer routing, plus the engine specialist when the story involves engine-specific APIs or patterns, and always when engine risk is HIGH |
+| **dev-story** | Core programmer routing, plus the engine specialist's check of every code story |
 | **code-review** | Language, shader and UI specialists when an engine is configured, plus `qa-tester` for Logic and Integration stories |
 | **security-audit** | `security-engineer` is spawned to run the audit |
 
@@ -458,7 +461,7 @@ pipeline's own review steps run in every mode.
 **Default:** `minimal` — see the rationale block above `_yaml_helper_defaults`
 in `.claude/hooks/yaml-helper.sh`. Short version: the heavier tier costs more to
 reach working code without producing a better result.
-**Set by:** `/start` (Phase 3d), `/settings`
+**Set by:** `/start` (Phase 4: inferred from the user's description, shown, saved on a yes), `/settings`
 **Read by:** nothing directly — it is read *through* the six knobs it supplies
 
 **Priority chain:** `modes.rigor` in `project.yaml` → hardcoded default `minimal`
@@ -996,7 +999,7 @@ The list is a YAML list of these strings. Skills check whether the current decis
 **Values:** `coarse` | `balanced` | `fine`
 **Default:** *none* — supplied by `modes.rigor` (`minimal`, the default, yields `coarse`; `standard` yields `balanced`; `full` yields `fine`)
 **Set by:** `/start` (via `modes.rigor`), `/settings`
-**Read by:** `/create-epics`, `/create-stories`, `/dev-story`, `/sprint-plan`, `/story-done`, `/sprint-status`
+**Read by:** `/create-stories`, `/sprint-plan`, `/sprint-status`, `/story-readiness`
 
 **Priority chain:** `modes.story_granularity` in `project.yaml` → `modes.rigor` expansion → *(no hardcoded default)*
 
@@ -1016,11 +1019,8 @@ The list is a YAML list of these strings. Skills check whether the current decis
 
 | Skill | coarse | balanced | fine |
 |-------|--------|----------|------|
-| **create-epics** | Generates 3–5 child stories per epic | Generates 5–10 child stories per epic | Generates 10–20 child stories per epic |
 | **create-stories** | Each story carries 5–10 ACs covering an entire feature | Each story carries 2–4 ACs covering one task | Each story carries 1 AC; story name = AC restatement |
-| **dev-story** | Routing prompt expects multi-day implementation cycle. Subagent given longer working context. | Standard 1–2 day expectation. | Each story implementable in hours; subagent given tighter context. |
 | **sprint-plan** | Allocates 2–4 stories per sprint based on velocity. | Allocates 6–10 stories per sprint. | Allocates 15–25 stories per sprint. |
-| **story-done** | Fires every 3–5 days on average. | Fires every 1–2 days on average. | Fires multiple times per day. |
 | **sprint-status** | Burn-down reads in feature-sized chunks. | Burn-down reads in task-sized chunks. | Burn-down reads in AC-sized chunks. |
 
 ---
@@ -1035,9 +1035,9 @@ The list is a YAML list of these strings. Skills check whether the current decis
 
 **Priority chain:** `docs.density` in `project.yaml` → `modes.rigor` expansion → *(no hardcoded default)*
 
-> **Distinct from `workflow`, but no longer independent by default.** `workflow`
+> **Distinct from `workflow`, but not independent by default.** `workflow`
 > controls which sections exist; `density` controls how deep each section goes.
-> `modes.rigor` now sets both together, so the diagonal (`rigor: full` → 8
+> `modes.rigor` sets both together, so the diagonal (`rigor: full` → 8
 > sections *and* thorough prose) is what you get without asking. The off-diagonal
 > is still reachable and is the reason `rigor` overrides both ways: `rigor: full`
 > + an explicit `docs.density: terse` gives "all sections but each is compact" —
@@ -1189,14 +1189,14 @@ closing, or produces a warning and lets work continue — per test type
 
 | Aspect | minimal | standard | full |
 |--------|---------|----------|------|
-| Logic stories | No test required, no gap flagged | Unit test required (strict.logic controls block) | Unit test + coverage minimum |
+| Logic stories | No test required, no gap flagged | Unit test required (strict.logic controls block) | Unit test, and every acceptance criterion covered |
 | Integration stories | No test required | Integration test or playtest doc required | Same + regression coverage |
 | Visual stories | Screenshot + lead sign-off required — the look is never waived (strict.visual controls block) | Same | Same |
 | UI stories | Screenshot of each screen touched required — never waived (strict.ui controls block) | Same | Same |
-| Config/Data stories | No evidence required | Smoke check advisory | Smoke check required |
+| Config/Data stories | No evidence required | Smoke check advisory | Smoke check required (blocking unless `testing.strict.config: false`) |
 | /story-done test gate | Acceptance criteria only, except the UI and Visual/Feel screenshot, which is never waived | Enforced per story type | Enforced for every story type |
 | /gate-check phase enforcement | No test gates | Logic + integration must pass | Full coverage + regression suite |
-| /dev-story routing prompt | No "Test required: ..." line | Per-type test requirement included | Per-type + coverage target included |
+| /dev-story routing prompt | No "Test required: ..." line | Per-type test requirement included | Per-type, and every criterion must be covered |
 | Regression suite required by | Never | Polish stage | Production stage |
 | Best for | Jam games, throwaway prototypes, fast iteration | Most projects | Commercial, console cert, learning, paranoid teams |
 
@@ -1206,9 +1206,9 @@ closing, or produces a warning and lets work continue — per test type
 
 | Skill | minimal | standard | full |
 |-------|---------|----------|------|
-| **story-done** | Acceptance criteria check only — no test evidence required, except the UI and Visual/Feel screenshot, which is never waived | Per-type evidence required; strictness from `testing.strict` | All types require evidence; strictness from `testing.strict` |
+| **story-done** | Acceptance criteria check only — no test evidence required, except the UI and Visual/Feel screenshot, which is never waived | Per-type evidence required; strictness from `testing.strict`; more than half the criteria untested blocks | Per-type evidence required; a Config/Data smoke report blocks by default; any untested criterion blocks |
 | **story-readiness** | No test requirement validated, except the UI and Visual/Feel screenshot requirement | Test requirement per story type validated | Test requirement + coverage target validated |
-| **dev-story** | Routing prompt has no "Test required" line | Per-type test requirement passed to programmer agent | Coverage target passed to programmer agent |
+| **dev-story** | Routing prompt has no "Test required" line | Per-type test requirement passed to programmer agent | Per-type requirement, and every criterion must be covered by a test |
 | **smoke-check** | Optional; with no game tests (WAIVED), `commands.smoke` (else `commands.build`) when set and the launch and critical-path checks carry the verdict; a build nobody launched is NOT ASSESSED | Required before phase transition | Required before every commit |
 | **gate-check** | No test enforcement at phase transitions | Logic + integration tests must pass | Full coverage check + regression suite |
 | **qa-plan** | Skipped entirely or minimal smoke plan | Full plan per story type | Full plan + coverage targets per system |
@@ -1741,7 +1741,7 @@ implementation, review, and architecture validation
 
 | Skill | How engine.name is used |
 |-------|------------------------|
-| **dev-story** | Routes code stories to language specialist. Spawns engine specialist alongside for HIGH engine-risk stories or engine-specific API usage. |
+| **dev-story** | Routes code stories to a programmer agent, then hands the changed files to the language specialist (the generic engine specialist when none is set) for an engine-API check. |
 | **code-review** | Routes review to language, shader, or UI specialist based on file type being reviewed. |
 | **architecture-decision** | Loads `docs/engine-reference/[engine]/VERSION.md` before authoring. Spawns engine specialist to validate ADR for API correctness and post-cutoff compatibility. |
 | **create-architecture** | Includes engine-specific constraints and patterns in architecture doc based on engine choice. |
@@ -1945,9 +1945,8 @@ skeleton-first output files for recovery
 **Values:** `off` | `on`  
 **Default:** `on`  
 **Set by:** `/settings`  
-**Read by:** Six hooks — `session-start.sh` (its recovery preview only),
-`pre-compact.sh`, `post-compact.sh`, `session-stop.sh`, `log-agent.sh` and
-`log-agent-stop.sh`. No skill reads it, and neither does `statusline.sh`.
+**Read by:** Five hooks — `session-start.sh` (its recovery preview only),
+`pre-compact.sh`, `session-stop.sh`, `log-agent.sh` and `log-agent-stop.sh`. No skill reads it, and neither does `statusline.sh`.
 
 > **`on` is the recommended setting.** Long-form skills write self-describing
 > skeleton files upfront, which covers much of mid-task recovery on its own; the
@@ -1980,7 +1979,7 @@ skeleton-first output files for recovery
 
 | Value | Intent |
 |-------|--------|
-| `off` | Recovery via skeleton-first output files. Long-form skills write a complete skeleton (all section headers, empty bodies) before starting. If context clears or compacts, the agent reads the skeleton + relevant docs and resumes. The six session-state hooks do nothing, so no logs; skills still update the checkpoint in `active.md`, but session start does not show it. Saves at most ~750 tokens per session start. |
+| `off` | Recovery via skeleton-first output files. Long-form skills write a complete skeleton (all section headers, empty bodies) before starting. If context clears or compacts, the agent reads the skeleton + relevant docs and resumes. The five session-state hooks do nothing, so no logs; skills still update the checkpoint in `active.md`, but session start does not show it. Saves at most ~750 tokens per session start. |
 | `on` | Full session tracking. Session-stop archival, compaction log and agent audit log all active. Adds the checkpoint preview to each session start, capped at 25 lines or 3,000 characters (at most ~750 tokens). Compaction hooks log to disk and add nothing to Claude's context. |
 
 ---
@@ -1999,9 +1998,8 @@ skeleton-first output files for recovery
 |------|--------------------|-------------------|
 | **session-start.sh** | Runs normally (git/sprint context) — skips the `active.md` checkpoint preview | Runs fully, including the `active.md` checkpoint preview |
 | **detect-gaps.sh** | Runs unchanged — gap detection is independent of session state | Runs unchanged |
-| **pre-compact.sh** | No-op — exits silently (no compaction-log append) | The CHECKPOINT block (and any STATUS lines) from `active.md`, changed and untracked file names and design docs with WIP markers — each list capped at 20 — then a compaction-log append; the output goes to the debug log, since PreCompact output never reaches Claude |
-| **post-compact.sh** | No-op — exits silently | Runs: prints a re-read reminder to the debug log (PostCompact output never reaches Claude; `session-start.sh` restores context) |
-| **session-stop.sh** | No-op — exits silently | Archives `active.md` to `session-log.md` when it has changed, appends commits and uncommitted file names |
+| **pre-compact.sh** | No-op — exits silently (no compaction-log append) | Appends one line to `compaction-log.txt` and prints nothing (PreCompact output never reaches Claude; `session-start.sh` restores context) |
+| **session-stop.sh** | No-op — exits silently | Archives `active.md` to `session-log.md` when it has changed, appends commits and uncommitted file names, writes the spawn tally to `session-cost.md`; prints nothing |
 | **log-agent.sh** | No-op — exits silently | Appends to agent-audit.log |
 | **log-agent-stop.sh** | No-op — exits silently | Appends to agent-audit.log |
 
@@ -2148,7 +2146,7 @@ the `<!-- CHECKPOINT -->` block; the others append a SESSION EXTRACT.
 **Values:** float between 0.0 and 1.0
 **Default:** `0.7` (warn at 70%)
 **Set by:** `/settings`
-**Read by:** nothing yet (intended readers: `pre-compact.sh`, `session-start.sh`, `statusline.sh`)
+**Read by:** nothing yet (intended readers: `session-start.sh`, `statusline.sh`)
 
 **Priority chain:** `features.token_budget_warn_at` in `project.yaml` → hardcoded default of `0.7`
 
@@ -2165,6 +2163,88 @@ the `<!-- CHECKPOINT -->` block; the others append a SESSION EXTRACT.
 | Below `warn_at` | No warning |
 | At or above `warn_at` | `statusline.sh` shows context usage in yellow; next session-start hook emits a one-line note: *"Last session reached [X]% context — consider /clear if continuing work."* |
 | At 90%+ | Yellow becomes red regardless of `warn_at` value |
+
+---
+
+## features.read_guard
+
+**Controls:** Whether a whole-file Read of a large design doc is refused  
+**Values:** `on` | `off`; `true` and `false` also work  
+**Default:** `on`  
+**Set by:** `/settings`  
+**Read by:** `validate-read.sh` (PreToolUse Read), through `.claude/scripts/read-guard.sh check`
+
+> **Priority chain:** `features.read_guard` in `project.local.yaml` →
+> `project.yaml` → default **`on`**.
+
+A Read with no offset and no limit of a file under `design/`, `docs/architecture/`
+or `production/session-state/` that is over `features.read_guard_kb` is refused.
+The refusal lists the doc's headings with their line numbers, so the next call
+reads one section with offset and limit. A ranged read always passes, so no skill
+can get stuck behind the guard; images and PDFs are never checked. It blocks
+rather than warns because a warning would let the whole read happen, and the
+read is the cost.
+
+---
+
+## features.read_guard_kb
+
+**Controls:** The size over which `features.read_guard` refuses a whole-file read  
+**Values:** a whole number of KB (1 KB = 1,024 bytes)  
+**Default:** `40`  
+**Set by:** `/settings`  
+**Read by:** `validate-read.sh`, through `.claude/scripts/read-guard.sh check`
+
+> **Priority chain:** `features.read_guard_kb` in `project.local.yaml` →
+> `project.yaml` → default **`40`**. A value that is not a whole number is
+> ignored, and `read-guard.sh check` names it on its `threshold` row.
+
+By file size, not lines: token cost follows bytes, and one table row can be 2 KB.
+40 KB is about 10,000 tokens and sits above every shipped template (the largest is
+33 KB).
+
+---
+
+## updates.check
+
+**Controls:** Whether session start tells you that a newer Claude Code Game
+Studios release is out  
+**Values:** `true` | `false`  
+**Default:** `true`  
+**Set by:** `/settings` (`/settings --local updates.check=false` turns it off
+for you only)  
+**Read by:** `session-start.sh`, through `update-check.sh`
+
+> When a newer release is out, session start shows one line: *"Update: Claude
+> Code Game Studios 1.3.0 is out (this project has 1.2.0). What changed and how
+> to upgrade: <release page> — to stop this notice: /settings --local
+> updates.check=false"*. Nothing is downloaded or changed; upgrading stays your
+> call (`UPGRADING.md`).
+
+> **Priority chain:** `updates.check` in `project.local.yaml` → `project.yaml` →
+> default **`true`**. A value other than `true` or `false` is skipped and named
+> in the session-start schema errors. The check is also off whenever the `CI`
+> environment variable is set: nobody reads session start there.
+
+---
+
+### How it checks
+
+- At most once a day, a background job asks GitHub for the latest release
+  (`api.github.com/repos/Donchitos/Claude-Code-Game-Studios/releases/latest`)
+  and stores the answer in `~/.cache/claude-code-game-studios/latest-release`
+  (under `$XDG_CACHE_HOME` when that is set). The file is per user and outside
+  every project, so `git status` stays clean and one check covers every project
+  on the machine.
+- Session start only reads that file. It makes no network call and never waits;
+  a new answer shows from the next session on.
+- Offline, or with neither `curl` nor `wget`, it stays silent. The cache keeps
+  the last answer, plus an `error=` line saying why the last check failed.
+- Pre-releases are never offered.
+- The version compared is the one the framework's own hook files carry, not
+  `framework.version`: an upgrade that keeps your `project.yaml` leaves that
+  number behind, and the line would announce the release you already have.
+- With `false`, nothing is read and nothing is requested.
 
 ---
 
@@ -2198,7 +2278,7 @@ the `<!-- CHECKPOINT -->` block; the others append a SESSION EXTRACT.
 **Controls:** Tracks which CCGS version created or last touched this project
 **Values:** `framework.version` (semver string) + `framework.last_upgraded` (ISO date)
 **Default:** stamped in the template's `project.yaml` at each release
-**Set by:** the template; `/start` (Phase 3c), `/setup-engine` and `/gate-check` write the block into a `project.yaml` they create, and `migrate-v1-config.sh` (which `/adopt` runs) writes `framework.version` into the one it builds
+**Set by:** the template; `/start` (through `set-stage.sh`), `/setup-engine` and `/gate-check` write the block into a `project.yaml` they create, and `migrate-v1-config.sh` (which `/adopt` runs) writes `framework.version` into the one it builds
 **Read by:** no skill branches on it — it is file metadata, not a behavioural setting. It appears in `/start`, `/gate-check`, `/settings` and `/setup-engine` as part of the `project.yaml` block they **write or display**, and in `yaml-helper.sh`.
   *(The four skills above were verified to name it; whether each reads it or merely emits it was NOT separated, so this says 'appears in', not 'read by'.)*
 
@@ -2208,8 +2288,8 @@ the `<!-- CHECKPOINT -->` block; the others append a SESSION EXTRACT.
 
 ```yaml
 framework:
-  version: "1.1.0"
-  last_upgraded: "2026-05-14"
+  version: "1.2.0"
+  last_upgraded: "2026-10-18"
 ```
 
 | Field | Purpose |
@@ -2315,8 +2395,8 @@ Godot project. Use this as the reference shape when authoring or migrating.
 schema_version: 1
 
 framework:
-  version: "1.1.0"
-  last_upgraded: "2026-05-15"
+  version: "1.2.0"
+  last_upgraded: "2026-10-18"
 
 project:
   name: "Forge Knights"
@@ -2377,7 +2457,7 @@ platform:
 
 engine:
   name: "Godot"              # Godot | Unity | Unreal — set by /setup-engine
-  version: "4.6"
+  version: "4.7"
   language: "GDScript"       # GDScript | C# | C++ | Blueprint
   rendering: "Forward+"
   physics: "Jolt"
@@ -2419,6 +2499,11 @@ commands:                    # simple string OR OS-aware map per command
 features:
   session_state: on          # off | on
   token_budget_warn_at: 0.7  # 0.0-1.0; warn at this context % usage
+  read_guard: on             # on | off; true and false also work. Refuse whole-file reads of large design docs
+  read_guard_kb: 40          # the size, in KB, over which they are refused
+
+updates:
+  check: true                # false: no new-release line at session start
 ```
 
 And a minimal sparse `project.local.yaml` example — a single developer who wants autonomous mode locally:

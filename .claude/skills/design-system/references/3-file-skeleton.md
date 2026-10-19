@@ -106,15 +106,6 @@ Use the template structure from `.claude/docs/templates/game-design-document.md`
 [To be designed]
 ```
 
-> **This skeleton and the template must stay identical in section set and
-> order.** They diverged once and it was invisible: the skeleton omitted
-> `## Game Feel` and `## Cross-References`, so §3's own rule — *"§4 cannot fill a
-> section §3 never created"* — made both unreachable **at every tier, `full`
-> included**, while §3's prose above still said *"every other section in the
-> template is scaffolded"*. Two agents authoring a combat GDD noticed the gap
-> only by opening the template. If you add a section to one file, add it to the
-> other in the same commit.
-
 Ask: "May I create the skeleton file at `design/gdd/[system-name].md`?"
 
 If the user declines: Stop with the following message:

@@ -38,7 +38,7 @@ the executable Phase 1 step 3 resolved):
 godot --headless --path . --import
 godot --headless -s -d --remote-debug tcp://127.0.0.1:0 res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests --ignoreHeadlessMode 2>&1
 ```
-gdUnit4's exit code gives the verdict (6.1.3):
+gdUnit4's exit code gives the verdict (run on 6.1.3 and 6.2.2):
 - **0** — every test passed: PASS. **But exit 0 over zero tests is not a pass:**
   gdUnit4 aborts and still exits 0, so if the output says `No test cases found`,
   the verdict is `NOT ASSESSED — no tests found`.
@@ -60,8 +60,7 @@ debugger and the run hangs at a `debug>` prompt until the timeout.
 Unity **can** run tests headlessly via shell. Do not skip to reading artifacts.
 
 First confirm the Unity Test Framework is installed. A project without it does
-not fail cleanly — it **hangs** until something kills it, which is the
-observation the old "Unity cannot test headlessly" advice was generalised from:
+not fail cleanly — it **hangs** until something kills it:
 ```bash
 grep -q 'com.unity.test-framework' Packages/manifest.json && echo present || echo ABSENT
 ```

@@ -22,11 +22,11 @@ Draw the smoke test checklist from, in priority order (and name the one you used
 **Name the source you used in the report**, on its own line — *"Checklist source:
 `production/qa/smoke-tests.md`"*, or *"Checklist source: standard fallback list —
 no QA plan scope, no `production/qa/smoke-tests.md`, no `tests/smoke/`."* The
-fallback is a real fallback, so nothing is silently skipped here; what was
-missing is that a report drawn from the generic list and one drawn from this
-project's own smoke definitions were indistinguishable. `/gate-check` now
-validates a smoke report's claims against the repo, and it cannot weigh them
-without knowing what the checklist was drawn from.
+fallback is a real fallback, so nothing is silently skipped here, but without
+that line a report drawn from the generic list reads the same as one drawn from
+this project's own smoke definitions. `/gate-check` validates a smoke report's
+claims against the repo, and it cannot weigh them without knowing what the
+checklist was drawn from.
 
 Tailor batches 2 and 3 to the actual systems identified from the sprint or QA
 plan. Replace bracketed placeholders with real mechanic names from the current

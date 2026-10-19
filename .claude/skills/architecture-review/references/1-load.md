@@ -16,31 +16,67 @@
 
 ### Phase 1a — L0: Summary Scan (fast, low tokens)
 
-**Freshness check before any scan.** Locate the latest prior report — Glob
-`docs/architecture/architecture-review-*.md` and take the newest — then:
+**Freshness check before any scan.** A prior report can stand in for this run
+only if nothing it rests on has changed: the documents, the engine reference,
+the project config, this skill, and the kind of review that produced it.
+
+In `rtm` mode, skip the check and say so — *"Freshness check: not run — rtm
+builds the matrix fresh, because stories and tests change without any review
+input changing."*
+
+Otherwise locate the latest prior report — Glob
+`docs/architecture/architecture-review-*.md` and take the newest — and check
+**the review inputs**: every file the phases below read that can change a
+finding or the verdict. `[engine]` is the lowercased `engine.name` from
+`project.yaml`, the value Phase 5 uses; with no engine configured, leave the two
+engine-reference paths out.
 
 ```
-Bash: bash .claude/scripts/review-receipts.sh check "[latest-report]" docs/architecture/adr-*.md design/gdd/*.md
+Bash: bash .claude/scripts/review-receipts.sh check "[latest-report]" docs/architecture/adr-*.md design/gdd/*.md docs/architecture/tr-registry.yaml docs/architecture/architecture.md docs/engine-reference/[engine]/*.md docs/engine-reference/[engine]/modules/*.md project.yaml .claude/docs/technical-preferences.md docs/consistency-failures.md .claude/skills/architecture-review/SKILL.md .claude/skills/architecture-review/references/*.md
 ```
+
+Phase 8 stamps the same list into this run's report; keep the two identical,
+and add any file a phase starts reading to both. The check also compares every
+file the prior report stamped, named here or not, and prints `GONE:` for one
+that no longer exists.
+
+Then read the prior report's `Mode:` and `Workflow:` lines. It **covers** this
+run only when its Mode is this run's mode (for `single-gdd`, the same path) or
+`full`, and its Workflow is this run's resolved `workflow` or `full`. A report
+without those lines was written before they existed and covers nothing.
 
 - **Any `UNRESOLVED`** — check this FIRST; it disqualifies every option
-  below. One of the two globs matched no file, so that whole document class
-  was never examined and the comparison covered less than it appears to.
-  Say which pattern came back unresolved and stop: an ADR or GDD directory
-  that is empty, renamed or misspelled is a finding about the project, not a
-  reason to stand on a prior report. Never read a set of `UNCHANGED` lines as
+  below. A glob matched no file, so that whole document class was never
+  examined and the comparison covered less than it appears to. Say which
+  pattern came back unresolved, and neither stand on the prior report nor
+  scope a re-run from it: an ADR or GDD directory that is empty, renamed or
+  misspelled is a finding about the project. Run the review as asked; its
+  verdict is NOT ASSESSED for the missing class (Phase 7), never a stop with
+  no report. Never read a set of `UNCHANGED` lines as
   "everything is current" while an `UNRESOLVED` line is present — the set
   compared was not the set requested.
-- **Everything `UNCHANGED`** (and no `UNRESOLVED`) — nothing this review
-  reads has changed since that report; re-running reproduces it. Surface the
-  prior report's date and verdict and offer via `AskUserQuestion`: `[A] Stand
-  on the prior report (Recommended)` / `[B] Re-run the full review anyway` —
-  `guided` proceeds with [A] and notes it; `autonomous` logs via
-  `log_decision` and stands on the prior report.
-- **Some `CHANGED`/`NEW`** — name them, then scope instead of re-running
-  everything: recommend `/architecture-review [system]` (single-system mode)
-  for just the changed systems. A full re-run stays available on request,
-  and structural changes (a `NEW` ADR, a deleted file) warrant one.
+- **The prior report does not cover this run** — check this second, whatever
+  the other lines say. Say why: *"The last report was a [mode] review at
+  workflow [tier]; it does not cover this run."* Run the review as asked.
+  Never offer to stand on it or to scope a re-run from it.
+- **Everything `UNCHANGED`** — nothing this review reads has changed since
+  that report; re-running reproduces it. Surface the prior report's date,
+  mode and verdict and offer via `AskUserQuestion`: `[A] Stand on the prior
+  report (Recommended)` / `[B] Re-run the full review anyway` — `guided`
+  proceeds with [A] and notes it; `autonomous` logs via `log_decision` and
+  stands on the prior report.
+- **Only GDDs or ADRs `CHANGED`/`NEW`** — name them, then scope instead of
+  re-running everything: recommend `/architecture-review single-gdd [path]`
+  for just the changed systems. A full re-run stays available on request, and
+  a `NEW` ADR warrants one.
+- **Anything else `CHANGED`, `NEW` or `GONE`** — a deleted GDD or ADR, the TR
+  registry, `architecture.md`, the engine reference, `project.yaml`,
+  `technical-preferences.md`, `consistency-failures.md`, or this skill's own
+  files. These reach every phase, so recommend re-running the review as
+  asked, never a `single-gdd` scope, and name each input with what it
+  affects — e.g. *"The engine reference changed after the
+  last report: its deprecated-API audit, which `/gate-check` reads, was made
+  against the old one."*
 - **`RECEIPT: NONE`** — no prior report, or one written before receipts
   existed. Proceed with the full review; this run's report will carry the
   first stamps.

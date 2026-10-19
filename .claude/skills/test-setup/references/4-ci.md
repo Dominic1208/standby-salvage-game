@@ -39,18 +39,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           lfs: true
 
-      # godot-version must be a full release such as 4.6.1 (`godot --version`
-      # shows it); VERSION.md's "4.6" is not one. version: installed runs the
+      # godot-version must be a full release such as 4.7.2 (`godot --version`
+      # shows it); VERSION.md's "4.7" is not one. version: installed runs the
       # gdUnit4 committed in addons/ -- without it the action deletes that
       # copy and installs the latest release, which may not match your tests.
       - name: Run GdUnit4 Tests
         uses: godot-gdunit-labs/gdUnit4-action@v1
         with:
-          godot-version: '[FULL GODOT VERSION, e.g. 4.6.1]'
+          godot-version: '[FULL GODOT VERSION, e.g. 4.7.2]'
           version: 'installed'
           paths: |
             tests/unit
@@ -59,7 +59,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: reports/
@@ -85,7 +85,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -107,7 +107,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: test-results/
@@ -139,7 +139,7 @@ jobs:
     # ("No such file or directory") when the runner's folder has a space.
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -165,7 +165,7 @@ jobs:
 
       - name: Upload Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-logs
           path: Saved/Logs/
@@ -174,7 +174,10 @@ jobs:
 Note: UE CI requires a self-hosted Windows runner with Unreal Editor installed.
 The `windows` label keeps the job off any Linux self-hosted runner the
 repository also has. Set the `UE_ROOT` environment variable on the runner to the engine folder
-(e.g. `C:/Program Files/Epic Games/UE_5.7`). `[ProjectName]Editor` is the
-editor target in `Source/[ProjectName]Editor.Target.cs`.
+(e.g. `C:/Program Files/Epic Games/UE_5.8`). `[ProjectName]Editor` is the
+editor target in `Source/[ProjectName]Editor.Target.cs`. `actions/checkout@v7`
+and `actions/upload-artifact@v7` run on Node.js 24, which needs Actions Runner
+2.327.1 or newer: update the self-hosted runner before the first run
+(https://github.com/actions/checkout/blob/v7.0.1/README.md).
 
 ---

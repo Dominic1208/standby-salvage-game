@@ -14,7 +14,9 @@
 - 2e: Technical Feasibility Pre-Check
 
 Read all relevant context **before** asking the user anything. This is the skill's
-primary advantage over ad-hoc design — it arrives informed.
+primary advantage over ad-hoc design — it arrives informed. Read each GDD and ADR
+by section: find the headings you need with the Grep tool (pattern `^#`, content
+mode) and Read those ranges with offset and limit.
 
 ### 2a: Required Reads
 
@@ -55,10 +57,9 @@ primary advantage over ad-hoc design — it arrives informed.
 > does not mistake a derivation for an indexed fact. Do **not** write a systems
 > index to hold them: `/map-systems` owns that file (§5d).
 >
-> Read literally without this rule, an overridden system resolves to `full`, falls
-> through to the fail-fast reads below, and aborts with *"No game concept found.
-> Run `/brainstorm` first"* — killing the escape hatch on step one of the very
-> configuration it was built for.
+> Without this rule, an overridden system resolves to `full`, falls through to
+> the fail-fast reads below, and aborts on its first step with *"No game concept
+> found. Run `/brainstorm` first"*.
 
 - **Game concept**: Read `design/gdd/game-concept.md` — fail if missing:
   > "No game concept found. Run `/brainstorm` first."
@@ -67,15 +68,14 @@ primary advantage over ad-hoc design — it arrives informed.
 - **Target system**: Find the system in the index. If not listed, warn:
   > "[system-name] is not in the systems index. Would you like to add it, or
   > design it as an off-index system?"
-- **Entity registry**: If `design/registry/entities.yaml` exists, grep it for
-  the entries this system owns and the entries that reference it:
+- **Entity registry**: If `design/registry/entities.yaml` exists, list the
+  entries this system owns and the entries that reference it, each whole:
   ```
-  Grep pattern="source: design/gdd/[system-name].md" path="design/registry/entities.yaml" output_mode="content" -A 6
-  Grep pattern="design/gdd/[system-name].md" path="design/registry/entities.yaml" output_mode="content" -B 8
+  bash .claude/scripts/registry.sh slice design/gdd/[system-name].md
   ```
   `referenced_by:` is a block list (the key and its paths are on separate
-  lines), so match the path with `-B 8` context to see the owning entry; a
-  `referenced_by.*[system-name]` one-liner never matches it. Hold these
+  lines), so a grep for the path finds the line but not the entry that owns
+  it; `slice` prints the owning entry however long its list is. Hold these
   in context as **known facts** — values that other GDDs have already
   established and this GDD must not contradict.
 - **Reflexion log**: Read `docs/consistency-failures.md` if it exists.
@@ -189,9 +189,7 @@ which you picked.
   > `Gameplay` and `Core`. The Godot reference ships `animation, audio, input,
   > navigation, networking, physics, rendering, ui` — **there is no
   > `scripting.md` and no `core.md`**. So the majority of non-`Gameplay` systems
-  > hit the absent branch every time, and `if it exists` turned that into
-  > silence. Either the reference gains those two files or the check reports it;
-  > until the former, do the latter.
+  > hit the absent branch every time: report it every time.
 - Read `docs/engine-reference/[engine]/breaking-changes.md` for domain-relevant entries
 - Find the domain-matching ADRs without reading every ADR to learn the field you
   filter on — grep the Domain field first, then read only the matches:

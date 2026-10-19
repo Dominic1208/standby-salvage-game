@@ -100,6 +100,8 @@ check the verdict line: a FAIL verdict means the cross-GDD consistency check fai
 and must be resolved before advancing. A NOT ASSESSED verdict means that review
 could not compare the GDDs, so it satisfies nothing here: mark the item NOT
 ASSESSED for this gate, never passed.
+A report whose `Focus:` line names one pass only (a `consistency` or
+`design-theory` run) is treated the same way: the other pass never ran.
 
 ### Quality Checks
 - For test checks: Run the test suite via `Bash` if a test runner is configured.
@@ -133,7 +135,10 @@ ASSESSED for this gate, never passed.
   Bash: bash .claude/scripts/gdd-structure-check.sh
   ```
 
-  It prints a `PRESENT:` / `ABSENT:` pair per GDD and already accepts
+  It prints a `PRESENT:` / `ABSENT:` pair per GDD, plus a `PLACEHOLDER:` line
+  naming present sections that hold only `[To be designed]` (present but
+  unwritten: `5-verdict.md`'s rule for template placeholders applies), and
+  already accepts
   `## Detailed Design` as satisfying the `Detailed Rules` requirement. It reports
   presence only and makes no REQUIRED/ADVISORY judgment.
 
@@ -142,7 +147,9 @@ ASSESSED for this gate, never passed.
   Formulas) at `standard`. A missing *required* section blocks; a missing section
   that is optional at the effective tier is advisory. A section reported PRESENT
   can still fail review if it is an empty heading — spot-read any section the
-  verdict actually turns on.
+  verdict actually turns on. Read GDDs by section: find the headings with
+  the Grep tool (pattern `^#`, content mode) and Read those ranges with offset
+  and limit.
 - For performance checks: read the budgets (`performance.target_framerate`,
   `frame_budget_ms`, `draw_call_limit`, `memory_ceiling_mb`) from `project.yaml`
   (else technical-preferences.md) and compare against any profiling data in

@@ -21,7 +21,7 @@ intent before proceeding — with or without a carry-forward note:
 
 - **Prompt**: "How would you like to use this prototype session?"
 - **Options**:
-  - `Prototype this concept` — build a throwaway build to validate the core idea is fun before writing GDDs (1–3 days)
+  - `Prototype this concept` — build a throwaway build to validate the core idea is fun before writing GDDs (1 day at most)
   - `Skip — concept already proven` — I have enough evidence this works; log it and proceed directly to design
   - `Mid-production spike` — I'm already in Production and want to test a specific mechanic or technical question quickly (~4 hours, no phase gate implications)
 

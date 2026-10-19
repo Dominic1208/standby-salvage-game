@@ -87,7 +87,7 @@ qa.level: standard (rigor:standard)
 team.size: individual (rigor:standard)
 project.stage: Systems Design (production/stage.txt)
 automation_always_ask: scope_changes, file_deletions, schema_changes (default)
-engine: Godot 4.6 (project.yaml)
+engine: Godot 4.7 (project.yaml)
 testing.strict: logic=true integration=false visual=unset ui=unset config=unset (unset = each skill applies its own default)
 system_overrides: combat=full inventory=minimal
 notes: none
@@ -213,14 +213,29 @@ expansion), unlike the four on-disk knobs, which are locked.
 **`testing.strict.*` has no central default on purpose.** Its unset default
 differs per skill by design: `/smoke-check` treats unset as **blocking** (it is a
 build-health gate), while `/story-done` and `/dev-story` apply the per-story-type
-table in `.claude/docs/coding-standards.md`. `resolve_config` therefore reports
-only the *configured state* (`unset` where absent) and each skill applies its own
-default. The script resolves **sources**; the skill owns **policy**.
+table in `.claude/docs/coding-standards.md`. The `testing.strict` line therefore
+reports only the *configured state* (`unset` where absent). The `gate_level` line
+(below) applies that table and names `/smoke-check`'s own default beside `config`.
 
-**`engine` is reported from `project.yaml` only.** No markdown reader is built.
-Skills keep their existing per-field fallback to
-`.claude/docs/technical-preferences.md`, which also remains the sole source for
-forbidden patterns and allowed libraries — those never migrated.
+**The `engine` line is reported from `project.yaml` only.** The `engine_values`
+line (below) adds the per-field fallback to `.claude/docs/technical-preferences.md`,
+which also remains the sole source for forbidden patterns and allowed libraries —
+those never migrated.
+
+## Derived lines (named only)
+
+Six more lines answer steps skills would otherwise work out by hand. Each prints
+**only when named** in `--keys`; the full block never includes them. Each value carries its source in parentheses, and YAML `null`
+or `~` reads as unset (the reader returns them as strings, which are not empty).
+
+| Label | What it prints |
+|---|---|
+| `gate_level` | The gate level per story type: `testing.strict.<type>` (`project.local.yaml`, then `project.yaml`), then the plain `testing.strict: true\|false`, then the default table in `coding-standards.md`. `gate_level: logic=blocking(default) integration=advisory(project.yaml) visual=blocking(default) ui=blocking(default) config=advisory(default; /smoke-check: blocking)` |
+| `engine_values` | `engine.name`, `.version` and `.language`, each falling back to `technical-preferences.md` (its Engine line holds name and version together). `engine_values: name=Godot(project.yaml) version=4.7(project.yaml) language=GDScript(project.yaml)` |
+| `specialists` | The engine specialists: `primary` from the engine, the rest from the `specialists` block, where `null` is unset and never an agent name; `technical-preferences.md` only when the block is absent. `specialists: primary=godot-specialist(engine.name) code=godot-gdscript-specialist shader=unset ui=godot-specialist additional=none (project.yaml; unset = skip that specialist)` |
+| `review_gate` | Whether a skill's own director gate and the PHASE-GATEs run at the resolved `review_mode` (`director-gates.md`): `solo` none, `lean` the PHASE-GATEs only, `full` all. `review_gate: skill-gates=skip phase-gates=run (review_mode lean, rigor:standard; a --review flag overrides)` |
+| `input_methods` | The input methods from the `platform` block, each listed once: keyboard/mouse when `PC` or `Web` is a target, gamepad and touch when their support is Full or Partial, plus the primary input, where a primary input such as `Keyboard`, `Controller` or `Touchscreen` is read as keyboard/mouse, gamepad or touch; else `technical-preferences.md`'s Input Methods line. `input_methods: keyboard/mouse, gamepad (project.yaml platform; primary: Gamepad)` |
+| `perf_budgets` | The four `performance.*` budgets (`target_framerate`, `frame_budget_ms`, `draw_call_limit`, `memory_ceiling_mb`), from `project.yaml` only: they are not locally overridable. `perf_budgets: target_framerate=60 frame_budget_ms=16.67 draw_call_limit=unset memory_ceiling_mb=unset (project.yaml)` |
 
 ## Failure modes
 
@@ -238,6 +253,7 @@ condition below degrades to defaults and is named on `notes:`:
 | 3-space indent | parsed correctly; the parser is indent-tolerant |
 | Key present, value empty | treated as **unset**; falls through to the next source, never to `""` |
 | Enum-invalid value | chain continues; rejected value named in `notes:` |
+| Duplicate key (two `modes:` blocks, or `rigor:` twice in one block) | a repeated block is **merged**, so every key in either block is read; a key set twice takes the **last** value. Named on `notes:` with its lines — ``duplicate key `modes` (lines 2, 9): read here as one merged block, …`` |
 | `project.local.yaml` without a base | `validate_local_yaml_base` message on `notes:` |
 | Locked key in `project.local.yaml` | ignored as always, but now **named** on `notes:` — `local: not locally overridable, ignored — modes.rigor (move to project.yaml or delete)` |
 | No Python interpreter | legacy files and defaults only; **explicitly noted** on `notes:` |
@@ -251,25 +267,26 @@ that task notice: the settings line ran out of time, not the settings, so read
 the files as that row says instead of taking the defaults. If it keeps
 happening, exclude the project folder from real-time scanning.
 
-### Two inputs that resolve without a note
+### An input that resolves without a note
 
-In both cases `resolve_config` follows a fixed rule and emits no note, so it does
-not tell you that something you wrote was not used.
+Here `resolve_config` follows a fixed rule and emits no note, so it does not tell
+you that something you wrote was not used.
 
 | Input | What happens | Note emitted |
 |---|---|---|
-| **Duplicate key** (`rigor:` twice in one block) | **the last occurrence wins**, deterministically | **none** |
 | **Wrong shape** — a list where a scalar belongs (`rigor:` followed by `- standard`) | key resolves empty, falls through to the default | **none** |
 
 An enum-*invalid* value is announced (`modes.workflow: 'medium' is not a valid
-value … — ignored, chain continued`). A wrong shape is not: the key is present
-but resolves to nothing, which is also what a key with an empty value does on
-purpose (the "Key present, value empty" row above), and `resolve_config` does not
-tell the two apart. When a setting seems ignored, check the structure of its key
-in the file: one scalar on the key's own line, the key written once per block,
-and no list under it. `/settings` shows the value that is actually in effect.
+value … — ignored, chain continued`), and so is a duplicate key. A wrong shape
+is not: the key is present but resolves to nothing, which is also what a key
+with an empty value does on purpose (the "Key present, value empty" row above),
+and `resolve_config` does not tell the two apart. When a setting seems ignored,
+check the structure of its key in the file: one scalar on the key's own line and
+no list under it. `/settings` shows the value that is actually in effect.
 
-The last-wins rule for a duplicate key is fixed, so you can rely on it.
+Merging a repeated block and taking the last value of a repeated key are fixed
+rules here, but most other YAML tools keep only the last block. Combine repeated
+blocks rather than rely on the merge.
 
 ## Why not inject at session start
 

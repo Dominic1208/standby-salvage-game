@@ -102,7 +102,7 @@ phases:
           any_of:
             - glob: "project.yaml"
               pattern: 'name:[[:space:]]*"?(Godot|Unity|Unreal)'
-            # technical-preferences.md writes "- **Engine**: Godot 4.6", so the
+            # technical-preferences.md writes "- **Engine**: Godot 4.7", so the
             # pattern must clear the bold markers. The [^[] guard rejects the
             # "[TO BE CONFIGURED]" placeholder.
             - glob: ".claude/docs/technical-preferences.md"
@@ -305,8 +305,8 @@ phases:
         required: true
         repeatable: true
         artifact:
-          glob: "production/epics/**/*.md"
-          min_count: 2
+          glob: "production/epics/*/story-*.md"
+          min_count: 1
         description: "Break each epic into implementable story files. Run per epic: /create-stories [epic-slug]"
 
       - id: sprint-plan

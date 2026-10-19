@@ -33,10 +33,16 @@ engine has a native way.
 4. **Look.** `Read` the PNG. Compare what is on screen to the acceptance
    criteria. Clipped text, an overflowing panel, a missing element, the wrong
    colour — these are defects, and this is the only step that finds them.
-5. **Retain.** Copy the image to
-   `production/qa/evidence/[story-slug]/[NN]-[what-it-shows].png` and reference
-   it from the evidence doc. A screenshot that was taken and discarded is an
-   assertion, not evidence.
+5. **Retain.** Capture straight into the story's evidence folder, so nothing
+   needs copying: `mkdir -p production/qa/evidence/[story-slug]`, then pass
+   `production/qa/evidence/[story-slug]/[NN]-[what-it-shows].png` as the capture
+   path (Godot adds its frame number to the name). `[story-slug]` is the story
+   file's name without `.md`: `story-003-light-pickup` for
+   `production/epics/core/story-003-light-pickup.md`. Reference the image from
+   the evidence doc. A screenshot that was taken and discarded is an
+   assertion, not evidence. Beside it, stamp the files it proves:
+   `bash .claude/scripts/review-receipts.sh hash <each file the story changed> > production/qa/evidence/[story-slug]/stamp.txt`.
+   A later edit to one of them then shows the evidence as older than the code.
 6. **Report** one `Run result:` line in the implementation summary — vocabulary
    below.
 
@@ -57,8 +63,13 @@ godot --path . --windowed --resolution 1280x720 --write-movie shots/shop.png --q
 `--write-movie` is Movie Maker mode: with a `.png` target it writes a frame
 sequence and `--quit-after` sets the frame count. Filenames carry **8**
 zero-padded digits — `shop00000000.png` through `shop00000059.png` — so take the
-last. `--fixed-fps` is applied automatically. The scene path is positional; any
-`.tscn` can be launched directly, which is how step 2 is satisfied.
+last; a `shop.wav` lands beside them. `--fixed-fps` is applied automatically. The
+scene path is positional; any `.tscn` can be launched directly, which is how step
+2 is satisfied. The frames are recorded at the project's viewport size
+(`display/window/size/viewport_width` and `_height`, 1152x648 when unset), not at
+`--resolution`, which only sizes the window; the log's `recording movie in
+<W>×<H>` line says which. The capture-on-trigger alternative below saves at the
+window size.
 
 Capture-on-trigger alternative, for a state a scene launch cannot reach: an
 autoload that on the wanted condition does
@@ -223,7 +234,8 @@ engine on this machine". Absence of a path is not absence of an engine.
 
 ---
 
-*Commands above were run on Windows with Godot 4.6.1 (gdUnit4 6.1.3), Unity
+*Commands above were run on Windows with Godot 4.6.1 (gdUnit4 6.1.3) and the
+Godot ones again on 4.7.2 (gdUnit4 6.2.2), Unity
 6000.3.23f1 and Unreal Engine 5.7; the Unreal Linux and macOS notes come from
 Epic's documentation. `docs/engine-reference/<engine>/` is
 the project's pinned authority; check it before trusting a version-qualified

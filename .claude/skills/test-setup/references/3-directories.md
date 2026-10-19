@@ -107,7 +107,8 @@ script`), so no test ran. A cache older than a new `class_name` fails valid
 code with 105. The CI action imports on its own.
 
 Exit code **0** when every test passes and **100** when any fails — verified
-on Godot 4.6.1 with gdUnit4 6.1.3. **101** means every test passed but a test
+on Godot 4.6.1 with gdUnit4 6.1.3 and on Godot 4.7.2 with gdUnit4 6.2.2.
+**101** means every test passed but a test
 leaked nodes: a warning, not a failure. 103 and 104 mean gdUnit4 could not run
 (headless refused, Godot older than 4.3); 105 means a test script does not parse. `-a res://tests` runs every suite
 under `tests/`; `--ignoreHeadlessMode` is required because gdUnit4 otherwise
@@ -127,7 +128,7 @@ Create `tests/integration/.gdignore_placeholder` with content:
 
 Note in the README: **Installing GdUnit4**
 ```
-1. Open Godot → AssetLib → search "GdUnit4" → Download & Install
+1. Open Godot → Asset Store (AssetLib before Godot 4.7) → search "GdUnit4" → install it
 2. Enable the plugin: Project → Project Settings → Plugins → GdUnit4 ✓
 3. Restart the editor
 4. Verify: res://addons/gdUnit4/bin/GdUnitCmdTool.gd exists (capital U)

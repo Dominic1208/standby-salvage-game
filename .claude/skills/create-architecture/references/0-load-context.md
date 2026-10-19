@@ -51,7 +51,9 @@ If no engine is configured, stop and prompt:
 
 ### 0b. Design Context + Technical Requirements Extraction
 
-Load the approved design documents and extract technical requirements from each:
+Load the approved design documents and extract technical requirements from each.
+Read each one by section: find the headings you need with the Grep tool (pattern
+`^#`, content mode) and Read those ranges with offset and limit.
 
 1. `design/gdd/game-concept.md` — game pillars, genre, core loop
 2. `design/gdd/systems-index.md` — all systems, dependencies, priority tiers
@@ -64,7 +66,7 @@ matter just as much:
   > "No systems index found. Run `/map-systems` first. An architecture written
   > without it invents layers for systems nobody mapped, and every ADR, epic and
   > story downstream inherits that invention."
-  At `minimal` the index is not required (§ tier note above) — say so and proceed
+  At `minimal` the index is not required (the `workflow` list in SKILL.md) — say so and proceed
   from the brief instead.
 - **`game-concept.md` absent** — at `standard`/`full`, stop and point at
   `/brainstorm`. At `minimal`, read `design/game-brief.md` in its place; if that
@@ -107,17 +109,36 @@ everything downstream rather than re-checked.
 Build a **Technical Requirements Baseline** — a flat list of all extracted
 requirements across all GDDs, numbered `TR-[system]-[NNN]`, the TR registry's
 ID format. This is the
-complete set of what the architecture must cover. Present it as:
+complete set of what the architecture must cover.
+
+**The IDs come from the TR registry, not from a fresh count.** Stories and ADRs
+cite TR-IDs, and `/architecture-review` keeps them permanent in
+`docs/architecture/tr-registry.yaml`. A baseline numbered from 001 on a re-run
+gives a requirement a different ID from the one stories already cite. So, before
+numbering:
+
+- **Registry present with entries:** read `docs/architecture/tr-registry.yaml`.
+  A requirement that matches an `active` entry for the same system (same intent,
+  wording may differ) keeps that entry's ID. Skip `deprecated` and
+  `superseded-by` entries; they were retired on purpose. Every other requirement
+  is **provisional**: number it from `bash .claude/scripts/registry.sh next-id tr
+  <system>` onwards, so it cannot reuse a registered or retired ID, and mark it
+  `(provisional)`. `/architecture-review` registers it and gives the permanent ID.
+- **Registry absent, or `requirements: []`:** every ID is provisional. Say so in
+  the baseline's header line, so nobody cites them as permanent.
+
+Present it as:
 
 ```
 ## Technical Requirements Baseline
-Extracted from [N] GDDs | [X] total requirements
+Extracted from [N] GDDs | [X] total requirements | [R] registered, [P] provisional
+(TR registry: [read, E entries | absent | empty])
 
 | Req ID | GDD | System | Requirement | Domain |
 |--------|-----|--------|-------------|--------|
 | TR-combat-001 | combat.md | Combat | Hitbox detection per-frame | Physics |
 | TR-combat-002 | combat.md | Combat | Combo state machine | Core |
-| TR-inventory-001 | inventory.md | Inventory | Item persistence | Save/Load |
+| TR-inventory-001 (provisional) | inventory.md | Inventory | Item persistence | Save/Load |
 ```
 
 This baseline feeds into every subsequent phase. No GDD requirement should be
@@ -135,7 +156,9 @@ Grep pattern="\*\*Domain\*\*" glob="docs/architecture/adr-*.md" output_mode="con
 Compatibility `Domain` field are exactly "what was decided and its domain". List
 the ADRs found, their status, and their domains from the scan. Full-read a
 specific ADR only when a new decision this session would collide with it and you
-need its reasoning — not to build the inventory.
+need its reasoning — not to build the inventory. Read it by section: find the
+headings with the Grep tool (pattern `^#`, content mode) and Read those
+ranges with offset and limit.
 
 ### 0d. Generate Knowledge Gap Inventory
 

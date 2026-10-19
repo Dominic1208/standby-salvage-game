@@ -15,6 +15,7 @@
 Date: [date]
 GDDs Reviewed: [N] of [M] present
 Not read: [each GDD that could not be read or is present but empty, by file name — or "none"]
+Focus: [full / consistency only — design theory not run / design theory only — consistency not run]
 Systems Covered: [list]
 
 ---
@@ -96,7 +97,10 @@ thorough while covering a fraction of the surface. Emit it when any of:
   is not a cross-review; a clean result there means only that nothing was
   compared. This is the single most important trigger in this skill.
 - **A whole review phase did not run** — consistency, design theory, economy,
-  pillar drift. A parallel phase that returned nothing has to be distinguished
+  pillar drift — when it should have. A pass the focus argument left out is not
+  this trigger: the user asked for it. Give the verdict for the pass that ran,
+  labelled — `PASS (consistency only — design theory not run)` — and fill the
+  `Focus:` line. A parallel phase that returned nothing has to be distinguished
   from one that returned no findings; if a spawned agent produced no report, that
   phase is NOT ASSESSED, not clean — an agent can return a fluent sentence,
   write nothing, and consume a phase.

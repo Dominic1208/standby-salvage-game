@@ -11,14 +11,25 @@ Before extracting any requirements, read `docs/architecture/tr-registry.yaml`
 if it exists. Index existing entries by `id` and by normalized `requirement`
 text (lowercase, trimmed). This prevents ID renumbering across review runs.
 
+Then read the Technical Requirements Baseline in `docs/architecture/architecture.md`
+if it exists. `/create-architecture` numbers each requirement the registry did not
+hold as `(provisional)`, from the registry's next free ID, and ADRs written from
+the baseline may already cite those IDs.
+
 For each requirement you extract, the matching rule is:
 1. **Exact/near match** to an existing registry entry for the same system →
    reuse that entry's TR-ID unchanged. Update the `requirement` text in the
    registry only if the GDD wording changed (same intent, clearer phrasing) —
    add a `revised: [date]` field.
-2. **No match** → assign a new ID: next available `TR-[system]-NNN` for that
-   system, starting from the highest existing sequence + 1.
-3. **Ambiguous** (partial match, intent unclear) → ask the user:
+2. **Match to a provisional baseline row** (same system, same intent) → keep that
+   ID when the registry holds no entry with it, active or retired: registering it
+   is what makes it permanent. When the ID is taken, assign the next available one
+   and list the rename (`TR-[system]-004 (provisional) → TR-[system]-006`) in the
+   report, so the ADRs and stories that cite it can be updated.
+3. **No match** → assign a new ID: next available `TR-[system]-NNN` for that
+   system, starting from the highest existing sequence + 1, skipping any ID a
+   provisional baseline row holds.
+4. **Ambiguous** (partial match, intent unclear) → ask the user:
    > "Does '[new requirement text]' refer to the same requirement as
    > `TR-[system]-NNN: [existing text]'`, or is it a new requirement?"
    User answers: "Same requirement" (reuse ID) or "New requirement" (new ID).

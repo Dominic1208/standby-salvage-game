@@ -62,8 +62,9 @@ Formulas, Edge Cases, Dependencies, Tuning Knobs, Acceptance Criteria.
 
 A section reported PRESENT can still be an empty heading. For each GDD, also
 record with a targeted grep (not a full read):
-- Placeholder-only sections — `Grep pattern="\[To be designed\]"` (or an
-  equivalent empty/single-line body) marks a present-but-unwritten section.
+- Placeholder-only sections — the script's `PLACEHOLDER:` line names the
+  present sections that hold only `[To be designed]` or nothing; a
+  single-line stub body is the same in effect, so spot-check short sections.
 - The `**Status**:` header field — `Grep pattern="^>?[[:space:]]*\*\*Status\*\*:"`.
   Valid values: `Draft`, `In Design`, `Designed`, `In Review`, `Approved`,
   `Implemented`, `Needs Revision`.
@@ -151,7 +152,8 @@ real values.
 Language, Rendering, Physics, the naming, platform and performance fields,
 Framework, or the specialists. Not merely "some bullet is filled in": the
 shipped template ships one prose default (`- **Required Tests**: …`) that is
-never migrated, and counting it made every fresh clone read as a v1.0 project.
+never migrated, and counting it would make every fresh clone read as a v1.0
+project.
 
 Do not hand-migrate. Run the converter, which is deterministic and covered by
 the framework's own test suite:

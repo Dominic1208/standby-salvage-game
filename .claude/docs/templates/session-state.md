@@ -64,9 +64,12 @@ or agent picking this up cold.]
   CHECKPOINT block
     The recovery payload. `session-start.sh` shows it when a previous session
     left state, and again after a compaction (SessionStart runs then too).
-    `pre-compact.sh` reads it as well, for the debug log. Both read THIS
-    region and nothing else, which is what keeps the cost fixed no matter how
-    long the narrative gets.
+    It reads THIS region and nothing else, which is what keeps the cost fixed
+    no matter how long the narrative gets.
+
+    Keep `Branch` current. This file is not committed, so it stays put when you
+    switch branches; session-start.sh compares `Branch` with the branch you are
+    on and adds one line when they differ.
 
     Write it so a cold reader can resume without reading anything else. "Current
     task: fixing the thing" is useless; "Current task: adding wall-jump to

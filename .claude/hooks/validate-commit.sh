@@ -11,16 +11,19 @@
 # project, not this one. Resolving to the script's own location first would
 # override them. So, in order:
 #   1. cwd holds project.yaml   -> cwd   (a project root)
-#   2. cwd holds .claude/       -> cwd   (a project root not yet configured)
-#   3. CLAUDE_PROJECT_DIR       -> that  (populated in the hook environment)
+#   2. cwd holds .claude/       -> cwd   (a project root not yet configured),
+#      unless cwd is itself named .claude: a stray .claude/.claude/ would
+#      make .claude/ a root, and the hooks would write .claude/production/
+#   3. CLAUDE_PROJECT_DIR       -> that  (populated in the hook environment),
+#      unless it names a .claude folder, for the same reason as rule 2
 #   4. this script's location   -> <root>/.claude/hooks/../.. by construction
 # Rule 4 always works and needs no environment at all; rules 1-2 stop it from
 # overriding a caller that legitimately means somewhere else.
 #
 # NOT an upward search: that resolves a nested project to its parent's config.
-if [ -f "project.yaml" ] || [ -d ".claude" ]; then
+if [ -f "project.yaml" ] || { [ -d ".claude" ] && [ "${PWD##*/}" != ".claude" ]; }; then
   CCGS_ROOT="$PWD"
-elif [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -d "${CLAUDE_PROJECT_DIR}" ]; then
+elif [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -d "${CLAUDE_PROJECT_DIR}" ] && case "${CLAUDE_PROJECT_DIR%/}" in */.claude|*\\.claude) false ;; *) true ;; esac; then
   CCGS_ROOT="$CLAUDE_PROJECT_DIR"
 else
   CCGS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)"
@@ -65,8 +68,10 @@ else
       | tr '\002' '\\')
 fi
 
-# Print the first segment of $2 that runs `git $1`, anywhere in the command.
-# Anchoring on ^git let every chained form through unchecked:
+# git_segment prints the first segment of $2 that runs `git $1`, anywhere in
+# the command; command_segments does the splitting, which validate-push.sh
+# also uses on its release tools. Anchoring on ^git let every chained form
+# through unchecked:
 # `git add -A && git commit`, `git -C . commit`, `cd x && git commit`,
 # `GIT_DIR=.git git commit`, a commit on a second line. Segments split on
 # && || ; & | ( ) backticks and quotes, and on newlines. Before a segment's
@@ -87,7 +92,7 @@ fi
 # string rather than opening a value. All splitting is awk: BSD sed writes a
 # literal `n` for `\n`, so on macOS a sed split missed every chained form.
 # Over-splitting only costs a check that finds nothing staged; under-splitting
-# is the bypass. Kept identical in validate-push.sh.
+# is the bypass. Both functions are kept identical in validate-push.sh.
 #
 # `git` itself is matched case-insensitively (`Git`, `GIT`) and a bare quoted
 # `"git"` or `'git'` (no path) reads as plain `git` too, the same as a quoted
@@ -114,8 +119,8 @@ fi
 # is the same kind of text and is dropped the same way; the double-quote form
 # (`@"` ... `"@`) is left alone, because PowerShell itself expands `$(...)`
 # inside it, and that content is still live.
-git_segment() {
-    printf '%s\n' "$2" \
+command_segments() {
+    printf '%s\n' "$1" \
       | awk '{ while ($0 ~ /\\$/) { line = $0; sub(/\\$/, "", line); if ((getline nxt) > 0) { $0 = line nxt } else { $0 = line; break } } print }' \
       | awk '
           pd != "" { t = $0; sub(/\r$/, "", t); if (t ~ /^'"'"'@/) pd = ""; next }
@@ -171,7 +176,12 @@ git_segment() {
           }
           s = out s
           gsub(/&&|\|\|/, "\n", s); gsub(/[;&|()`"'"'"']/, "\n", s); print s
-        }' \
+        }'
+}
+
+# The segment whose command, after the prefixes above, is git and then $1.
+git_segment() {
+    command_segments "$2" \
       | grep -E "^[[:space:]]*((if|then|else|elif|do|while|until|time|exec|command|nohup|!|[{])[[:space:]]+|(env|sudo|doas|xargs|nice|timeout|stdbuf|winpty|command)([[:space:]]+-[A-Za-z0-9-]+(=[^[:space:]]*)?([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+([0-9][0-9.]*[smhd]?[[:space:]]+)?|[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*([^[:space:]]*[/\\])?[Gg][Ii][Tt](\.exe)?([[:space:]]+(-[Cc][[:space:]]+[^[:space:]]+|--(git-dir|work-tree|namespace|super-prefix|config-env|attr-source)[[:space:]]+[^[:space:]]+|-[A-Za-z]|--[A-Za-z-]+(=[^[:space:]]+)?))*[[:space:]]+$1([[:space:]]|\$)"
 }
 
@@ -271,14 +281,20 @@ if [ -n "$_VC_PY" ]; then
     fi
     _VC_AWAY=0
     [ -n "$_VC_CWD" ] && [ ! "$_VC_CWD" -ef . ] && _VC_AWAY=1
+    # PowerShell's escape is the backtick: a backslash there is a path separator.
+    _VC_PS=0
+    printf '%s' "$INPUT" | LC_ALL=C grep -qE '"tool_name"[[:space:]]*:[[:space:]]*"PowerShell"' && _VC_PS=1
     _VC_TOK=$(printf '%s\n' "$COMMAND" | "$_VC_PY" -c '
 import re, shlex, subprocess, sys
+PS = len(sys.argv) > 2 and sys.argv[2] == "1"
 OPS = set(";&|()<>")
 GIT_ARG = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--super-prefix", "--config-env", "--attr-source"}
 REDIR = re.compile(r"^[<>]+&?$|^&>+$")  # >, >>, >&, <, <<, &>: a redirection operator
 COMMIT_ARG = {"--message", "--file", "--reuse-message", "--reedit-message", "--fixup", "--squash",
               "--author", "--date", "--template", "--cleanup", "--trailer", "--pathspec-from-file"}
 def words(line):
+    if PS:  # git reads assets/data/x.json as assets\data\x.json
+        line = line.replace("\\", "/")
     try:
         lx = shlex.shlex(line, posix=True, punctuation_chars=True)
         lx.whitespace_split = True
@@ -302,7 +318,8 @@ def add(w, k):  # git add/stage from w[k] -> pathspecs, takes untracked, -f, -n,
         if a and set(a) <= OPS:
             break
         if rest or not a.startswith("-") or a == "-":
-            specs.append(a)
+            # $f, $(...), `...`: known only when the shell runs, so the whole tree
+            specs.append(":/" if "$" in a or "`" in a else a)
         elif a == "--":
             rest = True
         elif a.startswith("--"):
@@ -394,7 +411,7 @@ for s, new, force in ([] if only else adds):
     if new:
         more += git("ls-files", "--others", "--full-name", *([] if force else ["--exclude-standard"]), "--", *s).stdout
 sys.stdout.buffer.write((b"CCGS-ONLY\n" if only else b"CCGS-INDEX\n") + (out.stdout if out else b"") + more)
-' "$_VC_AWAY" 2>/dev/null)
+' "$_VC_AWAY" "$_VC_PS" 2>/dev/null)
     case "$_VC_TOK" in CCGS-ONLY*) INDEX_FILES="" ;; esac
     WT_FILES=$(printf '%s\n%s' "$WT_FILES" "$(printf '%s\n' "$_VC_TOK" | tail -n +2)")
 else
@@ -602,8 +619,9 @@ fi
 # design/gdd/ also holds governance and registry files that are not system
 # GDDs and have none of these sections, so they warned on every commit (#133).
 # Skip the names not_a_system_gdd() skips in gdd-structure-check.sh and
-# review-scope.sh; keep the three lists the same.
-DESIGN_FILES=$(echo "$STAGED" | grep -E '^design/gdd/' \
+# review-scope.sh; keep the three lists the same. Only top-level files count as
+# system GDDs: archive/ and reviews/ copies under design/gdd/ are not checked.
+DESIGN_FILES=$(echo "$STAGED" | grep -E '^design/gdd/[^/]+\.md$' \
   | grep -vE '/(game-concept|systems-index|game-pillars|gdd-cross-review-[^/]*|gameplay-tags|fixture-swap-ledger|entity-registry|sound-bible)\.md$')
 if [ -n "$DESIGN_FILES" ]; then
     WORKFLOW="standard"
@@ -641,21 +659,53 @@ if [ -n "$DESIGN_FILES" ]; then
         # documents warn -- a behaviour change smuggled inside a performance
         # fix. If that wants tightening it should be its own change with its
         # own test.
-        printf '%s\n' "$DESIGN_FILES" | "$_VC_PY" -c '
-import sys, os
+        #
+        # It reads what the commit takes, as the JSON check above does: the
+        # staged copy ("I"), or the working copy for a file this command adds
+        # itself ("W", git add or commit -a). Reading the working copy alone
+        # judged a GDD the commit does not contain, either way round.
+        LC_ALL=C awk -v OFS='\t' 'NR == FNR { if ($0 != "") wt[$0] = 1; next }
+                     $0 != "" { print (($0 in wt) ? "W" : "I"), $0 }' \
+                     <(printf '%s\n' "$WT_FILES") <(printf '%s\n' "$DESIGN_FILES") \
+          | CCGS_VC_PREFIX="$_VC_PREFIX" "$_VC_PY" -c '
+import sys, os, subprocess
 argv = sys.argv
 required = [x for x in argv[1].split("|") if x]
 workflow = argv[2]
+items = [l.split("\t", 1) for l in sys.stdin.buffer.read().decode("utf-8").splitlines() if "\t" in l]
+staged = [p for mode, p in items if mode == "I"]
+# Paths are project-relative; the index names them from the repository top.
+prefix = os.environ.get("CCGS_VC_PREFIX", "")
+blobs = {}
+if staged:
+    raw = subprocess.run(["git", "cat-file", "--batch"], stdout=subprocess.PIPE,
+                         input="".join(":" + prefix + p + "\n" for p in staged).encode("utf-8")).stdout
+    pos = 0
+    for p in staged:
+        end = raw.index(b"\n", pos)
+        head = raw[pos:end].split()
+        pos = end + 1
+        if len(head) == 3 and head[1] == b"blob":
+            size = int(head[2])
+            blobs[p] = raw[pos:pos + size]
+            pos += size + 1
 out = []
-for line in sys.stdin.read().splitlines():
-    path = line.strip()
-    if not path or not path.endswith(".md") or not os.path.isfile(path):
+for mode, path in items:
+    if not path.endswith(".md"):
         continue
-    try:
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            body = fh.read().lower()
-    except OSError:
-        continue
+    if mode == "I":
+        if path not in blobs:
+            continue  # removed from the index: nothing of it is committed
+        data = blobs[path]
+    else:
+        if not os.path.isfile(path):
+            continue
+        try:
+            with open(path, "rb") as fh:
+                data = fh.read()
+        except OSError:
+            continue
+    body = data.decode("utf-8", "replace").lower()
     for section in required:
         if section.lower() not in body:
             out.append("DESIGN: %s missing section required at workflow=%s: %s"

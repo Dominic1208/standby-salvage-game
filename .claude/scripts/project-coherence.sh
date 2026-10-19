@@ -18,10 +18,10 @@
 # desktop-focused"). Prose is in place and does not hold on its own. What was
 # missing was a step that reads back what was written.
 #
-# F1's root cause was subtler and is fixed elsewhere: `/setup-engine` is told to
-# write an `Installed at pin time` row into VERSION.md, and no VERSION.md had
-# such a row. There was no slot, so the step vanished leaving no trace. The row
-# now ships in all three reference files, and check 1 below reads it.
+# A subtler cause is handled elsewhere: `/setup-engine` writes an `Installed at
+# pin time` row into VERSION.md, and a VERSION.md with no such row leaves that
+# step no slot, so it vanishes without a trace. The row ships in all three
+# reference files, and check 1 below reads it.
 #
 # OBSERVATIONS, NEVER VERDICTS
 #
@@ -137,10 +137,16 @@ case "$ENGINE_LC" in
     # and smoke-check use. commands.* now carries the full editor path once
     # /setup-engine has run, so a bare `command -v godot` alone reported "no
     # Godot binary found on PATH" even on a correctly configured project.
+    # commands.test's program counts only when its file name says godot: a
+    # wrapper such as `bash run-tests.sh` is not the editor, and probing it
+    # compared bash's version with engine.version.
+    godot_named() {
+      case "$(printf '%s' "${1##*/}" | tr 'A-Z' 'a-z')" in *godot*) printf '%s' "$1" ;; esac
+    }
     GEXE=""
     for GCAND in \
-      "$(yaml_block_value commands test | grep -oE '"[^"]*"' | head -1 | tr -d '"')" \
-      "$(yaml_block_value commands test | awk '{print $1}')" \
+      "$(godot_named "$(yaml_block_value commands test | grep -oE '"[^"]*"' | head -1 | tr -d '"')")" \
+      "$(godot_named "$(yaml_block_value commands test | awk '{print $1}')")" \
       "$(yaml_block_value engine path)" \
       "godot"; do
       [ -n "$GCAND" ] || continue

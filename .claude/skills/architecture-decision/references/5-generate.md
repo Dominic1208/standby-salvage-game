@@ -43,8 +43,9 @@ chosen approach.]
 
 | Field | Value |
 |-------|-------|
-| **Engine** | [e.g. Godot 4.6] |
+| **Engine** | [e.g. Godot 4.7] |
 | **Domain** | [Physics / Rendering / UI / Audio / Navigation / Animation / Networking / Core / Input] |
+| **Layer** | [Foundation / Core / Feature / Presentation] |
 | **Knowledge Risk** | [LOW / MEDIUM / HIGH — from VERSION.md] |
 | **References Consulted** | [List engine-reference docs read, e.g. `docs/engine-reference/godot/modules/physics.md`] |
 | **Post-Cutoff APIs Used** | [Any APIs from post-LLM-cutoff versions this decision depends on, or "None"] |
@@ -140,6 +141,15 @@ to implement it.]
 - [Links to related design documents]
 ```
 
+**Always write the Layer row.** An ADR with no Layer row counts as critical
+(Foundation) wherever it is read, so at `standard` its advisory items become
+blockers. The value is the ADR's own layer, how early in the build it must
+exist: the layer `docs/architecture/architecture.md`'s layer map gives the
+system this decision governs. With no layer map, or no system in it, ask the
+user, with the four values as options. Never take it from an epic that
+references the ADR, and never reuse a `Domain` value (the template's note under
+Engine Compatibility says why).
+
 5.5. **Engine Specialist Validation** — Before saving, spawn the **primary engine specialist** via `Agent` to validate the drafted ADR:
    - Resolve the primary specialist: `<engine>-specialist` derived from `engine.name` in `project.yaml` (Godot→`godot-specialist`, Unity→`unity-specialist`, Unreal→`unreal-specialist`); if `engine.name` is absent or empty, read the Primary line of the `## Engine Specialists` section in `.claude/docs/technical-preferences.md`
    - If no engine is configured (neither source yields an engine), skip this step **Record ``Engine validation: NOT ASSESSED — no engine configured (`engine.name` unset in `project.yaml`)`` in this run's output.** A skipped check that says nothing is indistinguishable from a check that passed; the reader cannot tell engine guidance was never sought.
@@ -178,8 +188,8 @@ developers reading the GDD from implementing the wrong interface.
 ```
 
 **This check has three outcomes, not two.** The two above are "found" and "none
-found"; the third is **could not check**, and until now it fell through the
-silent branch and rendered exactly like a clean result.
+found"; the third is **could not check**, which must never take the silent
+branch and render like a clean result.
 
 - **None found** — print one line, do not stay silent:
   `GDD sync: checked [N] referenced GDD(s), no naming inconsistencies.`
@@ -231,7 +241,7 @@ Registry candidates from this ADR:
 **Registry append logic**: When writing to `docs/registry/architecture.yaml`, do NOT assume sections are empty. The file may already have entries from previous ADRs written in this session. Before each Edit call:
 1. Read the current state of `docs/registry/architecture.yaml`
 2. Find the correct section (state_ownership, interfaces, forbidden_patterns, api_decisions)
-3. Append the new entry AFTER the last existing entry in that section — do not try to replace a `[]` placeholder that may no longer exist
+3. If the section is still the empty list (`state_ownership: []`), replace `[]` with the first entry: the key alone on its line, the entry below it indented two spaces as in the file's commented example. An entry appended after `[]` makes the file invalid YAML. Otherwise append the new entry AFTER the last existing entry in that section
 4. If the section has entries already, use the closing content of the last entry as the `old_string` anchor, and append the new entry after it
 
 **BLOCKING — do not write to `docs/registry/architecture.yaml` without explicit user approval.**
@@ -241,6 +251,12 @@ Ask using `AskUserQuestion`:
   - Options: "Yes — update the registry", "Not yet — I want to review the candidates", "Skip registry update"
 
 Only proceed if the user selects yes. If yes: append new entries. Never modify existing entries — if a stance is
-changing, set the old entry to `status: superseded_by: ADR-[NNNN]` and add the new entry.
+changing, set the old entry to `status: "superseded_by: ADR-[NNNN]"` and add the new entry. Keep the quotes:
+unquoted, the second colon makes the file invalid YAML.
+
+After writing, run `bash .claude/scripts/registry.sh validate` and fix every row about an entry this write added
+or changed (a DUPLICATE, STATUS or LAYOUT row, an UNQUOTED row (quote the value it names), or a PATH_MISSING row for a path it named) before you go on; name
+rows about other entries to the user rather than fixing them unasked. If the script is missing or prints nothing,
+say the registry check did not run, then re-read the entries you wrote against the rules in the file's header.
 
 ---

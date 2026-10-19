@@ -92,6 +92,10 @@ gate files:
   Anchor (from `design/gdd/game-concept.md`, else the "Art & audio direction"
   line of `design/game-brief.md`), and the art bible path.
 
+Tell each director to read any GDD, ADR or the art bible by section: find the
+headings with the Grep tool (pattern `^#`, content mode) and Read those
+ranges with offset and limit.
+
 Pass each context item as one of three things, so no director has to guess:
 - **Present** — its path or value (`0` blocked stories is a value).
 - **"none"** — the target gate (or an earlier one) requires or recommends it at

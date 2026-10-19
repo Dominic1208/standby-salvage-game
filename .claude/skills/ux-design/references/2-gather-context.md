@@ -18,7 +18,9 @@
 - 2i: Present Context Summary
 
 Read all relevant context **before** asking the user anything. The skill's value
-comes from arriving informed.
+comes from arriving informed. Read each GDD and the art bible by section: find the
+headings you need with the Grep tool (pattern `^#`, content mode) and Read those
+ranges with offset and limit.
 
 ### 2a: Required Reads
 

@@ -58,11 +58,7 @@ and A3.
 > **This list and the `naming` enum table in Section 5.5.1 of the skill must
 > agree, value for value.** They are written into two different files —
 > `technical-preferences.md` from here, `project.yaml` from there — and Section
-> 5.5.3 compares them and **stops the skill** on any mismatch. They disagreed on
-> `scenes` (this list said PascalCase, the enum table said snake_case) for the
-> GDScript column only, which halted `/setup-engine` on the most common Godot
-> configuration there is. Changing a value in one place without the other
-> reintroduces that halt.
+> 5.5.3 compares them and **stops the skill** on any mismatch.
 
 **C#:**
 - Classes: PascalCase (`PlayerController`) — must also be `partial`

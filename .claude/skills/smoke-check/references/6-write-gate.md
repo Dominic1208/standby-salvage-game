@@ -33,8 +33,8 @@ developer's local override is silently ignored):
 2. Else read `testing.strict` as a plain boolean (legacy single-value form) — if
    its value is `true` or `false`, it applies.
 3. Else default to **blocking** — an unset `testing.strict.config` keeps
-   smoke-check's FAIL gate blocking (behavior unchanged from before this setting
-   existed). Smoke check is a build-health gate, so its unset default is strict
+   smoke-check's FAIL gate blocking. Smoke check is a build-health gate, so its
+   unset default is strict
    even though the `config` test type defaults to advisory elsewhere. The
    reciprocal carve-out is recorded in `.claude/skills/story-done/SKILL.md` and
    `.claude/docs/coding-standards.md`, which own the per-story evidence table.

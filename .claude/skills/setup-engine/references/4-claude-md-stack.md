@@ -65,9 +65,9 @@ to point at the configured engine:
 - Unity → `@docs/engine-reference/unity/VERSION.md`
 - Unreal → `@docs/engine-reference/unreal/VERSION.md`
 
-This is why a fresh Unity or Unreal project no longer loads the Godot reference in
-every session. It is idempotent — re-running `/setup-engine` for a different
+This keeps a Unity or Unreal project from loading the Godot reference in every
+session. It is idempotent — re-running `/setup-engine` for a different
 engine rewrites the same line. (The target `docs/engine-reference/<engine>/`
-directory is created in Section 8 below if it does not yet exist.)
+directory is created in Section 7, Populate Engine Reference Docs, if it does not yet exist.)
 
 ---

@@ -38,7 +38,6 @@ already exist at these paths."
 **At `collaborative` and `guided`** — do not proceed without approval. These are
 **new** files, and `automation-modes.md:81` gates new-file writes in `guided` too,
 so the answer is the same in both modes. **At `autonomous`** — create them and log
-the decision; do not block. An unconditional gate here would read as "block even
-in autonomous" and contradict this skill's own header.
+the decision; do not block.
 
 ---

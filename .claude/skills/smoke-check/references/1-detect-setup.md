@@ -69,7 +69,9 @@ Before running anything, understand the environment:
    onto `PATH` by default on Windows or macOS, so a bare `godot` that does not
    resolve says nothing about whether the engine is installed. Take the first
    that resolves (the file exists, or `command -v` finds it): the executable
-   `commands.test` names (its quoted path or first word), else the editor
+   `commands.test` names (its quoted path or first word; on Godot, only when its
+   file name says godot, since a wrapper such as `bash run-tests.sh` is not the
+   editor), else the editor
    `engine.path` records, else the engine's name on `PATH` (`godot`). Use it
    wherever Phase 2 writes `godot` or `"<Unity editor>"`, quoting a path with a
    space; on Unreal, `<UE root>` is `engine.path`. If none resolves, the test

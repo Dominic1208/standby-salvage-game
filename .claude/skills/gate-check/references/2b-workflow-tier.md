@@ -40,10 +40,10 @@ across all of them:
 > a per-story evidence gate ... This divergence is intentional"). So a gate file
 > that requires a smoke report keeps requiring it at every `qa.level`.
 >
-> Without that exclusion the Production → Polish gate had **zero required
-> artifacts at `rigor: minimal`** and could not fail on artifacts by
-> construction: `minimal` reduced the gate to the smoke check alone, `qa.level`
-> then dropped the smoke check too, and one `modes.rigor` setting fires both.
+> Without that exclusion the Production → Polish gate would have **zero
+> required artifacts at `rigor: minimal`** and could not fail on artifacts by
+> construction: `minimal` reduces the gate to the smoke check alone, `qa.level`
+> would then drop the smoke check too, and one `modes.rigor` setting fires both.
 
 > **A gate with no required artifacts left must say so, and may not return
 > PASS.** After applying the tier reduction and the `qa.level` relaxation, count
@@ -70,10 +70,9 @@ across all of them:
 > `off` is the only thing that makes budgets informational, and it is a
 > deliberate choice the user makes on the same key.
 >
-> Without this, `performance.enforce: block` is **inert on every `rigor: minimal`
-> project** — the Polish gate's `minimal` reduction drops everything outside its
-> floor, and "Performance is within budget" sits in the dropped remainder. A
-> setting that works only when a rule is disregarded is not wired.
+> This matters most on a `rigor: minimal` project: the Polish gate's `minimal`
+> reduction drops everything outside its floor, and "Performance is within
+> budget" sits in that dropped remainder. Run the check anyway.
 
 ### Per-system overrides (`workflow_overrides.system_overrides`)
 

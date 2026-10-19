@@ -7,12 +7,9 @@
 
 **If `docs/architecture/architecture.md` does not exist, say so in the report** —
 `Architecture document coverage: NOT ASSESSED — no docs/architecture/architecture.md`
-— and carry it into the Phase 7 verdict per the trigger list below. Phase 5
-already models this for the engine consultation (*"A skipped check that says
-nothing is indistinguishable from a check that passed"*); this phase is the one
-that did not. Silently producing no Phase 6 findings reads as an architecture
-document that was checked and found clean, which is the opposite of what
-happened.
+— and carry it into the Phase 7 verdict per the trigger list below. Silently
+producing no Phase 6 findings reads as an architecture document that was checked
+and found clean, which is the opposite of what happened.
 
 If it exists, validate it against GDDs:
 

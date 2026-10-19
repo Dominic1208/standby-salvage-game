@@ -6,7 +6,9 @@
 ## Phase 2: Load Concept Context
 
 Read `design/gdd/game-concept.md` — or `design/game-brief.md`, the one-page brief
-that replaces it at `rigor: minimal` — if either exists. Extract:
+that replaces it at `rigor: minimal` — if either exists. Read it by section: find the
+headings you need with the Grep tool (pattern `^#`, content mode) and Read those
+ranges with offset and limit. Extract:
 - Core fantasy (what the player is supposed to feel)
 - Core loop (the moment-to-moment action being tested)
 

@@ -9,11 +9,15 @@
 
 Enter **retrofit mode**:
 
-1. Read the existing ADR file completely.
+1. Read the existing ADR file completely. This step needs the whole ADR: read it
+   in ranges by its headings (found with the Grep tool: pattern `^#`, content
+   mode), since a whole-file Read over 40 KB is refused.
 2. Identify which template sections are present by scanning headings:
    - `## Status` — **BLOCKING if missing**: `/story-readiness` cannot check ADR acceptance
    - `## ADR Dependencies` — HIGH if missing: dependency ordering breaks
-   - `## Engine Compatibility` — HIGH if missing: post-cutoff risk unknown
+   - `## Engine Compatibility` — HIGH if missing: post-cutoff risk unknown. A
+     present table with no **Layer** row is HIGH too: the ADR counts as critical
+     wherever it is read, so at `standard` its advisory items become blockers
    - `## GDD Requirements Addressed` — MEDIUM if missing: traceability lost
    - `## Date` — MEDIUM if missing, and no `## Last Verified` either: `/create-stories`
      stamps stories with it and `/dev-story` compares against it, so without it a
@@ -44,7 +48,11 @@ Enter **retrofit mode**:
    - For **ADR Dependencies**: ask — "Does this decision depend on any other ADR?
      Does it enable or block any other ADR or epic?" Accept "None" for each field.
    - For **Engine Compatibility**: read the engine reference docs (same as Step 1 below)
-     and ask the user to confirm the domain. Then generate the table with verified data.
+     and ask the user to confirm the domain. Then generate the table with verified data,
+     its Layer row included.
+   - For a present Engine Compatibility table with no **Layer** row: find the
+     layer as `references/5-generate.md` says under "Always write the Layer row",
+     and add the row under **Domain**. It adds a row and changes none.
    - For **GDD Requirements Addressed**: ask — "Which GDD systems motivated this decision?
      What specific requirement in each GDD does this ADR address?"
    - Append each missing section to the ADR file using the Edit tool.

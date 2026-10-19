@@ -11,8 +11,8 @@ Enter **acceptance mode**. This is the *only* path in the framework that moves a
 ADR from `Proposed` to `Accepted`. Authoring always produces `Proposed`
 (Step 5), while
 `/create-control-manifest`, `/create-epics`, `/create-stories` and `/gate-check`
-all require `Accepted` — so without this mode the pipeline had a state it could
-enter and never leave.
+all require `Accepted` — so without this mode an ADR would enter a state it
+never leaves.
 
 1. **Resolve the id to a file, then read it.** Glob
    `docs/architecture/adr-NNNN-*.md` for the given number. If **no** file matches,

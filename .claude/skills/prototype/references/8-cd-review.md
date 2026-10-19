@@ -16,7 +16,9 @@
 
 Pass: the full REPORT.md content, the original hypothesis, and game pillars /
 core fantasy from `design/gdd/game-concept.md` (or the brief's pitch and "what
-they feel" line from `design/game-brief.md`).
+they feel" line from `design/game-brief.md`). Read the concept by section: find the
+headings you need with the Grep tool (pattern `^#`, content mode) and Read those
+ranges with offset and limit.
 
 The creative director evaluates the result against the game's creative vision and
 returns one of the gate's verdicts — APPROVE, CONCERNS or REJECT — or NOT

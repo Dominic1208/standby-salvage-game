@@ -81,6 +81,10 @@ Read whole (small, and every part is used):
 2. `design/gdd/game-pillars.md` if it exists — design pillars and anti-pillars
 3. `design/gdd/systems-index.md` — authoritative system list, layers, dependencies, status
 
+Read each document by section: find the headings with the Grep tool (pattern `^#`,
+content mode) and Read those ranges with offset and limit. A document read whole
+is read in ranges the same way, since a whole-file Read over 40 KB is refused.
+
 Then, for **every in-scope system GDD**, load the sections this review actually
 consumes — **not the whole file**:
 

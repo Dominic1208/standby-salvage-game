@@ -55,6 +55,9 @@ will determine whether the automated test row contributes to a FAIL verdict."
 
 **Summary**: [N] covered, [N] manual, [N] missing, [N] expected.
 
+[If `quick`:] "Coverage: not checked (quick run) — run `/smoke-check sprint`
+before hand-off." in place of the table and summary.
+
 ---
 
 ### Manual Smoke Checks
@@ -78,6 +81,8 @@ Stories that must have test evidence before they can be marked COMPLETE via
   Expected location: `tests/unit/[system]/[story-slug]_test.[ext]`
 
 [If none:] "All Logic and Integration stories have test coverage."
+[If `quick`:] "Not checked (quick run)." — never the line above, which a quick
+run has not shown.
 
 ---
 
@@ -140,6 +145,9 @@ Any platform with one or more FAIL checks contributes to the overall FAIL verdic
   launch and critical-path batches below then carry the verdict)
 - All smoke checks in all batches PASS or N/A
 - No MISSING test evidence entries
+
+[On a `quick` run, any verdict carries the label: `PASS (quick — coverage and
+Batch 3 not checked)`. A quick run can pass; it never reads as a full one.]
 ````
 
 **`NOT ASSESSED` — the build nobody could check.** Rank: it **outranks PASS and
@@ -147,11 +155,10 @@ PASS WITH WARNINGS** and **ranks below FAIL**. A suite that never ran has not
 shown the build is healthy; a suite that ran and failed is the more actionable
 finding and must not be demoted behind one that did not run.
 
-This is a change in where unconfirmed `NOT RUN` lands, and it is deliberate. The
-rule below — **never treat NOT RUN as an automatic FAIL** — is unchanged and
-still correct: NOT ASSESSED is not a FAIL, and it ranks below one. What changes
-is that an unrun suite no longer resolves to a *pass* verdict while waiting for a
-confirmation that may never come. Confirmed NOT RUN (the developer reports the
+The rule below — **never treat NOT RUN as an automatic FAIL** — still holds:
+NOT ASSESSED is not a FAIL, and it ranks below one. But an unrun suite never
+resolves to a *pass* verdict while waiting for a confirmation that may never
+come. Confirmed NOT RUN (the developer reports the
 result from their own IDE or CI) still lands at PASS WITH WARNINGS, because
 somebody did look.
 

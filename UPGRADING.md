@@ -18,6 +18,7 @@ of the template to the next.
 ## Table of Contents
 
 - [Upgrade Strategies](#upgrade-strategies)
+- [v1.1.3 → v1.2.0](#v113--v120)
 - [v1.1.2 → v1.1.3](#v112--v113)
 - [v1.1.1 → v1.1.2](#v111--v112)
 - [v1.1.0 → v1.1.1](#v110--v111)
@@ -45,8 +46,8 @@ your repo shares history with the template.
 # Add the template as a remote (one-time setup; skip this if `git remote -v` already lists template)
 git remote add template https://github.com/Donchitos/Claude-Code-Game-Studios.git
 
-# Fetch the new version
-git fetch template main
+# Fetch the new version and its release tag
+git fetch --tags template main
 
 # Merge into your branch
 git merge template/main
@@ -169,6 +170,222 @@ Best when: you didn't use git to set up the template (just downloaded a zip).
    file the list marks as yours, such as `.claude/docs/technical-preferences.md`.
 3. For files under **"Merge carefully"**, open both versions side-by-side
    and manually merge the structural changes while keeping your content.
+
+---
+
+## v1.1.3 → v1.2.0
+
+**Released:** 2026-10-19
+**Commit range:** `v1.1.3..v1.2.0`
+**Key themes:** The story skills rebuilt around shared helper scripts; a read
+guard for large design docs; Godot 4.7 and Unreal Engine 5.8 references; skills
+pre-approve only the commands they run
+
+### What Changed
+
+| Category | Changes |
+|----------|---------|
+| **Config helper** | `yaml-helper.sh` runs six read-only lookups directly (`bash .claude/hooks/yaml-helper.sh resolve_setting <key>` and five more), from the project root; `/settings` and `/perf-profile` call it that way |
+| **Hooks** | `post-compact.sh` removed: its output never reached Claude. `pre-compact.sh` only logs the compaction. `session-stop.sh` runs in the background and prints nothing. `notify.sh` fires for permission and idle prompts only |
+| **New hooks** | `validate-read.sh` refuses a whole-file read of a design doc over 40 KB and answers with its headings, so the retry reads one section (`features.read_guard: off` turns it off, `features.read_guard_kb` sets the size). `validate-write.sh` and `validate-registry.sh` warn, never block, when a write would break a rule the skills state (a file they never overwrite, the prototype boundary, an append-only registry). `validate-agent-artifact.sh` warns when a subagent stops without writing the file its brief named |
+| **Update alert** | Session start prints one line when a newer release is out. It asks GitHub at most once a day, in the background, and never waits; `updates.check: false` in `project.yaml` or `project.local.yaml` turns it off, and CI runs never ask |
+| **Worktrees** | `settings.json` sets `worktree.baseRef` to `"head"`, so a worktree (the prototyper's, an isolated subagent's, `claude --worktree`) starts from your current commit, not the remote's default branch. The new `.worktreeinclude` copies `project.local.yaml`, `CLAUDE.local.md` and `.claude/settings.local.json` into each one. The prototyper names uncommitted files its worktree can't see, and says which of its checks it could not run |
+| **Rules** | New `.claude/rules/scene-files.md`: engine scene and asset files (`.tscn`, `.tres`, `.unity`, `.prefab`, `Assets/**/*.asset`) are changed in the editor where possible |
+| **Templates** | New layouts in `.claude/docs/templates/`: bug reports, launch and certification checklists, patch notes, start paths and more. `/create-stories` writes stories from `story.md`; the other skills do not use the new layouts yet |
+| **Permissions** | `settings.json`: the three Bash `.env` deny rules removed; `Read(**/.env*)` and `Edit(**/.env*)` already cover them. No skill pre-approves bare `Bash` any more: 34 skills now pre-approve only the commands their text runs (framework scripts, `git log` and the like). A command a skill does not name, such as your `commands.test`, asks first; approve it once, or add `Bash(<your command> *)` to `.claude/settings.local.json` |
+| **Git** | `.gitignore` ignores `.claude/worktrees/` |
+| **Docs** | `settings-local-template.md` uses the current permission mode names and narrower example rules |
+| **Skill testing** | `CCGS Skill Testing Framework/` is renamed `studio-tests/`. `/skill-test`, `/skill-improve` and the `spec:` paths in its `catalog.yaml` use the new name; the two skills say so while the old folder is still there |
+| **Skills** | `/create-stories`, `/story-readiness`, `/create-epics`, `/dev-story`, `/story-done` and `/start` are rebuilt: shorter, with rarely used branches moved to each skill's `references/` folder (`/start` stays one `SKILL.md`) and fixed steps handed to scripts in `.claude/scripts/`. `/dev-story` and `/story-done` replace 1.1.3's numbered phase files with fewer, named ones. `/start` works out the rigor from what you describe and shows it on one card with a single save question, instead of asking for it. `/brainstorm`'s full concept path moved to `references/full-concept.md` |
+| **Stories** | New story template `.claude/docs/templates/story.md` with a `## Files` section: `/create-stories` lists the planned files, `/dev-story` replaces the list with the files it changed, and `/story-done` checks scope against it. `/create-stories` proposes an estimate (`S`, `M` or `L`) for each story, which you can change before it writes them |
+| **Evidence** | `/dev-story` writes `stamp.txt` beside a story's screenshots. `/story-done` names any of the story's files that changed after the evidence was captured; it reports this and never blocks on it |
+| **Gates** | The Technical Setup → Pre-Production gate reads each `/architecture-review` report's `Mode:` line and counts the report only for what that mode checked. Reports written by 1.1.3 have no `Mode:` line and count for nothing, so run `/architecture-review` once after upgrading, before that gate |
+| **Engine references** | `docs/engine-reference/` now covers Godot 4.7 (was 4.6) and Unreal Engine 5.8 (was 5.7). Unity stays on 6.3 LTS, the newest LTS, and records 6.4 to 6.6 and the 6.7 beta. Release timelines carry vendor-sourced dates |
+| **CI templates** | `/test-setup` writes `actions/checkout@v7` and `actions/upload-artifact@v7` (was `@v4`), names Godot 4.7.2 and gdUnit4 6.2, and `game-ci/unity-test-runner@v4` now resolves to v4.4.0 |
+
+---
+
+### Files: Safe to Overwrite
+
+**Existing files to overwrite (no user content), and new files to add:**
+```
+.claude/hooks/*.sh                           ← take the whole folder: 13 hooks
+                                               changed, yaml-helper.sh among
+                                               them, and 5 are new. Take
+                                               .claude/scripts/ in the same
+                                               step: the hooks call its helpers
+.claude/scripts/**                           ← 25 new helper scripts, 7 changed
+.claude/statusline.sh
+.claude/skills/**                            ← if you edited a skill, see
+                                               Merge Carefully
+.claude/agents/*.md                          ← all 49 changed; if you edited
+                                               one, see Merge Carefully
+.claude/docs/**                              ← EXCEPT technical-preferences.md,
+                                               which is yours and unchanged in
+                                               1.2.0
+.claude/rules/scene-files.md                 ← new
+docs/WORKFLOW-GUIDE.md
+docs/engine-reference/<engine>/              ← unless your project stays on
+                                               Godot 4.6 or Unreal 5.7; see
+                                               Merge Carefully
+README.md, CHANGELOG.md, UPGRADING.md        ← keep your README if it is your
+                                               game's
+studio-tests/                                ← renamed from CCGS Skill Testing
+                                               Framework/; if you wrote specs
+                                               there, see Merge Carefully
+production/.gdignore                         ← new: Godot skips production/
+```
+
+In a Godot project, after adding `production/.gdignore`, delete the .import files Godot made under `production/`
+(`find production -name '*.import' -delete`): Godot imported the evidence screenshots there as game resources,
+and a default export packed them into the game.
+
+With Strategy A2, also check out what this release changes outside `.claude`
+(your README aside): `git checkout template/main -- studio-tests production/.gdignore .worktreeinclude docs/WORKFLOW-GUIDE.md`.
+
+Take `.claude/hooks/` whole, not only its new files: a 1.1.3 `yaml-helper.sh`
+answers the new lookups (`resolve_setting modes.rigor` and the rest) with its
+usage line, so `/settings`, `/perf-profile` and the command the update notice
+prints stop working, and the rebuilt skills lose their review and gate lines.
+
+---
+
+### Files: Merge Carefully
+
+**Strategy A:** the merge has already made these changes wherever git could,
+which is every file you never edited. Check each item instead of making it
+again (a hook entry added twice runs twice). The steps are for files that
+conflicted, and for Strategies A2 and C.
+
+**`.claude/settings.json`** — if you have not edited it, overwrite it with the
+shipped file. If you have:
+
+- Delete the `"PostCompact"` entry under `hooks`, and delete
+  `.claude/hooks/post-compact.sh`. Do both: an entry left pointing at the
+  deleted script fails on every compaction.
+- Under `"Stop"`, add `"async": true` to the `session-stop.sh` hook.
+- Under `"Notification"`, change `"matcher": ""` to
+  `"matcher": "permission_prompt|idle_prompt"`.
+- Remove `Bash(*>.env*)`, `Bash(cat *.env*)` and `Bash(type *.env*)` from
+  `deny`. Keep `Read(**/.env*)` and `Edit(**/.env*)`, which cover Bash file
+  commands and redirects to `.env` files, and keep the two PowerShell `.env`
+  rules.
+- Add `Edit(**/*.uasset)` and `Edit(**/*.umap)` to `deny`. They stop Unreal's
+  binary assets being edited or overwritten as text, which corrupts them; an
+  `Edit(...)` rule covers writes too.
+- Add the four new hooks, copying each entry from the shipped file: under
+  `"PreToolUse"`, a `"Write|Edit"` entry running `validate-registry.sh` and
+  `validate-write.sh`, and a `"Read"` entry running `validate-read.sh`; under
+  `"SubagentStop"`, `validate-agent-artifact.sh` after `log-agent-stop.sh`.
+  Take `.claude/hooks/` and `.claude/scripts/` (Safe to Overwrite) first: an
+  entry pointing at a missing script fails every time it fires, and the four
+  hooks call helpers in `.claude/scripts/`, so without them every Read and
+  Write prints "guard skipped".
+- Add `"worktree": { "baseRef": "head" }` at the top level. Without it, Claude
+  Code makes each worktree from the remote's default branch, so a prototype or
+  isolated subagent works on code without your local commits.
+
+**`.gitignore`** — add `.claude/worktrees/`. Without it, a worktree made by the
+prototyper, an isolated subagent or `claude --worktree` shows up as untracked
+files, and `git add -A` stages it as an embedded repository.
+
+**`.worktreeinclude`** (new, at the root) — take it. It lists the gitignored
+local config Claude Code copies into each new worktree. If you add lines, add
+only local config, never secrets such as `.env` or keys.
+
+**`.gitattributes`** — add `*.awk text eol=lf` and `.worktreeinclude text eol=lf`.
+They keep both LF on every checkout, including `core.autocrlf=true` on Windows:
+mawk and BWK awk may misread an awk program with carriage returns, and a CRLF
+`.worktreeinclude` leaves every pattern ending in one, so nothing is copied.
+
+**`project.yaml`** — optionally set `framework.version: 1.2.0`. Nothing reads it
+for this release: the update alert compares against the version stamp in
+`.claude/hooks/update-check.sh`, which arrives with the hooks folder. Leave
+`updates.check` and `features.read_guard` unset to keep their defaults (on).
+
+**`CLAUDE.md`** — one wording change in the Technical Preferences paragraph;
+nothing to do if you edited the file.
+
+**`.claude/settings.local.json`** — if you copied `Bash(git *)` from the old
+`settings-local-template.md`, it approves every git command, `git push`
+included. Narrow it to the commands you mean, such as `Bash(git add *)` and
+`Bash(git commit *)`.
+
+**`studio-tests/`** — the renamed `CCGS Skill Testing Framework/`, same layout.
+If you never changed anything in the old folder, take the new one and delete
+the old one. If you wrote or edited specs there, move them to the same path
+under `studio-tests/`, and in `studio-tests/catalog.yaml` change their `spec:`
+paths from `CCGS Skill Testing Framework/` to `studio-tests/`. Then delete the
+old folder: `/skill-test` and `/skill-improve` only read the new one.
+
+**`.claude/skills/` and `.claude/scripts/`** — take the rebuilt skill folders
+whole (`create-stories`, `story-readiness`, `create-epics`, `dev-story`,
+`story-done`, `start`, `brainstorm`), and take `.claude/scripts/` with them: they
+call scripts 1.1.3 did not have (`adr-status.sh`, `story-facts.sh`,
+`md-section.sh`, `session-state.sh`, `write-guard.sh`, `project-state.sh`,
+`set-stage.sh`, `config-set.sh`). If you edited one of these skills, make your
+edit again on the new text; the step it changed may now be in the skill's
+`references/` folder.
+
+If you keep your own copy of any other skill, take the shipped `allowed-tools:`
+line into it: 34 skills replaced a bare `Bash` grant there, and a kept copy
+still pre-approves every shell command while it runs.
+
+**`docs/engine-reference/<engine>/`** — take the folder if your project uses
+the newer engine (Godot 4.7, Unreal 5.8) or has not pinned one yet. If your
+project stays on Godot 4.6 or Unreal 5.7, keep your current folder for that
+engine: the new one describes APIs your editor does not have. With Strategy A
+the merge takes the new folder without asking; only a file you edited (usually
+`VERSION.md`) conflicts. To keep yours, run `git checkout HEAD -- docs/engine-reference/<engine>/` before you commit the merge. Either way, run
+`/setup-engine` again afterwards so `Installed at pin time` records your editor.
+
+**`.github/workflows/`** — a workflow `/test-setup` already wrote is not changed.
+To move it to the current actions, change `actions/checkout@v4` and
+`actions/upload-artifact@v4` to `@v7`. On a self-hosted runner (the Unreal
+template), update the runner to 2.327.1 or newer first: v7 runs on Node.js 24.
+
+**`.claude/agents/`** — all 49 agent files changed: an agent ends its turn with
+its question instead of waiting for a yes it cannot receive, the GDScript, Unity,
+Unreal and Blueprint specialists leave scene and asset files to the editor, the engine agents follow the
+new engine versions, and the prototyper checks what its worktree cannot see. Take
+the folder; if you edited an agent, make your edit again on the new text.
+
+**Your registries** (`design/registry/entities.yaml`,
+`docs/architecture/tr-registry.yaml`, `docs/registry/architecture.yaml`) — keep
+yours: they hold your project's entries. The shipped files gained `# LAYOUT:`
+comment lines in their headers describing the shape `.claude/scripts/registry.sh`
+reads; copy them into your header if you like. Nothing reads the comment.
+1.1.3's `/architecture-decision` wrote a replaced entry in
+`docs/registry/architecture.yaml` as `status: superseded_by: ADR-NNNN`, without
+quotes. Quote each one: `status: "superseded_by: ADR-NNNN"`. Unquoted, the second
+colon makes the file invalid YAML. `registry.sh` still reads the old form and
+prints an `UNQUOTED` row naming each line to change.
+
+**`.claude/docs/templates/sprint-plan.md`** — take it. It gains a
+`## Goal Prerequisites` section that `/sprint-plan` fills; sprint plans you
+already wrote need no change.
+
+**Your existing stories and evidence** need no change. A story written before
+1.2.0 has no `## Files` section, so `/story-done` checks its scope against the
+session checkpoint's files in progress, or reports scope as NOT ASSESSED. Add
+the section by hand (one changed file per line) to get the check. Evidence
+captured before 1.2.0 has no `stamp.txt`, and `/story-done` says "no stamp"
+instead of whether the code changed after it.
+
+---
+
+### Files: Delete
+
+```
+.claude/hooks/post-compact.sh      → removed; delete its PostCompact entry in settings.json too
+CCGS Skill Testing Framework/      → renamed studio-tests/; move any specs you wrote first (above)
+.claude/skills/dev-story/references/2-load-context.md, 3-route.md, 4-implement.md,
+  5-test-evidence.md, 6-collect.md, 7-session-state.md
+                                   → replaced by engine-checks.md and version-mismatch.md
+.claude/skills/story-done/references/1-find-story.md, 2-read-story.md, 3-verify-criteria.md,
+  4-deviations.md, 5-code-review-gate.md, 6-completion-report.md, 7-update-status.md,
+  8-next-story.md                  → replaced by review-gates.md, sprint-next.md and tech-debt-row.md
+```
 
 ---
 

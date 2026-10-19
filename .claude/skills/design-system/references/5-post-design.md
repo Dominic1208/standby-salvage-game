@@ -40,13 +40,14 @@ the section cycle's Write step as for any other section.
 ### 5a: Self-Check
 
 Read back the complete GDD from file (not from conversation memory — the file is
-the source of truth). Verify:
+the source of truth). This step needs the whole GDD: read it in ranges by its
+headings (found with the Grep tool: pattern `^#`, content mode), since a whole-file
+Read over 40 KB is refused. Verify:
 - The `## Summary` and its Quick reference are populated (not the placeholder)
 - Every section **required at this system's effective tier** has real content
   (not placeholders) — §1: 8 at `full`, 5 + conditional Formulas at `standard`,
   5 at a voluntary `minimal`. Do not verify against a fixed count of 8: below
-  `full` that reports a correctly-authored GDD as incomplete, which is the same
-  error already corrected in the optional-sections prompt above
+  `full` that reports a correctly-authored GDD as incomplete
 - Formulas reference defined variables
 - Edge cases have resolutions
 - Dependencies are listed with interfaces
@@ -84,7 +85,7 @@ Scan the completed GDD for cross-system facts that should be registered:
 - Named constants referenced by value in more than one place
 
 **First check the registry exists** — §2a reads it *"if it exists"*, and this
-step never carried the same guard. At `standard` and below the file is often
+step needs the same guard. At `standard` and below the file is often
 absent, and a grep against a missing path returns nothing, which is
 indistinguishable from "no candidate is registered yet":
 
@@ -126,6 +127,13 @@ there are no `referenced_by` arrays to merge.)
 If yes: append new entries and update `referenced_by` arrays. Never modify
 existing `value` / attribute fields without surfacing it as a conflict first.
 
+After writing, run `bash .claude/scripts/registry.sh validate` and fix every row
+about an entry this write added or changed (a DUPLICATE, STATUS or LAYOUT row,
+or a PATH_MISSING row for a path it named) before you go on; name rows about
+other entries to the user rather than fixing them unasked. If the script is
+missing or prints nothing, say the registry check did not run, then re-read the
+entries you wrote against the rules in the file's header.
+
 ### 5c: Offer Design Review
 
 Present a completion summary:
@@ -149,8 +157,8 @@ Present a completion summary:
 After the GDD is complete (and optionally reviewed):
 
 **First check the systems index exists.** §2a skips it at `minimal` because it is
-never written at that tier, and this step never carried the same guard — the same
-class of bug §5b was patched for. It bites hardest on a `minimal` project with a
+never written at that tier, and this step needs the same guard as §5b. It
+matters most on a `minimal` project with a
 `system_overrides` bump, where the effective tier is `standard` or `full` and
 nothing else in §5 hints the file may be absent.
 
@@ -160,7 +168,9 @@ nothing else in §5 hints the file may be absent.
   index listing exactly one system.
 - **Present** — continue:
 
-- Read the systems index
+- Read the systems index by section: find the headings you need with
+  the Grep tool (pattern `^#`, content mode) and Read those ranges with
+  offset and limit
 - Update the target system's row:
   - If design-review was run and verdict is APPROVED: Status → "Approved"
   - If design-review was run and verdict is NEEDS REVISION or MAJOR REVISION NEEDED: Status → "Needs Revision" (that exact string — `/design-review` sets "In Review" only once the revisions are applied)

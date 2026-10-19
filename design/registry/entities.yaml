@@ -45,6 +45,13 @@
 # FORMAT: YAML. Consistent indentation is critical for grep reliability.
 #   Sections: entities | items | formulas | constants
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
+#
+# LAYOUT: the one shape .claude/scripts/registry.sh reads. Each section is a
+#   key at column 0 holding a block list, or [] while it is empty. Each entry
+#   starts "- name: <name>" with the dash at column 2 (or 0, the same for every
+#   entry of a section); its fields sit two columns past the dash, and a deeper
+#   line belongs to the field above it. Quote a value that holds ": ". A line
+#   in any other shape is reported as unsupported layout, with its number.
 
 version: 1
 last_updated: ""

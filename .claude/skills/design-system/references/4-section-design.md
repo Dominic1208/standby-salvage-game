@@ -259,10 +259,8 @@ The [formula_name] formula is defined as:
 Do NOT write `[Formula TBD]` or describe a formula in prose without the variable
 table. A formula without defined variables cannot be implemented without guesswork.
 
-> **These columns must match `templates/game-design-document.md` exactly.** They
-> did not: this block said `Symbol` where the template says `Source`, so a
-> correctly-authored GDD was wrong against whichever of the two its reader
-> happened to hold. `Source` is the column that stays, because it is what carries
+> **These columns match `templates/guidance/game-design-document-guide.md`
+> exactly; do not rename them.** The `Source` column carries
 > the coding-standards rule *"gameplay values must be data-driven (external
 > config), never hardcoded"* into the design document — a variable marked
 > `data file` is a tuning knob, one marked `constant` is a deliberate exception,
@@ -357,9 +355,8 @@ system]". Flag any one-directional dependencies for correction.
 **Agent delegation**: If formulas are complex, delegate to `systems-designer`
 to derive tuning knobs from the formula variables.
 
-> The guard above was missing here while Sections B, C, D, E and H all carried
-> one — and this delegation names `systems-designer`, the same agent Section D's
-> guard has already told a `solo` run to skip. Read without it, `solo` skips the
+> This delegation names `systems-designer`, the same agent Section D's guard
+> already tells a `solo` run to skip. Without the guard above, `solo` skips the
 > specialist for the formulas and then consults it for the knobs derived from
 > those same formulas.
 
@@ -439,11 +436,8 @@ exactly once, so nothing falls through:
 - `Narrative` — dialogue, quests, cutscenes, lore delivery
 - `Audio` — by definition
 
-> **`Gameplay` is the row this table was missing.** It is the category
-> `/map-systems` assigns to combat, AI and movement — the largest bucket in most
-> action games. If it appears in **neither** this list nor the "all other" list
-> below, the skill has no defined behaviour for it and the author has to guess.
-> All nine categories must be covered between the two lists.
+> **`Gameplay` belongs in this list.** It is the category `/map-systems` assigns
+> to combat, AI and movement — the largest bucket in most action games.
 
 For required systems: **spawn `art-director` via `Agent`** before drafting this section. Provide: system name, game concept, game pillars, art bible sections 1–4 if they exist. Ask them to specify: (1) VFX and visual feedback requirements for this system's events, (2) any animation or visual style constraints, (3) which art bible principles most directly apply to this system. Present their output; do NOT leave this section as `[To be designed]` for visual systems.
 
@@ -452,17 +446,15 @@ For required systems: **spawn `art-director` via `Agent`** before drafting this 
 - `lean` → skip unless this system's visual feedback is central to it (a `Gameplay` or `UI` system whose events the player reads to play). Otherwise draft without the agent.
 - `full` → spawn as described above.
 
-> Sections B, C, D, E and H each carry this block and this spawn did not, while
-> being worded as mandatory (*"do NOT leave this section as `[To be designed]`"*).
-> Two agents in `solo` skipped it anyway, on the strength of the other five, and
-> both flagged the guess. `director-gates.md`'s *"solo → no director gates
-> anywhere"* governs director **gates**, not specialist spawns, so it did not
-> settle it — this block does.
+> This block applies even though the spawn above is worded as mandatory (*"do
+> NOT leave this section as `[To be designed]`"*). `director-gates.md`'s *"solo
+> → no director gates anywhere"* governs director **gates**, not specialist
+> spawns, so it does not settle this spawn — this block does.
 
 **Game Feel is REQUIRED (mandatory — do not offer to skip) for `Gameplay` and
 `UI`** — the categories whose systems the player directly operates, where
 responsiveness, weight and snap are design targets rather than polish. It is
-optional for the other seven. The template argues the point itself: feel *"drives
+optional for the other seven. The template's guide argues the point itself: feel *"drives
 animation budgets, input handling architecture, and hitbox timing. Retrofitting
 feel targets after implementation is expensive."*
 
@@ -480,8 +472,7 @@ after the required sections.
 > **At `minimal`, force nothing.** §1 says a voluntary `minimal` GDD is *"exactly
 > the 5 standard sections"*, which contradicts a category rule that makes
 > Visual/Audio or Game Feel mandatory. §1 wins: at `minimal` both drop to
-> optional and the whole set goes through the widget below. The contradiction is
-> real — an agent authoring a `minimal` inventory GDD hit it and had to choose.
+> optional and the whole set goes through the widget below.
 
 Use `AskUserQuestion`:
 - "The required sections for this workflow tier are complete. Which of the
@@ -494,15 +485,14 @@ Use `AskUserQuestion`:
     skipped.
   - **Recommended option**: "All of them" when the system has any dependency,
     UI surface or player-facing feedback; "Just Cross-References and open
-    questions" otherwise. `autonomous` needs a marked recommendation to pick —
-    the three options previously carried none, unlike the Section A/B widgets,
-    so an unattended run had nothing to choose by and defaulted to skipping.
+    questions" otherwise. `autonomous` needs a marked recommendation to pick:
+    without one an unattended run has nothing to choose by and skips.
 
   Do **not** state a section count here. The required set is tier-dependent
   (§1: 8 at `full`, 5 + conditional Formulas at `standard`, 5 at a voluntary
-  `minimal`), so the previous hardcoded "8 required sections are complete" was
-  false on every run below `full` — it told a `standard`-tier user that 8
-  sections existed when 6 had been authored.
+  `minimal`), so a fixed "8 required sections are complete" is false on every
+  run below `full` — it tells a `standard`-tier user that 8 sections exist when
+  6 have been authored.
 
 For **Visual/Audio** (non-required systems): Coordinate with `art-director` and `audio-director` if detail is needed. Often a brief note suffices at the GDD stage.
 

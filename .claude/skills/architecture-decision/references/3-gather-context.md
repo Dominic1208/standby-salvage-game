@@ -52,16 +52,18 @@ or explicitly accepted as an intentional exception.
 The registry (3a) covers *what* prior decisions bind — not always *why*. If the
 registry surfaced a directly relevant ADR and its reasoning matters here (not
 just its stated facts), read that specific ADR — never glob-and-read every
-ADR in `docs/architecture/` on the chance one is relevant:
+ADR in `docs/architecture/` on the chance one is relevant. Read it by section:
+find the headings you need with the Grep tool (pattern `^#`, content mode)
+and Read those ranges with offset and limit.
 
 1. **Map its headings first** (cheap):
    ```
    Grep pattern="^## " path="docs/architecture/[adr-file].md" output_mode="content" -n
    ```
-2. **Under ~50KB** (`Bash: wc -c "docs/architecture/[adr-file].md"`) — one full
+2. **Under ~40KB** (`Bash: wc -c "docs/architecture/[adr-file].md"`) — one full
    `Read` is fine; per-call overhead exceeds the savings from bounded reads at
    this size.
-3. **~50KB or larger** — bounded-read only `## Context`, `## Decision`, and
+3. **~40KB or larger** — bounded-read only `## Context`, `## Decision`, and
    `## Consequences` (the sections that carry reasoning, not just facts) via
    `Read(offset, limit)` from the heading map.
 

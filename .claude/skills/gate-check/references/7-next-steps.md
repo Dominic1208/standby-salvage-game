@@ -18,8 +18,10 @@ being entered, so `/gate-check systems-design` is the Concept → Systems Design
 **At `workflow: minimal`, skip the menus below.** They walk the phase ladder, and
 the minimal route is not the ladder: offer the first incomplete step of
 `paths.minimal` instead (the `--path minimal` rows from Section 3):
-`/setup-engine`, then `/brainstorm`, then `/create-stories`, then `/dev-story`
-on the next story — the route `/help` gives.
+`/setup-engine`, then `/brainstorm` (or `/reverse-document design [code root]`
+when the code root already holds the game: it writes the brief from what is
+built), then `/create-stories`, then `/dev-story` on the next story — the route
+`/help` gives.
 
 For **Concept → Systems Design** (`/gate-check systems-design`) PASS — option [A] is
 `/map-systems` when `design/gdd/systems-index.md` does not exist yet (many
@@ -83,7 +85,7 @@ Based on the verdict, suggest specific next steps:
 - **Small design change needed?** → `/quick-design` for changes under about one week of implementation (bypasses full GDD pipeline)
 - **No UX specs?** → `/ux-design [screen name]` to author specs, or `/team-ui [feature]` for full pipeline
 - **UX specs not reviewed?** → `/ux-review [file]` or `/ux-review all` to validate
-- **No accessibility requirements doc?** → run `/ux-design` which creates both `design/accessibility-requirements.md` and `design/ux/interaction-patterns.md` in one step
+- **No accessibility requirements doc?** → `/ux-design accessibility` to write `design/accessibility-requirements.md`
 - **No interaction pattern library?** → `/ux-design patterns` to initialize it
 - **Concept or a GDD not reviewed?** → `/design-review [doc]`
 - **GDDs not cross-reviewed?** → `/review-all-gdds` (run after all MVP GDDs are individually approved)
@@ -104,13 +106,11 @@ Based on the verdict, suggest specific next steps:
 - **No Difficulty Curve doc?** → Author `design/difficulty-curve.md` by hand from the template at `.claude/docs/templates/difficulty-curve.md`. (`/quick-design` is a related session but writes to `design/quick-specs/`, not to this path — use it to think the curve through, then copy the outcome here.)
 - **No player journey map?** → Author `design/player-journey.md` by hand from the template at `.claude/docs/templates/player-journey.md`.
 
-> **Neither of these has a skill that writes it — the remediations must not imply
-> otherwise.** Naming "`/ux-design` Phase 2b" would point at the step that *reads*
-> `design/player-journey.md`, landing the user back at the check that just
-> failed. Naming `/quick-design` would point at a skill that writes
-> `design/quick-specs/[name]-[date].md` and would leave this gate still failing.
-> Both docs are hand-authored from their templates; say so plainly rather than
-> naming a skill that cannot produce them.
+> **Neither of these has a skill that writes it — do not name one.**
+> "`/ux-design` Phase 2b" is the step that *reads* `design/player-journey.md`,
+> so it lands the user back at the check that just failed. `/quick-design`
+> writes `design/quick-specs/[name]-[date].md` and leaves this gate still
+> failing. Say plainly that both docs are hand-authored from their templates.
 - **Need a quick sprint check?** → `/sprint-status` for current sprint progress snapshot
 - **Performance unknown?** → `/perf-profile`
 - **Not localized?** → `/localize`

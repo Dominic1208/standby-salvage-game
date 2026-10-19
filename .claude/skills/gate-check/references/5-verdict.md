@@ -58,9 +58,9 @@ readable.
 **Verdict precedence — first matching rule wins**, evaluated in this order:
 **FAIL**, then **CONCERNS**, then **NOT ASSESSED**, then **PASS**. A gate with
 both a real blocker and an unassessable check is FAIL: the blocker is the
-actionable finding. Stating the order mechanically removes the inference — the
-rank sentence above says what outranks what, but only an ordered list says what
-to do when two conditions hold at once.
+actionable finding. A CONCERNS verdict with an unassessable check still names
+that check under Blockers, as NOT ASSESSED with its reason: it is what keeps the
+stage from advancing (Section 6), so a reader must see it next to the concerns.
 
 Emit it when any of:
 
@@ -82,7 +82,7 @@ Emit it when any of:
   could still reach PASS. Meanwhile `testing.strict.logic` and
   `.integration` both default to `true`, so the project's own configuration
   called those gates BLOCKING. A blocking gate that never ran is the unknown this
-  verdict exists to name. Remediation is already listed under Common Gaps
+  verdict exists to name. Remediation is already listed under Section 8's follow-up actions
   (`/test-setup`); this is what the verdict does with it.
 
   > **Scope this to tiers that require tests.** At `qa.level: minimal` no test
@@ -92,10 +92,8 @@ Emit it when any of:
   > over-broad reading the director trigger below warns against. Fires only where
   > the resolved tier actually asked for the test check.
 - A **`MANUAL CHECK NEEDED` item the user never resolved**. Section 4 already
-  refuses to assume PASS for unverifiable items and marks them this way — but
-  until now the verdict vocabulary had nowhere to put one, so an unresolved
-  manual check had to land inside PASS, CONCERNS or FAIL anyway. This is where it
-  goes.
+  refuses to assume PASS for unverifiable items and marks them this way, and an
+  unresolved one lands here, never inside PASS, CONCERNS or FAIL.
 - A director the **resolved tier was supposed to spawn** did not return — it
   errored, produced no verdict, or was interrupted.
 
@@ -154,8 +152,8 @@ Do NOT reference the draft verdict text — re-check specific files or ask the u
 - If any answer reveals a check that **could not be run** rather than one that
   ran and passed → PASS→NOT ASSESSED. The first two PASS-draft questions above
   ("verified by actually reading a file, vs. inferring", "MANUAL CHECK NEEDED
-  items I marked PASS") exist to find exactly this, and until now a yes to either
-  had no verdict to move to
+  items I marked PASS") exist to find exactly this, and a yes to either moves
+  the verdict here
 - If any answer reveals an over-stated blocker → downgrade only if citing specific evidence
 - Never revise NOT ASSESSED down to PASS by re-reasoning about the missing input.
   Only obtaining the input clears it

@@ -13,8 +13,8 @@ Flow State, Bartle Player Types). Use whichever engine set matches your project.
 
 ## The Default Path: Rigor Minimal
 
-`modes.rigor` defaults to `minimal` (`/start` asks; `/settings` changes it any
-time). At `minimal` the path to code is four steps:
+`modes.rigor` defaults to `minimal` (`/start` infers it from what you describe and shows it
+before saving; `/settings` changes it any time). At `minimal` the path to code is four steps:
 
 1. `/setup-engine` -- configure the engine
 2. `/brainstorm` -- writes the one-page `design/game-brief.md`, in place of the
@@ -248,7 +248,7 @@ If you already know what you need, jump directly to the relevant path:
      current docs from the web so agents suggest correct APIs
 3. **Validate the concept** — Run `/design-review design/gdd/game-concept.md`
    (or `design/game-brief.md`, if `/brainstorm` wrote the one-page brief)
-4. **Prototype the mechanic** — Run `/prototype [core-mechanic]` (1–3 days) to
+4. **Prototype the mechanic** — Run `/prototype [core-mechanic]` (1 day at most) to
    test that the core idea is fun before you write GDDs
 5. **Decompose into systems** — Run `/map-systems` to map all systems and dependencies
 6. **Design each system** — Run `/design-system [system-name]` (or `/map-systems next`)
@@ -261,7 +261,7 @@ If you already know what you need, jump directly to the relevant path:
 If you already have a game concept and engine choice:
 
 1. **Set up the engine** — Run `/setup-engine [engine] [version]`
-   (e.g., `/setup-engine godot 4.6`) — also creates technical preferences
+   (e.g., `/setup-engine godot 4.7`) — also creates technical preferences
 2. **Write the Game Pillars** — delegate to `creative-director`
 3. **Decompose into systems** — Run `/map-systems` to enumerate systems and dependencies
 4. **Design each system** — Run `/design-system [system-name]` for GDDs in dependency order
@@ -301,8 +301,8 @@ project.yaml                       -- Machine-readable project config (engine, m
   settings.json                    -- Claude Code hooks and project settings
   agents/                          -- 49 agent definitions (YAML frontmatter)
   skills/                          -- 74 slash command definitions (YAML frontmatter)
-  hooks/                           -- 12 event hooks (.sh, wired by settings.json) + yaml-helper.sh
-  rules/                           -- 13 path-specific rule files
+  hooks/                           -- 15 event hooks (.sh, wired by settings.json) + yaml-helper.sh, update-check.sh
+  rules/                           -- 14 path-specific rule files
   docs/
     quick-start.md                 -- This file
     technical-preferences.md       -- Legacy fallback for project.yaml config (mirror; see project.yaml at repo root)
@@ -314,5 +314,5 @@ project.yaml                       -- Machine-readable project config (engine, m
     setup-requirements.md          -- System prerequisites (Git Bash, jq, Python)
     settings-local-template.md     -- Personal settings.local.json guide
     CLAUDE-local-template.md       -- Personal CLAUDE.local.md guide (gitignored overrides)
-    templates/                     -- 39 document templates (+ per-section guidance)
+    templates/                     -- 62 document templates (+ per-section guidance)
 ```

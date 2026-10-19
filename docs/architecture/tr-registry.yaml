@@ -22,6 +22,7 @@
 #             /create-epics (trace requirements to ADR coverage)
 #             /test-helpers (map requirements to tested systems)
 #             /adopt (brownfield audit: is the registry there)
+#             /create-architecture (reuses registered IDs in its baseline)
 #
 # ID FORMAT: TR-[system]-[NNN]
 #   [system] = a short lowercase slug for the system. It is an alias: the
@@ -29,6 +30,12 @@
 #   NNN = three-digit zero-padded sequence per system, starting at 001
 #
 # STATUS VALUES: active | deprecated | "superseded-by: TR-[system]-NNN"
+#
+# LAYOUT: the one shape .claude/scripts/registry.sh reads. requirements: holds
+#   a block list, or [] while it is empty. Each entry starts "- id: TR-..." with
+#   the dash at column 0, as in the examples (or 2, the same for every entry);
+#   its fields sit two columns past the dash. Quote a value that holds ": ". A
+#   line in any other shape is reported as unsupported layout, with its number.
 
 version: 1
 last_updated: ""

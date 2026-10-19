@@ -37,8 +37,35 @@ If the project appears fresh (no artifacts at all), use `AskUserQuestion`:
   - "My artifacts are in a non-standard location — help me find them"
   - "Cancel"
 
-Then stop — do not proceed with the audit regardless of which option the user picks
-(each option leads to a different skill or manual investigation).
+`/start` and Cancel end this skill: say which, and stop.
+
+**If they pick "help me find them"**, search before asking anything else:
+
+1. Search the folder they named, if they named one; otherwise the whole
+   project, skipping `.claude/`, `.git/`, `docs/engine-reference/`,
+   `studio-tests/`, `node_modules/` and the engine's build and
+   cache folders.
+2. Glob `**/*.md` there, then Grep the matches for the headings each artifact
+   carries: a GDD has `## Overview` with `## Detailed Rules` or
+   `## Detailed Design`; an ADR `## Status` with `## Decision`; a story
+   `## Acceptance Criteria` with a `Status` line; a concept doc
+   `## Elevator Pitch` or `## Game Pillars`; a brief `## Core loop` with
+   `## MVP`.
+3. Show what was found, grouped by type, each with the place every skill reads
+   it from: GDD → `design/gdd/[name].md`; ADR →
+   `docs/architecture/adr-NNNN-[name].md`; story →
+   `production/epics/[epic]/story-NNN-[name].md`; concept →
+   `design/gdd/game-concept.md`; brief → `design/game-brief.md`. If nothing
+   matched, say so, name the folders and headings searched, and offer `/start`.
+4. Ask before moving anything — a move takes the file away from its old path,
+   so it is a `file_deletions` decision: "May I move these [N] files to the
+   standard folders?" — `[A] Move them all` / `[B] Let me pick which` /
+   `[C] Don't move them — I'll do it myself`. Move with `git mv` in a git
+   repository (the file's history follows it), plain `mv` otherwise. Never
+   overwrite a file already at the target: name the clash and skip that file.
+   Files are moved, never edited.
+5. After the moves, run Phase 1 again from the top, so the audit reads the files
+   where every other skill will. With [C], print the moves as a list and stop.
 
 Report: "Detected phase: [phase]. Found: [N] GDDs, [M] ADRs, [P] stories."
 

@@ -45,7 +45,9 @@ A system name or retrofit path is **required**. If missing:
 If the argument starts with `retrofit` or the argument is a file path to an
 existing `.md` file in `design/gdd/`, enter **retrofit mode**:
 
-1. Read the existing GDD file.
+1. Read the existing GDD file. Read it by section: find the headings with
+   the Grep tool (pattern `^#`, content mode) and Read those ranges with
+   offset and limit.
 2. Identify which of the 8 **possible** sections are present (scan for section
    headings): Overview, Player Fantasy, Detailed Design/Rules, Formulas,
    Edge Cases, Dependencies, Tuning Knobs, Acceptance Criteria.
@@ -87,11 +89,10 @@ value.
 
 The resolved tier determines which GDD sections are **required** (applied in §4).
 **`## Summary` is required at every tier and is not one of the 8** — §5-pre
-authors it unconditionally (*"This runs at every tier"*), but it appeared in none
-of the per-tier lists below, and these lists are what other skills and gates
-apply. A GDD checked against a tier list alone would pass with no Summary, the
-one section `/review-all-gdds` and the tiered-loading readers depend on. Read
-every list below as "`## Summary`, plus:".
+authors it unconditionally (*"This runs at every tier"*). The per-tier lists
+below do not repeat it, and a GDD checked against a tier list alone would pass
+with no Summary, the one section `/review-all-gdds` and the tiered-loading
+readers depend on. Read every list below as "`## Summary`, plus:".
 - `full` — all 8 sections
 - `standard` — Overview, Detailed Design, Edge Cases, Dependencies, Acceptance
   Criteria (5 required); **Formulas conditional** — required when the system
@@ -104,14 +105,13 @@ every list below as "`## Summary`, plus:".
   of the engine, Formulas is required. **Player Fantasy and Tuning Knobs skipped**
   unless `workflow_overrides` force them (`tuning_knobs: true` forces Tuning Knobs)
 
-  > **Do not gate this on a category token.** A rule of the form "required when
-  > the system category is combat / economy / progression / AI" does not work:
-  > those four tokens are not what `/map-systems` writes — `templates/systems-index.md`
-  > defines the categories as `Core · Gameplay · Progression · Economy ·
-  > Persistence · UI · Audio · Narrative · Meta` and lists **combat and AI as
-  > example systems under `Gameplay`**. A combat system categorised exactly as the
-  > template instructs matches none of the four, and Formulas would be dropped for
-  > the system most likely to need it.
+  > **Do not gate this on a category token.** A test such as "the category is
+  > combat / economy / progression / AI" matches tokens `/map-systems` does not
+  > write — `templates/systems-index.md` defines the categories as `Core ·
+  > Gameplay · Progression · Economy · Persistence · UI · Audio · Narrative ·
+  > Meta` and lists **combat and AI as example systems under `Gameplay`**. A
+  > combat system categorised exactly as the template instructs matches none of
+  > the four, and Formulas would be dropped for the system most likely to need it.
 - `minimal` — a GDD is not required (the game brief replaces it). If invoked
   voluntarily at minimal, author exactly the 5 standard sections (Overview,
   Detailed Design, Edge Cases, Dependencies, Acceptance Criteria) — the

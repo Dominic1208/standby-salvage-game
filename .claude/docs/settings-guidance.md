@@ -72,8 +72,8 @@ rigor; want that?"). If the user has **no concept yet** (exploring), do not seed
 "No concept yet" means **no signal**, not a particular onboarding path. A rough
 one-line hint is still a description: if it trips the signals above, seed from the
 signal. Only fall back to `minimal`-for-exploring when the user has given you
-nothing to map. (`/start` Phase 3d states the same rule for its Path A/B branch;
-both drive the same recommendation.)
+nothing to map. (`/start` Phase 4 applies the same rule when it infers rigor for its
+Path A/B branch.)
 
 ---
 
@@ -100,7 +100,7 @@ state is needed — but never emit the same suggestion twice in one session.
 
 | Skill | Moment | Sections used |
 |---|---|---|
-| `/start` | Phase 3d/4 — choosing rigor | § 2 (presets), § 3 (seed from concept) |
+| `/start` | Phase 4 — inferring rigor for the card | § 2 (presets), § 3 (seed from concept) |
 | `/help` | escalation footer when user sounds stuck/overwhelmed | § 4 (lower trigger) |
 | `/gate-check` | on PASS into a new stage | § 4 (raise trigger) |
 | `/settings` | view output — further reading | § 2 (choosing a value) |
