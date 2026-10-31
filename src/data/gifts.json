@@ -1,0 +1,37 @@
+{
+  "_doc": "员工带回的包裹。处理一条 AI 请求（批准或拒绝都算，奖励一样）给 small；AI 完成任务、你确认汇报给 big。daily_cap 是每天最多拆几个，防止刷。outcomes 按 weight 抽：kind = cash / collectible / intel / rep / nothing。",
+  "daily_cap": 8,
+  "tiers": {
+    "small": {"art": "gift_small", "title": "一个小纸包", "bonus": 1.0},
+    "big": {"art": "gift_big", "title": "一只结实的木箱", "bonus": 2.0},
+    "weird": {"art": "gift_weird", "title": "一个在发抖的布包", "bonus": 1.5}
+  },
+  "weird_chance": 0.12,
+  "outcomes": [
+    {"kind": "cash", "min": 50, "max": 200, "weight": 26, "text": ["员工：“路上捡到的，交公！”", "员工：“客户给的小费，分你一半。”", "员工：“帮人修了个 bug，人家硬塞的。”"]},
+    {"kind": "cash", "min": 300, "max": 700, "weight": 6, "text": ["员工：“老板，我好像发现了一个宝藏……”", "员工：“顺手卖掉了我在外面捡的破烂，嘿嘿。”"]},
+    {"kind": "cash", "min": -150, "max": -30, "weight": 10, "text": ["员工：“这是我的奶茶报销单。”", "员工：“对不起，我把别人的东西碰坏了，赔了点钱……”", "员工：“停车罚单，算公司的吧？”"]},
+    {"kind": "collectible", "weight": 32},
+    {"kind": "intel", "count": 2, "weight": 12, "text": ["员工：“我打听到了些门道，下两件货我帮你看一眼。”"]},
+    {"kind": "rep", "amount": 1, "weight": 8, "text": ["员工：“我在外面替你说了好话，街坊都说你实在。”"]},
+    {"kind": "nothing", "weight": 6, "text": ["包裹里只有一张便条：“下次一定。”", "包裹里是空的。员工：“……我明明装了东西的。”"]}
+  ],
+  "collectibles": [
+    {"id": "woodfish", "name": "电子木鱼", "rarity": 1, "desc": "敲一下，功德 +1。敲一百下，邻居 -1。"},
+    {"id": "amulet", "name": "退退退护身符", "rarity": 1, "desc": "专退霉运、前任和周一。"},
+    {"id": "duck", "name": "情绪稳定的鸭子", "rarity": 1, "desc": "无论发生什么，它都是这个表情。"},
+    {"id": "squish", "name": "压力怪捏捏", "rarity": 1, "desc": "替你承受了它不该承受的。"},
+    {"id": "badge", "name": "打工人工牌", "rarity": 1, "desc": "挂绳上的磨损，是岁月，也是班味。"},
+    {"id": "calendar", "name": "摸鱼台历", "rarity": 2, "desc": "每一页都写着：今天也适合摸鱼。"},
+    {"id": "alarm", "name": "摔裂的早八闹钟", "rarity": 2, "desc": "它尽力了，是你没有。"},
+    {"id": "milktea", "name": "续命奶茶", "rarity": 1, "desc": "全糖去冰加珍珠，今天的快乐来源。"},
+    {"id": "pie", "name": "老板画的大饼", "rarity": 2, "desc": "又大又圆，看得见，吃不着。"},
+    {"id": "egg", "name": "电子宠物蛋", "rarity": 2, "desc": "里面的小东西饿了三年，还在等你。"},
+    {"id": "koi", "name": "锦鲤贴纸", "rarity": 3, "desc": "转发了吗？没转发的话运气减半。"},
+    {"id": "cat", "name": "纸箱里的橘猫", "rarity": 3, "desc": "不是你选择了它，是它选择了你的纸箱。"},
+    {"id": "selfie", "name": "员工的自拍", "rarity": 3, "desc": "AI 员工在外面拍的，比了个耶。"},
+    {"id": "ticket", "name": "过期彩票", "rarity": 2, "desc": "差一位数就中了，每张都差一位数。"},
+    {"id": "alien", "name": "小绿人摆件", "rarity": 3, "desc": "员工坚持说它是自己走进包裹的。"},
+    {"id": "trophy", "name": "一键三连奖杯", "rarity": 3, "desc": "点赞、投币、收藏，样样不落。"}
+  ]
+}

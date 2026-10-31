@@ -24,6 +24,71 @@ const state = {
   retry: 0,
 };
 
+// ---------------- 声音 ----------------
+// 由外壳播放：Web Audio 在非 HTTPS 页面也能用（Godot 自己的音频需要 HTTPS）。
+// iOS 要求用户先点一下屏幕才能出声，所以第一次点击时解锁。
+const sound = {
+  ctx: null, buffers: new Map(), bgmNode: null, bgmName: "", wantBgm: "", gain: null,
+  muted: store.get("muted") === "1",
+  unlock() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      this.ctx = new AC();
+      this.gain = this.ctx.createGain();
+      this.gain.gain.value = this.muted ? 0 : 1;
+      this.gain.connect(this.ctx.destination);
+    }
+    if (this.ctx.state === "suspended") this.ctx.resume();
+    if (this.wantBgm && this.bgmName !== this.wantBgm) this.bgm(this.wantBgm);
+  },
+  async load(name) {
+    if (this.buffers.has(name)) return this.buffers.get(name);
+    const url = name.startsWith("bgm_") ? `/audio/${name}.mp3` : `/audio/sfx_${name}.wav`;
+    const p = fetch(url).then((r) => r.arrayBuffer()).then((b) => new Promise((ok, bad) => this.ctx.decodeAudioData(b, ok, bad)));
+    this.buffers.set(name, p);
+    return p;
+  },
+  async sfx(name) {
+    if (!this.ctx || this.muted) return;
+    try {
+      const buf = await this.load(name);
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(this.gain);
+      src.start();
+    } catch {}
+  },
+  async bgm(name) {
+    this.wantBgm = name;
+    if (!this.ctx) return;
+    if (this.bgmNode) { try { this.bgmNode.stop(); } catch {} this.bgmNode = null; }
+    this.bgmName = name;
+    if (!name) return;
+    try {
+      const buf = await this.load("bgm_" + name);
+      if (this.wantBgm !== name) return;
+      const src = this.ctx.createBufferSource();
+      const vol = this.ctx.createGain();
+      vol.gain.value = 0.35;
+      src.buffer = buf;
+      src.loop = name === "shop";
+      src.connect(vol).connect(this.gain);
+      src.start();
+      this.bgmNode = src;
+    } catch {}
+  },
+  toggle() {
+    this.muted = !this.muted;
+    store.set("muted", this.muted ? "1" : "0");
+    if (this.gain) this.gain.gain.value = this.muted ? 0 : 1;
+    $("sound-btn").textContent = this.muted ? "🔇" : "🔊";
+  },
+};
+$("sound-btn").textContent = sound.muted ? "🔇" : "🔊";
+$("sound-btn").onclick = (e) => { e.stopPropagation(); sound.unlock(); sound.toggle(); };
+document.addEventListener("pointerdown", () => sound.unlock(), { capture: true });
+
 // ---------------- 游戏通讯 ----------------
 const game = $("game");
 function tellGame(msg) {
@@ -150,11 +215,17 @@ function nextDoor() {
     $("door-avatar").textContent = ag.avatar;
     $("door-who").textContent = ev.kind === "done" ? `${ag.name}回来汇报` : `${ag.name}发来消息`;
     $("door-say").textContent = `“${ev.text}”`;
-    $("door-open").textContent = "知道了";
-    $("door-open").onclick = () => { $("door").classList.add("hidden"); nextDoor(); };
+    $("door-open").textContent = ev.kind === "done" ? "看看成果" : "知道了";
+    $("door-open").onclick = () => {
+      $("door").classList.add("hidden");
+      // 确认了完成汇报 → 员工带回一只大箱子
+      if (ev.kind === "done") tellGame({ type: "gift", tier: "big", agent: ev.agent });
+      nextDoor();
+    };
     tellGame({ type: "employee", agent: ev.agent, kind: ev.kind });
   }
   pauseGame();
+  sound.sfx("notify");
   $("door").classList.remove("hidden");
 }
 
@@ -225,7 +296,10 @@ async function decide(decision) {
     });
     const data = await r.json().catch(() => ({}));
     if (data.status) { a.status = data.status; renderCardStatus(a); }
-    if (data.result === "ok") setTimeout(closeCard, 1400);
+    if (data.result === "ok") {
+      // 处理了请求（批准或拒绝都一样）→ 员工带回一个小包裹
+      setTimeout(() => { closeCard(); tellGame({ type: "gift", tier: "small", agent: a.agent }); }, 1400);
+    }
   } catch (e) {
     const box = $("card-status");
     box.className = "card-status bad";
@@ -312,6 +386,10 @@ function renderConsole() {
   if (!rl.children.length) rl.innerHTML = "<li>还没有记录</li>";
 }
 
+$("btn-sim-done").onclick = async () => {
+  await fetch("/api/simulate?kind=done", { method: "POST", headers: { "X-Device-Token": state.token || "" } });
+  $("console").classList.add("hidden");
+};
 $("btn-sim").onclick = async () => {
   await fetch("/api/simulate", { method: "POST", headers: { "X-Device-Token": state.token || "" } });
   $("console").classList.add("hidden");
@@ -360,6 +438,8 @@ $("btn-push").onclick = async () => {
 window.addEventListener("message", (e) => {
   if (e.origin !== location.origin) return;
   if (e.data?.type === "game-ready" && !$("door").classList.contains("hidden")) pauseGame();
+  if (e.data?.type === "sfx") { sound.unlock(); sound.sfx(String(e.data.name)); }
+  if (e.data?.type === "bgm") { sound.bgm(String(e.data.name || "")); }
 });
 
 connect();

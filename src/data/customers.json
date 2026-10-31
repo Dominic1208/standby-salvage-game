@@ -1,0 +1,25 @@
+{
+  "_doc": "顾客原型：art 是立绘，type 是性格（见 personalities.json），names 随机取一个。同一张立绘可以配不同名字，复用美术。",
+  "archetypes": [
+    {"art": "customer_zhang", "type": "shrewd", "names": ["张阿姨", "王阿姨", "菜市场李姐"]},
+    {"art": "customer_liu", "type": "desperate", "names": ["小刘", "加班的小周", "实习生小吴"]},
+    {"art": "customer_chen", "type": "honest", "names": ["老陈", "退休的赵老师", "楼下孙大爷"]},
+    {"art": "customer_hat", "type": "slick", "names": ["戴帽子的男人", "不愿透露姓名的人", "自称'阿飞'的人"]},
+    {"art": "customer_suit", "type": "shrewd", "names": ["穿西装的女人", "投资人林总", "HR 周经理"]},
+    {"art": "customer_courier", "type": "desperate", "names": ["外卖小哥", "跑腿小哥", "快递员小马"]},
+    {"art": "customer_student", "type": "desperate", "names": ["大学生", "考研党小陈", "大四的阿杰"]},
+    {"art": "customer_lin", "type": "honest", "names": ["林师傅", "修车的老马", "开锁的王师傅"]},
+    {"art": "customer_streamer", "type": "slick", "names": ["主播'家人们'", "带货主播小美", "自称百万粉的博主"]},
+    {"art": "customer_gym", "type": "shrewd", "names": ["健身哥", "私教阿强", "撸铁的大熊"]},
+    {"art": "customer_fisher", "type": "honest", "names": ["钓鱼的刘大爷", "空军老王", "河边的周伯"]},
+    {"art": "customer_mom", "type": "desperate", "names": ["新手妈妈", "抱娃的小芳", "宝妈阿琳"]},
+    {"art": "customer_schoolkid", "type": "slick", "names": ["初中生", "逃课的小胖", "背着书包的小孩"]},
+    {"art": "customer_artsy", "type": "shrewd", "names": ["文艺青年", "独立摄影师阿木", "写诗的小林"]},
+    {"art": "customer_coder", "type": "desperate", "names": ["程序员", "被裁的老张", "加班到凌晨的小李"]},
+    {"art": "customer_cosplayer", "type": "honest", "names": ["coser 小葵", "漫展回来的阿紫", "二次元少女"]},
+    {"art": "customer_dancer", "type": "shrewd", "names": ["广场舞领队", "跳舞的钱阿姨", "舞蹈队刘姐"]},
+    {"art": "customer_tourist", "type": "honest", "names": ["外国游客", "背包客汤姆", "迷路的旅行者"]},
+    {"art": "customer_fortune", "type": "slick", "names": ["算命的老太太", "神婆婆", "半仙"]},
+    {"art": "customer_boss", "type": "slick", "names": ["小老板", "包工头老黄", "开奶茶店的胖哥"]}
+  ]
+}

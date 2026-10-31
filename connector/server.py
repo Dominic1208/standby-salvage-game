@@ -328,6 +328,9 @@ async def push_key(request: web.Request) -> web.Response:
 async def simulate(request: web.Request) -> web.Response:
     """模拟一条请求，用来在没有真实 AI 任务时体验流程（卡片会标明“模拟”）。"""
     require_device(request)
+    if request.query.get("kind") == "done":
+        await add_event("done", "claude", "demo-project：这一轮工作完成了，回来看看结果吧（模拟）", "demo")
+        return web.json_response({"ok": True})
     a = await create_approval("claude", "demo", "D:/demo-project", "Bash",
                               {"command": "npm install left-pad"}, simulated=True)
     asyncio.create_task(_auto_clear_sim(a["id"]))

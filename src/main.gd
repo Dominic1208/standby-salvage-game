@@ -25,8 +25,8 @@ const CUSTOMER_COLORS := [Color("6c8ebf"), Color("c27c5a"), Color("7fa66a"), Col
 	Color("c9a04a"), Color("5fa3a0"), Color("b8606f"), Color("8a8f99")]
 
 var tuning: Dictionary
-var items: Array
-var customers: Array
+var catalog: Dictionary       ## 货物库 data/catalog.json
+var customers: Array          ## 顾客原型 data/customers.json
 var personas: Dictionary
 var rng := RandomNumberGenerator.new()
 var reputation := 0           ## 街坊口碑：公道交易、揭穿骗子会涨，压榨老实人会跌
@@ -83,16 +83,34 @@ var result_btn: Button
 var pause_layer: ColorRect
 var pause_label: Label
 
+var gifts_data: Dictionary    ## data/gifts.json
+var gift_queue: Array = []    ## 还没拆的包裹 ["small" / "big" / "weird"]
+var gifts_today := 0
+var collection := {}          ## 收藏品 id -> 数量（跨局保留）
+var intel := 0                ## 情报：下几次看线索免费、不耗时
+var gift_btn: Button
+var book_btn: Button
+var gift_layer: ColorRect
+var gift_art: TextureRect
+var gift_title: Label
+var gift_body: Label
+var gift_action: Button
+var gift_opened := false
+var book_layer: ColorRect
+var book_grid: GridContainer
+var book_count: Label
+const SAVE_PATH := "user://save.json"
+
 var _web := false
 var _poll := 0.0
 
 
 func _ready() -> void:
 	tuning = _load_json("res://data/tuning.json")
-	var data := _load_json("res://data/items.json")
-	items = data.items
-	customers = data.customers
+	catalog = _load_json("res://data/catalog.json")
+	customers = _load_json("res://data/customers.json").archetypes
 	personas = _load_json("res://data/personalities.json").types
+	gifts_data = _load_json("res://data/gifts.json")
 	rng.randomize()
 	cash = int(tuning.start_cash)
 	time_left = int(tuning.time_per_day)
@@ -106,7 +124,9 @@ func _ready() -> void:
 			});
 			if (window.parent !== window) window.parent.postMessage({type: 'game-ready'}, location.origin);
 		""", true)
-	_start_day()
+	_bgm("shop")
+	if not _load_game():
+		_start_day()
 
 
 func _process(delta: float) -> void:
@@ -133,6 +153,8 @@ func _on_shell_message(m: Dictionary) -> void:
 			_show_pause(true)
 		"resume":
 			_show_pause(false)
+		"gift":
+			_receive_gift(str(m.get("tier", "small")), str(m.get("agent", "")))
 		"employee":
 			var who := "Claude 员工" if m.get("agent", "") == "claude" else "Codex 员工"
 			var kind := str(m.get("kind", ""))
@@ -157,6 +179,7 @@ func _show_pause(on: bool) -> void:
 # ---------------- 流程 ----------------
 
 func _start_day() -> void:
+	_bgm("shop")
 	run_state = "playing"
 	time_left = int(tuning.time_per_day)
 	var tags: Array = tuning.order_tags
@@ -171,11 +194,11 @@ func _next_customer() -> void:
 		_end_day()
 		return
 	time_left -= int(tuning.time_per_customer)
-	deal = Deal.new(tuning, items, customers, personas, rng, reputation)
+	deal = Deal.new(tuning, catalog, customers, personas, rng, reputation)
 	deal_open = true
 	var cname: String = deal.customer.name
 	offer_amount = clampi(roundi(deal.ask * float(tuning.offer_start_ratio) / 10.0) * 10, 10, maxi(cash, 10))
-	figure_color = CUSTOMER_COLORS[customers.find(deal.customer) % CUSTOMER_COLORS.size()]
+	figure_color = CUSTOMER_COLORS[absi(hash(deal.customer.art)) % CUSTOMER_COLORS.size()]
 	figure_initial = cname.substr(0, 1)
 	portrait.texture = _art(deal.customer.get("art", ""))
 	figure.queue_redraw()
@@ -191,6 +214,7 @@ func _next_customer() -> void:
 	_build_clues()
 	_refresh()
 	_animate_arrival()
+	_sfx("door")
 
 
 func _animate_arrival() -> void:
@@ -217,11 +241,16 @@ func _build_clues() -> void:
 func _on_clue(i: int, b: Button) -> void:
 	if not deal_open or deal.clues[i].revealed:
 		return
-	if time_left < int(tuning.time_per_clue):
+	if intel <= 0 and time_left < int(tuning.time_per_clue):
 		_log("今天没时间细看了。", COL_BAD)
 		return
-	time_left -= int(tuning.time_per_clue)
+	if intel > 0:
+		intel -= 1
+		_float_text("（用掉一条情报，不耗时）", COL_NEON)
+	else:
+		time_left -= int(tuning.time_per_clue)
 	var text := deal.reveal(i)
+	_sfx("clue")
 	b.text = "✓  " + text
 	b.disabled = true
 	b.add_theme_stylebox_override("disabled", _revealed_box())
@@ -232,15 +261,17 @@ func _on_clue(i: int, b: Button) -> void:
 
 
 func _on_challenge() -> void:
-	if not deal_open or deal.challenged:
+	if not deal_open or deal.exposed:
 		return
 	var r := deal.challenge()
-	_log(r.text, COL_OK if r.mood == "caught" else COL_BAD)
-	if r.mood == "caught":
+	_log(r.text, COL_OK if r.mood in ["caught", "confess"] else COL_BAD)
+	if r.mood in ["caught", "confess"]:
 		_pulse(ask_stamp)
 		_change_rep(1, "揭穿了骗子")
+		_sfx("caught")
 	else:
 		_shake(figure)
+		_sfx("angry")
 	if deal.patience <= 0:
 		_close_deal(false, "顾客扭头就走了。")
 		return
@@ -264,6 +295,7 @@ func _on_offer() -> void:
 			_close_deal(false, r.text)
 		_:
 			_log(r.text, COL_TEXT)
+			_sfx("counter")
 			_shake(figure)
 			_pulse(ask_stamp)
 			_refresh()
@@ -290,6 +322,7 @@ func _on_refuse() -> void:
 
 func _buy(price: int) -> void:
 	cash -= price
+	_sfx("coin")
 	inventory.append({"name": deal.item.name, "paid": price, "value": deal.true_value,
 		"leaky": deal.item.get("leaky", false), "tag": deal.item.get("tag", "")})
 	# 口碑：对老实人给公道价会涨，压榨会跌
@@ -325,6 +358,7 @@ func _lie_text() -> String:
 
 
 func _close_deal(_bought: bool, text: String) -> void:
+	_sfx("leave")
 	_show_result("没谈成", "¥0", COL_MUTED, "%s\n\n它其实值 ¥%d" % [text, deal.true_value])
 
 
@@ -340,6 +374,7 @@ func _show_result(title: String, big: String, big_color: Color, body: String) ->
 
 
 func _open_result() -> void:
+	_save_game()
 	result_layer.visible = true
 	result_layer.modulate.a = 0.0
 	result_card.scale = Vector2(0.85, 0.85)
@@ -430,8 +465,12 @@ func _end_day() -> void:
 			result_btn.text = "开始第 %d 天" % (day + 1)
 	if run_state == "day_end":
 		day += 1
+	gifts_today = 0
 	deal_open = false
+	_sfx({"lost": "lose", "won": "win"}.get(run_state, "day_end"))
+	_bgm("closing" if run_state == "day_end" else "")
 	_open_result()
+	_save_game()
 	_refresh()
 
 
@@ -464,6 +503,203 @@ func _float_text(text: String, color: Color) -> void:
 	tw.tween_callback(l.queue_free)
 
 
+# ---------------- 员工包裹 ----------------
+
+## 外壳通知：员工带回一个包裹。批准和拒绝给的一样，避免诱导无脑批准。
+func _receive_gift(tier: String, _agent: String) -> void:
+	if gifts_today >= int(gifts_data.daily_cap):
+		_float_text("（今天的包裹已经够多了，员工把它放进了仓库）", COL_MUTED)
+		return
+	gifts_today += 1
+	if tier == "small" and rng.randf() < float(gifts_data.weird_chance):
+		tier = "weird"
+	gift_queue.append(tier)
+	_float_text("员工带回了%s！" % gifts_data.tiers[tier].title, COL_NEON)
+	_sfx("notify")
+	_refresh()
+	_pulse(gift_btn)
+	_save_game()
+
+
+func _open_gift() -> void:
+	if gift_queue.is_empty():
+		return
+	var tier: String = gift_queue[0]
+	gift_opened = false
+	gift_art.texture = _art(gifts_data.tiers[tier].art)
+	gift_title.text = gifts_data.tiers[tier].title
+	gift_body.text = "点一下拆开看看"
+	gift_action.text = "拆开"
+	gift_layer.visible = true
+	gift_art.pivot_offset = gift_art.size / 2
+	var tw := create_tween().set_loops(3)
+	tw.tween_property(gift_art, "rotation_degrees", 6.0, 0.08)
+	tw.tween_property(gift_art, "rotation_degrees", -6.0, 0.08)
+	tw.tween_property(gift_art, "rotation_degrees", 0.0, 0.08)
+
+
+func _on_gift_action() -> void:
+	if gift_opened:
+		gift_layer.visible = false
+		_refresh()
+		return
+	var tier: String = gift_queue.pop_front()
+	var bonus := float(gifts_data.tiers[tier].bonus)
+	var o: Dictionary = _pick_weighted_outcome(tier)
+	var good := true
+	var text := ""
+	match str(o.kind):
+		"cash":
+			var amount := roundi(rng.randi_range(int(o.min), int(o.max)) * (bonus if int(o.min) > 0 else 1.0))
+			cash += amount
+			good = amount >= 0
+			text = "%s\n\n%s ¥%d" % [_pick_text(o), "+" if amount >= 0 else "-", absi(amount)]
+		"collectible":
+			var c := _roll_collectible(tier)
+			var fresh := not collection.has(c.id)
+			collection[c.id] = int(collection.get(c.id, 0)) + 1
+			gift_art.texture = _art("col_" + str(c.id))
+			text = "%s收藏品：%s %s\n\n%s" % ["新" if fresh else "重复的", c.name, "★".repeat(int(c.rarity)), c.desc]
+			if not fresh:
+				var refund := 30 * int(c.rarity)
+				cash += refund
+				text += "\n\n（重复的卖给了收藏贩子 +¥%d）" % refund
+		"intel":
+			intel += int(o.count)
+			text = "%s\n\n情报 +%d：看线索免费、不耗时" % [_pick_text(o), int(o.count)]
+		"rep":
+			reputation += int(o.amount)
+			text = "%s\n\n街坊口碑 +%d" % [_pick_text(o), int(o.amount)]
+		_:
+			good = false
+			text = _pick_text(o)
+	gift_body.text = text
+	gift_title.text = "拆开了！" if good else "呃……"
+	gift_action.text = "收下"
+	gift_opened = true
+	_sfx("gift" if good else "bad_gift")
+	gift_art.scale = Vector2(0.6, 0.6)
+	create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT) \
+		.tween_property(gift_art, "scale", Vector2.ONE, 0.35)
+	_refresh()
+	_save_game()
+
+
+func _pick_weighted_outcome(tier: String) -> Dictionary:
+	var rows: Array = gifts_data.outcomes
+	var total := 0.0
+	for r in rows:
+		total += float(r.weight) * (0.5 if tier == "big" and int(r.get("min", 0)) < 0 else 1.0)
+	var roll := rng.randf() * total
+	for r in rows:
+		roll -= float(r.weight) * (0.5 if tier == "big" and int(r.get("min", 0)) < 0 else 1.0)
+		if roll <= 0.0:
+			return r
+	return rows[0]
+
+
+## 稀有度越高越难出；大箱子更容易出稀有的。
+func _roll_collectible(tier: String) -> Dictionary:
+	var pool: Array = gifts_data.collectibles
+	var weights: Array = []
+	var total := 0.0
+	for c in pool:
+		var w := 1.0 / pow(float(c.rarity), 2.0 if tier != "big" else 1.2)
+		weights.append(w)
+		total += w
+	var roll := rng.randf() * total
+	for i in pool.size():
+		roll -= weights[i]
+		if roll <= 0.0:
+			return pool[i]
+	return pool[0]
+
+
+func _pick_text(o: Dictionary) -> String:
+	var arr: Array = o.get("text", [""])
+	return str(arr[rng.randi_range(0, arr.size() - 1)])
+
+
+# ---------------- 图鉴 ----------------
+
+func _open_book() -> void:
+	for c in book_grid.get_children():
+		c.queue_free()
+	for c in gifts_data.collectibles:
+		var have := collection.has(c.id)
+		var cell := VBoxContainer.new()
+		cell.custom_minimum_size = Vector2(140, 0)
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(120, 120)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture = _art("col_" + str(c.id))
+		if not have:
+			icon.modulate = Color(0, 0, 0, 0.55)
+		cell.add_child(icon)
+		var cname := _label(str(c.name) if have else "？？？", 18, COL_INK if have else COL_INK_SOFT)
+		cname.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cell.add_child(cname)
+		book_grid.add_child(cell)
+	book_count.text = "已收集 %d / %d　（收藏品跨局保留）" % [collection.size(), gifts_data.collectibles.size()]
+	book_layer.visible = true
+	_sfx("tap")
+
+
+# ---------------- 存档 ----------------
+
+func _save_game() -> void:
+	var data := {"day": day, "cash": cash, "reputation": reputation, "inventory": inventory,
+		"time_left": time_left, "order_tag": order_tag, "run_state": run_state,
+		"collection": collection, "gift_queue": gift_queue, "gifts_today": gifts_today, "intel": intel}
+	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify(data))
+		f.close()
+
+
+## 读档成功返回 true。一局结束（输/赢）后只保留收藏品。
+func _load_game() -> bool:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return false
+	var d = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
+	if typeof(d) != TYPE_DICTIONARY:
+		return false
+	collection = d.get("collection", {})
+	gift_queue = d.get("gift_queue", [])
+	intel = int(d.get("intel", 0))
+	if str(d.get("run_state", "")) in ["lost", "won"]:
+		return false
+	day = int(d.get("day", 1))
+	cash = int(d.get("cash", tuning.start_cash))
+	reputation = int(d.get("reputation", 0))
+	inventory = d.get("inventory", [])
+	gifts_today = int(d.get("gifts_today", 0))
+	order_tag = str(d.get("order_tag", ""))
+	time_left = int(d.get("time_left", tuning.time_per_day))
+	if str(d.get("run_state", "")) == "day_end" or order_tag == "":
+		_start_day()
+		return true
+	run_state = "playing"
+	order_label.text = "今日订单：收购商高价收【%s】类，%.1f 倍" % [order_tag, float(tuning.order_bonus)]
+	time_left += int(tuning.time_per_customer)  # 读档时重新来一位顾客，不额外扣时间
+	_next_customer()
+	_float_text("欢迎回来", COL_NEON)
+	return true
+
+
+# ---------------- 声音（由网页外壳播放，非 HTTPS 也能响） ----------------
+
+func _sfx(sound: String) -> void:
+	if _web:
+		JavaScriptBridge.eval("window.parent.postMessage({type:'sfx',name:'%s'},location.origin)" % sound, true)
+
+
+func _bgm(track: String) -> void:
+	if _web:
+		JavaScriptBridge.eval("window.parent.postMessage({type:'bgm',name:'%s'},location.origin)" % track, true)
+
+
 func _art(art_name: String) -> Texture2D:
 	var path := "res://assets/art/%s.png" % art_name
 	if art_name != "" and ResourceLoader.exists(path):
@@ -480,6 +716,9 @@ func _refresh() -> void:
 	hud_day.text = "第 %d 天" % day
 	hud_cash.text = "¥%d" % cash
 	hud_rep.text = "口碑 %d" % reputation
+	gift_btn.visible = not gift_queue.is_empty()
+	gift_btn.text = "包裹 ×%d" % gift_queue.size()
+	book_btn.text = "图鉴 %d/%d" % [collection.size(), gifts_data.collectibles.size()]
 	var total := int(tuning.time_per_day)
 	if time_pips.get_child_count() != total:
 		for c in time_pips.get_children():
@@ -509,11 +748,12 @@ func _refresh() -> void:
 	take_btn.disabled = not deal_open or deal.ask > cash
 	for b in [offer_btn, refuse_btn, minus_btn, plus_btn]:
 		b.disabled = not deal_open
-	challenge_btn.disabled = not deal_open or deal.challenged
+	challenge_btn.disabled = not deal_open or deal.exposed
 	for i in clue_box.get_child_count():
 		var b: Button = clue_box.get_child(i)
 		if i < deal.clues.size() and not deal.clues[i].revealed:
-			b.disabled = not deal_open or time_left < int(tuning.time_per_clue)
+			b.disabled = not deal_open or (intel <= 0 and time_left < int(tuning.time_per_clue))
+			b.get_meta("cost").text = ("情报 ×%d" % intel) if intel > 0 else ("耗时 %d" % int(tuning.time_per_clue))
 
 
 # ---------------- 小动画 ----------------
@@ -578,6 +818,8 @@ func _build_ui() -> void:
 	float_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(float_layer)
 	_build_result_layer()
+	_build_gift_layer()
+	_build_book_layer()
 	_build_pause_layer()
 
 
@@ -604,6 +846,12 @@ func _build_hud() -> Control:
 	sign_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sign_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(sign_label)
+
+	book_btn = _button("图鉴", Color(0, 0, 0, 0), COL_NEON, COL_NEON)
+	book_btn.custom_minimum_size = Vector2(0, 44)
+	book_btn.add_theme_font_size_override("font_size", 20)
+	book_btn.pressed.connect(_open_book)
+	row.add_child(book_btn)
 
 	var cash_row := HBoxContainer.new()
 	cash_row.add_theme_constant_override("separation", 8)
@@ -711,6 +959,24 @@ func _build_scene() -> Control:
 	tail.draw.connect(func() -> void:
 		tail.draw_colored_polygon(PackedVector2Array([Vector2(24, 0), Vector2(24, 26), Vector2(0, 20)]), COL_PAPER))
 	scene_panel.add_child(tail)
+
+	# 员工带回的包裹：放在柜台右下角，有包裹时才出现
+	gift_btn = _button("包裹", COL_NEON, Color("1a1208"))
+	gift_btn.custom_minimum_size = Vector2(170, 60)
+	gift_btn.anchor_left = 1.0
+	gift_btn.anchor_right = 1.0
+	gift_btn.anchor_top = 1.0
+	gift_btn.anchor_bottom = 1.0
+	gift_btn.offset_left = -186
+	gift_btn.offset_right = -16
+	gift_btn.offset_top = -72
+	gift_btn.offset_bottom = -12
+	gift_btn.icon = _art("gift_small")
+	gift_btn.expand_icon = true
+	gift_btn.add_theme_constant_override("icon_max_width", 44)
+	gift_btn.visible = false
+	gift_btn.pressed.connect(_open_gift)
+	scene_panel.add_child(gift_btn)
 	return scene_panel
 
 
@@ -1000,6 +1266,85 @@ func _build_result_layer() -> void:
 	result_layer.add_child(center)
 	result_layer.visible = false
 	add_child(result_layer)
+
+
+func _build_gift_layer() -> void:
+	gift_layer = ColorRect.new()
+	gift_layer.color = Color(0.03, 0.02, 0.02, 0.86)
+	gift_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	gift_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(600, 0)
+	var sb := _box(COL_PAPER, 22)
+	sb.content_margin_left = 30
+	sb.content_margin_right = 30
+	sb.content_margin_top = 26
+	sb.content_margin_bottom = 26
+	card.add_theme_stylebox_override("panel", sb)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 14)
+	gift_title = _label("", 30, COL_INK_SOFT)
+	gift_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gift_art = TextureRect.new()
+	gift_art.custom_minimum_size = Vector2(0, 260)
+	gift_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	gift_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	gift_body = _label("", 26, COL_INK, true)
+	gift_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gift_action = _button("拆开", COL_NEON, Color("1a1208"))
+	gift_action.custom_minimum_size = Vector2(0, 80)
+	gift_action.pressed.connect(_on_gift_action)
+	for c in [gift_title, gift_art, gift_body, gift_action]:
+		col.add_child(c)
+	card.add_child(col)
+	center.add_child(card)
+	gift_layer.add_child(center)
+	gift_layer.visible = false
+	add_child(gift_layer)
+
+
+func _build_book_layer() -> void:
+	book_layer = ColorRect.new()
+	book_layer.color = Color(0.03, 0.02, 0.02, 0.9)
+	book_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	book_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 30)
+	var card := PanelContainer.new()
+	var sb := _box(COL_PAPER, 22)
+	sb.content_margin_top = 20
+	sb.content_margin_bottom = 20
+	card.add_theme_stylebox_override("panel", sb)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 12)
+	var title := _label("收藏图鉴", 34, COL_INK)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(title)
+	book_count = _label("", 20, COL_INK_SOFT)
+	book_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(book_count)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	book_grid = GridContainer.new()
+	book_grid.columns = 4
+	book_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	book_grid.add_theme_constant_override("h_separation", 6)
+	book_grid.add_theme_constant_override("v_separation", 14)
+	scroll.add_child(book_grid)
+	col.add_child(scroll)
+	var close := _button("关闭", COL_NEON, Color("1a1208"))
+	close.pressed.connect(func() -> void: book_layer.visible = false)
+	col.add_child(close)
+	card.add_child(col)
+	margin.add_child(card)
+	book_layer.add_child(margin)
+	book_layer.visible = false
+	add_child(book_layer)
 
 
 func _build_pause_layer() -> void:
