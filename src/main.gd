@@ -134,6 +134,10 @@ var emergency_used := false    ## 这一局借过应急款了吗
 var extra_due := {}            ## 应急款加到哪天还：{"7": 1000}
 var result_btn2: Button
 
+var progress: Progress        ## 店铺升级、员工造型、成就（永久保留）
+var meta_ui: MetaUI
+var last_ratio := 0.0         ## 上一次点的快捷出价成数（“铁公鸡”成就用）
+
 var _web := false
 var _poll := 0.0
 
@@ -144,10 +148,14 @@ func _ready() -> void:
 	customers = _load_json("res://data/customers.json").archetypes
 	personas = _load_json("res://data/personalities.json").types
 	gifts_data = _load_json("res://data/gifts.json")
+	progress = Progress.new(_load_json("res://data/meta.json"))
 	rng.randomize()
 	cash = int(tuning.start_cash)
 	time_left = int(tuning.time_per_day)
 	_build_ui()
+	meta_ui = MetaUI.new()
+	add_child(meta_ui)
+	meta_ui.setup(self, progress)
 	_web = OS.has_feature("web")
 	if _web:
 		JavaScriptBridge.eval("""
@@ -160,6 +168,7 @@ func _ready() -> void:
 	_bgm("shop")
 	if not _load_game():
 		_start_day()
+	progress.give_starter_skins()
 	_show_home.call_deferred()
 	_request_employees()
 
@@ -199,6 +208,9 @@ func _on_shell_message(m: Dictionary) -> void:
 				_refresh()
 		"gift":
 			_receive_gift(str(m.get("tier", "small")), str(m.get("agent", "")))
+		"stat":
+			progress.bump(str(m.get("name", "")), int(m.get("n", 1)))
+			_save_game()
 		"employee":
 			# 员工的对话框由网页外壳画（带立绘），这里只把游戏调暗、挡住点击
 			pause_label.text = ""
@@ -219,12 +231,21 @@ func _show_pause(on: bool) -> void:
 func _start_day() -> void:
 	_bgm("shop")
 	run_state = "playing"
-	time_left = int(tuning.time_per_day)
+	time_left = _day_length()
+	intel += int(progress.value("newsdesk"))
+	progress.set_max("best_day_reached", day)
+	if Time.get_datetime_dict_from_system().hour < 5:
+		progress.set_max("night", 1)
 	var tags: Array = tuning.order_tags
 	order_tag = tags[rng.randi_range(0, tags.size() - 1)]
 	order_label.text = "今日订单：收购商高价收【%s】类，%.1f 倍" % [order_tag, float(tuning.order_bonus)]
 	_next_customer()
 	_float_text("第 %d 天开张" % day, COL_NEON)
+
+
+## 每天的营业时间：基础 + 霓虹招牌
+func _day_length() -> int:
+	return int(tuning.time_per_day) + int(progress.value("sign"))
 
 
 func _next_customer() -> void:
@@ -233,6 +254,9 @@ func _next_customer() -> void:
 		return
 	time_left -= int(tuning.time_per_customer)
 	deal = Deal.new(tuning, catalog, customers, personas, rng, reputation)
+	deal.patience *= 1.0 + progress.value("charm")
+	if progress.level("appraiser") > 0:  # 老鉴定师：每位顾客免费看一处
+		deal.reveal(rng.randi_range(0, deal.clues.size() - 1))
 	deal_open = true
 	var cname: String = deal.customer.name
 	offer_amount = clampi(deal.ask, 10, maxi(cash, 10))  # 出价屏先显示顾客的要价，点 5/7/9 成再变
@@ -274,6 +298,16 @@ func _build_clues() -> void:
 		var b := _clue_button("◎  检查%s" % deal.clues[i].part, "耗时 %d" % int(tuning.time_per_clue))
 		b.pressed.connect(_on_clue.bind(i, b))
 		clue_box.add_child(b)
+		if deal.clues[i].revealed:
+			_mark_clue(b, "%s：%s（老鉴定师看的）" % [deal.clues[i].part, deal.clues[i].text])
+
+
+func _mark_clue(b: Button, text: String) -> void:
+	b.text = "✓  " + text
+	b.disabled = true
+	b.add_theme_stylebox_override("disabled", _revealed_box())
+	b.add_theme_color_override("font_disabled_color", COL_INK)
+	b.get_meta("cost").visible = false
 
 
 func _on_clue(i: int, b: Button) -> void:
@@ -285,15 +319,13 @@ func _on_clue(i: int, b: Button) -> void:
 	if intel > 0:
 		intel -= 1
 		_float_text("（用掉一条情报，不耗时）", COL_NEON)
+	elif rng.randf() < progress.value("lens"):
+		_float_text("（放大镜：一眼看穿，不耗时）", COL_NEON)
 	else:
 		time_left -= int(tuning.time_per_clue)
 	var text := deal.reveal(i)
 	_sfx("clue")
-	b.text = "✓  " + text
-	b.disabled = true
-	b.add_theme_stylebox_override("disabled", _revealed_box())
-	b.add_theme_color_override("font_disabled_color", COL_INK)
-	b.get_meta("cost").visible = false
+	_mark_clue(b, text)
 	_pulse(b)
 	_refresh()
 
@@ -308,8 +340,11 @@ func _on_challenge() -> void:
 		tag_label.text = "【%s】揭穿了：它其实只值 ¥%d 左右" % [deal.item.get("tag", ""), deal.ask]
 		tag_label.add_theme_color_override("font_color", COL_OK)
 		_change_rep(1, "揭穿了骗子")
+		progress.bump("liars")
 		_sfx("caught")
 	else:
+		if r.mood == "honest":
+			progress.bump("wrong_accuse")
 		_shake(figure)
 		_sfx("angry")
 	if deal.patience <= 0:
@@ -345,6 +380,7 @@ func _on_quick_offer(ratio: float) -> void:
 	if not deal_open:
 		return
 	offer_amount = clampi(roundi(deal.ask * ratio / 10.0) * 10, 10, mini(maxi(cash, 10), deal.ask))
+	last_ratio = ratio
 	_refresh()
 	_pulse(offer_label)
 
@@ -373,6 +409,13 @@ func _buy(price: int) -> void:
 		elif ratio < float(tuning.rep_lowball_ratio):
 			_change_rep(-1, "压价太狠")
 	var p := deal.profit(price)
+	progress.bump("deals")
+	progress.set_max("best_profit", p)
+	progress.set_max("worst_loss", -p)
+	if str(deal.item.get("tag", "")) == order_tag:
+		progress.bump("order_items")
+	if last_ratio > 0.0 and last_ratio <= 0.31 and price == offer_amount:
+		progress.bump("lowball")
 	var lines := ["%s　付出 ¥%d" % [deal.item.name, price], "收购商估价 ¥%d" % deal.true_value]
 	if str(deal.item.get("tag", "")) == order_tag:
 		lines.append("符合今日订单，打烊时按 %.1f 倍收" % float(tuning.order_bonus))
@@ -386,6 +429,7 @@ func _buy(price: int) -> void:
 
 func _change_rep(delta: int, why: String) -> void:
 	reputation += delta
+	progress.set_max("best_rep", reputation)
 	_float_text("（街坊口碑 %s%d · %s）" % ["+" if delta > 0 else "", delta, why], COL_OK if delta > 0 else COL_BAD)
 	_refresh()
 
@@ -449,6 +493,7 @@ func _is_broke() -> bool:
 
 func _show_bankrupt() -> void:
 	deal_open = false
+	progress.bump("bankrupts")
 	result_title.text = "破产了"
 	result_big.text = "¥%d" % cash
 	result_big.add_theme_color_override("font_color", COL_BAD)
@@ -493,7 +538,7 @@ func _end_day() -> void:
 	var lines: Array = []
 	# 漏液的问题货会弄坏仓库里另一件货
 	var leaky := inventory.filter(func(it): return it.leaky)
-	if not leaky.is_empty() and inventory.size() > 1:
+	if not leaky.is_empty() and inventory.size() > 1 and progress.level("safe") == 0:
 		var victims := inventory.filter(func(it): return not it.leaky)
 		if not victims.is_empty():
 			var v: Dictionary = victims[rng.randi_range(0, victims.size() - 1)]
@@ -503,8 +548,9 @@ func _end_day() -> void:
 	var total := 0
 	var paid := 0
 	var bonus := 0
+	var buyer := 1.0 + progress.value("buyer")
 	for it in inventory:
-		var value := int(it.value)
+		var value := roundi(int(it.value) * buyer)
 		if str(it.tag) == order_tag:
 			var extra := roundi(value * (float(tuning.order_bonus) - 1.0))
 			bonus += extra
@@ -513,6 +559,7 @@ func _end_day() -> void:
 		paid += int(it.paid)
 	cash += total
 	var net := total - paid
+	progress.set_max("best_day", net)
 	lines.push_front("收了 %d 件货，花了 ¥%d" % [inventory.size(), paid])
 	lines.insert(1, "收购商一共付了 ¥%d" % total)
 	if bonus > 0:
@@ -528,13 +575,17 @@ func _end_day() -> void:
 		if cash >= due:
 			cash -= due
 			lines.append("\n还贷 ¥%d ✓ 收债人点点头走了" % due)
+			progress.bump("loans_paid")
 		else:
 			lines.append("\n今天要还贷 ¥%d，你只有 ¥%d……\n收债人把店门锁上了。" % [due, cash])
 			run_state = "lost"
 	lines.append("现金 ¥%d　口碑 %d" % [cash, reputation])
 	if run_state == "day_end" and day >= int(tuning.run_days):
 		run_state = "won"
-		lines.append("\n贷款全部还清，这家店归你了。")
+		progress.bump("wins")
+		if emergency_used:
+			progress.bump("comebacks")
+		lines.append("\n贷款全部还清，这家店归你了。\n店铺升级、员工造型、收藏品都会保留。")
 	elif run_state == "day_end":
 		var next_due := _next_due(day + 1)
 		if next_due.x > 0:
@@ -571,6 +622,7 @@ func _next_due(from_day: int) -> Vector2i:
 func _change_offer(sign_dir: int) -> void:
 	var step := maxi(10, roundi(deal.ask * float(tuning.offer_step_ratio) / 10.0) * 10)
 	offer_amount = clampi(offer_amount + sign_dir * step, 10, mini(maxi(cash, 10), deal.ask))
+	last_ratio = 0.0
 	_refresh()
 	_pulse(offer_label)
 
@@ -611,6 +663,7 @@ func _show_home() -> void:
 
 func _set_employees(list: Array) -> void:
 	employees = list
+	progress.set_max("staff", list.size())
 	var visible_list := list.filter(func(e): return str(e.get("status", "")) == "waiting" \
 		or (bool(settings.get("reports", true)) and bool(e.get("reported", false))))
 	home_empty.visible = visible_list.is_empty()
@@ -668,6 +721,13 @@ func _build_home_layer() -> void:
 		settings_layer.visible = true
 		_sfx("tap"))
 	corner.add_child(book)
+	for entry in [["升级", func() -> void: meta_ui.open_upgrades()], ["抽造型", func() -> void: meta_ui.open_gacha()],
+			["成就", func() -> void: meta_ui.open_achievements()]]:
+		var mb := _button(entry[0], Color(0.08, 0.06, 0.05, 0.75), COL_NEON, COL_NEON)
+		mb.custom_minimum_size = Vector2(134, 54)
+		mb.add_theme_font_size_override("font_size", 22)
+		mb.pressed.connect(entry[1])
+		corner.add_child(mb)
 	corner.add_child(setting)
 	home_layer.add_child(corner)
 
@@ -734,11 +794,13 @@ func _open_dialog(e: Dictionary) -> void:
 			_post_shell("open-pending", {"employeeId": str(e.id)}))
 	_dialog_button("改名", Color(0.95, 0.9, 0.82), func() -> void:
 		_close_dialog()
+		progress.bump("renames")
 		_post_shell("rename-employee", {"id": str(e.id), "name": str(e.get("name", ""))}))
-	_dialog_button("换个样子", Color(0.95, 0.9, 0.82), func() -> void:
+	_dialog_button("换造型", Color(0.95, 0.9, 0.82), func() -> void:
 		_close_dialog()
-		_sfx("gift")
-		_post_shell("reroll-employee", {"id": str(e.id)}))
+		meta_ui.open_skin_picker(e, func(look: String) -> void:
+			_sfx("gift")
+			_post_shell("set-employee-look", {"id": str(e.id), "look": look})))
 	dialog_layer.visible = true
 	# 立绘滑入 + 文字逐字出现
 	dialog_portrait.modulate.a = 0.0
@@ -939,6 +1001,8 @@ func _receive_gift(tier: String, _agent: String) -> void:
 		_float_text("（今天的包裹已经够多了，员工把它放进了仓库）", COL_MUTED)
 		return
 	gifts_today += 1
+	if tier == "small" and rng.randf() < progress.value("map"):
+		tier = "big"
 	if tier == "small" and rng.randf() < float(gifts_data.weird_chance):
 		tier = "weird"
 	gift_queue.append(tier)
@@ -1006,6 +1070,8 @@ func _on_gift_action() -> void:
 		_:
 			good = false
 			text = _pick_text(o)
+	progress.bump("gifts")
+	progress.refresh_collection(collection, gifts_data.collectibles)
 	gift_body.text = text
 	gift_title.text = "拆开了！" if good else "呃……"
 	gift_action.text = "收下"
@@ -1149,7 +1215,8 @@ func _save_game() -> void:
 	var data := {"day": day, "cash": cash, "reputation": reputation, "inventory": inventory,
 		"time_left": time_left, "order_tag": order_tag, "run_state": run_state,
 		"collection": collection, "gift_queue": gift_queue, "gifts_today": gifts_today, "intel": intel,
-		"settings": settings, "emergency_used": emergency_used, "extra_due": extra_due}
+		"settings": settings, "emergency_used": emergency_used, "extra_due": extra_due,
+		"progress": progress.to_dict()}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(data))
@@ -1173,6 +1240,7 @@ func _apply_save(d) -> bool:
 	if typeof(d) != TYPE_DICTIONARY:
 		return false
 	collection = d.get("collection", {})
+	progress.from_dict(d.get("progress"))
 	settings = d.get("settings", settings)
 	_apply_volume()
 	gift_queue = d.get("gift_queue", [])
@@ -1187,7 +1255,7 @@ func _apply_save(d) -> bool:
 	inventory = d.get("inventory", [])
 	gifts_today = int(d.get("gifts_today", 0))
 	order_tag = str(d.get("order_tag", ""))
-	time_left = int(d.get("time_left", tuning.time_per_day))
+	time_left = int(d.get("time_left", _day_length()))
 	if str(d.get("run_state", "")) == "day_end" or order_tag == "":
 		_start_day()
 		return true
@@ -1230,7 +1298,8 @@ func _refresh() -> void:
 	gift_btn.visible = not gift_queue.is_empty()
 	gift_btn.text = "包裹 ×%d" % gift_queue.size()
 	book_btn.text = "图鉴 %d/%d" % [collection.size(), gifts_data.collectibles.size()]
-	var total := int(tuning.time_per_day)
+	var total := _day_length()
+	progress.set_max("best_cash", cash)
 	if time_pips.get_child_count() != total:
 		for c in time_pips.get_children():
 			c.queue_free()

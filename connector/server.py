@@ -481,6 +481,25 @@ async def reroll_employee(request: web.Request) -> web.Response:
     return web.json_response({"ok": False}, status=404)
 
 
+async def set_employee_look(request: web.Request) -> web.Response:
+    """把员工换成玩家指定的造型（游戏里抽到、已拥有的）。别的员工正在用这个造型，就和他互换。"""
+    require_device(request)
+    data = await request.json()
+    look = str(data.get("look", ""))
+    if look not in ALL_LOOKS:
+        return web.json_response({"ok": False}, status=400)
+    for e in STATE.employees.values():
+        if e["id"] == data.get("id"):
+            for other in STATE.employees.values():
+                if other is not e and other.get("look") == look:
+                    other["look"] = e.get("look")
+            e["look"] = look
+            STATE.save_employees()
+            await STATE.broadcast({"type": "employees", "employees": STATE.employees_public()})
+            return web.json_response({"ok": True})
+    return web.json_response({"ok": False}, status=404)
+
+
 async def push_key(request: web.Request) -> web.Response:
     return web.json_response({"publicKey": STATE.push.public_key})
 
@@ -893,6 +912,7 @@ def make_app() -> web.Application:
     app.router.add_post("/api/employee/rename", rename_employee)
     app.router.add_post("/api/employee/ack", ack_employee)
     app.router.add_post("/api/employee/reroll", reroll_employee)
+    app.router.add_post("/api/employee/look", set_employee_look)
     app.router.add_post("/api/simulate", simulate)
     app.router.add_get("/ws", ws_handler)
     app.router.add_get("/setup", setup_page)

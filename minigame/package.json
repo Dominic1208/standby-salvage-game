@@ -1,0 +1,13 @@
+{
+  "name": "standby-salvage-minigame",
+  "private": true,
+  "version": "1.0.0",
+  "description": "待机回收站 · 微信/抖音小游戏版",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --web && node serve.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.10"
+  }
+}

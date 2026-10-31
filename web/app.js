@@ -514,6 +514,7 @@ async function decide(decision) {
     if (data.result === "ok") {
       // 处理了请求（批准或拒绝都一样）→ 员工带回一个小包裹
       setTimeout(() => { closeCard(); tellGame({ type: "gift", tier: "small", agent: a.agent }); }, 1400);
+      tellGame({ type: "stat", name: "approvals" });   // 成就统计
     }
   } catch (e) {
     const box = $("card-status");
@@ -708,6 +709,10 @@ window.addEventListener("message", (e) => {
     }
   }
   if (e.data?.type === "rename-employee") renameEmployee(String(e.data.id), String(e.data.name || ""));
+  if (e.data?.type === "set-employee-look" && state.token) {
+    fetch("/api/employee/look", { method: "POST", headers: { "Content-Type": "application/json", "X-Device-Token": state.token },
+      body: JSON.stringify({ id: String(e.data.id), look: String(e.data.look) }) }).catch(() => {});
+  }
   if (e.data?.type === "reroll-employee" && state.token) {
     fetch("/api/employee/reroll", { method: "POST", headers: { "Content-Type": "application/json", "X-Device-Token": state.token },
       body: JSON.stringify({ id: String(e.data.id) }) }).catch(() => {});
@@ -717,6 +722,7 @@ window.addEventListener("message", (e) => {
 
 function ackReport(employeeId) {
   if (!employeeId || !state.token) return;
+  tellGame({ type: "stat", name: "reports" });   // 成就统计
   fetch("/api/employee/ack", { method: "POST", headers: { "Content-Type": "application/json", "X-Device-Token": state.token },
     body: JSON.stringify({ id: employeeId }) }).catch(() => {});
 }

@@ -1,0 +1,570 @@
+{
+ "_doc": "电脑版长期进度：店铺升级、员工造型抽卡、成就。升级和造型永久保留（换一局也在），花的是当前现金——花多了可能还不上贷款。",
+ "upgrades": [
+  {
+   "id": "lens",
+   "name": "放大镜",
+   "icon": "镜",
+   "desc": "看线索有几率不耗时间",
+   "levels": [
+    {
+     "cost": 400,
+     "value": 0.25,
+     "text": "25% 几率不耗时"
+    },
+    {
+     "cost": 900,
+     "value": 0.45,
+     "text": "45% 几率不耗时"
+    },
+    {
+     "cost": 1800,
+     "value": 0.7,
+     "text": "70% 几率不耗时"
+    }
+   ]
+  },
+  {
+   "id": "sign",
+   "name": "霓虹招牌",
+   "icon": "灯",
+   "desc": "每天营业时间更长，多来几位顾客",
+   "levels": [
+    {
+     "cost": 500,
+     "value": 1,
+     "text": "营业时间 +1"
+    },
+    {
+     "cost": 1200,
+     "value": 2,
+     "text": "营业时间 +2"
+    },
+    {
+     "cost": 2500,
+     "value": 3,
+     "text": "营业时间 +3"
+    }
+   ]
+  },
+  {
+   "id": "safe",
+   "name": "防水保险柜",
+   "icon": "柜",
+   "desc": "漏液的问题货不会弄坏别的货",
+   "levels": [
+    {
+     "cost": 700,
+     "value": 1,
+     "text": "漏液不再损坏别的货"
+    }
+   ]
+  },
+  {
+   "id": "appraiser",
+   "name": "老鉴定师",
+   "icon": "鉴",
+   "desc": "每位顾客免费帮你看一处",
+   "levels": [
+    {
+     "cost": 1500,
+     "value": 1,
+     "text": "每位顾客自动揭开 1 条线索"
+    }
+   ]
+  },
+  {
+   "id": "buyer",
+   "name": "收购商人脉",
+   "icon": "商",
+   "desc": "打烊时收购商多付一点",
+   "levels": [
+    {
+     "cost": 600,
+     "value": 0.05,
+     "text": "收购价 +5%"
+    },
+    {
+     "cost": 1400,
+     "value": 0.1,
+     "text": "收购价 +10%"
+    },
+    {
+     "cost": 3000,
+     "value": 0.15,
+     "text": "收购价 +15%"
+    }
+   ]
+  },
+  {
+   "id": "charm",
+   "name": "店里的招财猫",
+   "icon": "猫",
+   "desc": "顾客更有耐心，砍价不容易走人",
+   "levels": [
+    {
+     "cost": 500,
+     "value": 0.15,
+     "text": "顾客耐心 +15%"
+    },
+    {
+     "cost": 1100,
+     "value": 0.3,
+     "text": "顾客耐心 +30%"
+    }
+   ]
+  },
+  {
+   "id": "newsdesk",
+   "name": "情报站",
+   "icon": "报",
+   "desc": "每天开店时送你几条情报（看线索免费、不耗时）",
+   "levels": [
+    {
+     "cost": 700,
+     "value": 1,
+     "text": "每天 +1 条情报"
+    },
+    {
+     "cost": 1500,
+     "value": 2,
+     "text": "每天 +2 条情报"
+    }
+   ]
+  },
+  {
+   "id": "map",
+   "name": "藏宝地图",
+   "icon": "图",
+   "desc": "员工带回好包裹的几率更高",
+   "levels": [
+    {
+     "cost": 1000,
+     "value": 0.2,
+     "text": "大木箱几率 +20%"
+    },
+    {
+     "cost": 2200,
+     "value": 0.4,
+     "text": "大木箱几率 +40%"
+    }
+   ]
+  }
+ ],
+ "gacha": {
+  "cost": 300,
+  "ten_cost": 2700,
+  "dupe_refund": 60,
+  "rarities": [
+   {
+    "id": "n",
+    "name": "普通",
+    "weight": 60,
+    "color": "#a8998a"
+   },
+   {
+    "id": "r",
+    "name": "稀有",
+    "weight": 28,
+    "color": "#5aa9e6"
+   },
+   {
+    "id": "sr",
+    "name": "史诗",
+    "weight": 10,
+    "color": "#b06ae0"
+   },
+   {
+    "id": "ssr",
+    "name": "传说",
+    "weight": 2,
+    "color": "#ffb347"
+   }
+  ],
+  "skins": [
+   {
+    "look": "claude_1",
+    "name": "背包客",
+    "rarity": "n"
+   },
+   {
+    "look": "claude_2",
+    "name": "登山者",
+    "rarity": "n"
+   },
+   {
+    "look": "claude_3",
+    "name": "地图控",
+    "rarity": "n"
+   },
+   {
+    "look": "claude_4",
+    "name": "野营达人",
+    "rarity": "n"
+   },
+   {
+    "look": "claude_5",
+    "name": "夜行者",
+    "rarity": "r"
+   },
+   {
+    "look": "claude_6",
+    "name": "考古迷",
+    "rarity": "r"
+   },
+   {
+    "look": "codex_1",
+    "name": "风衣侦探",
+    "rarity": "n"
+   },
+   {
+    "look": "codex_2",
+    "name": "机械师",
+    "rarity": "n"
+   },
+   {
+    "look": "codex_3",
+    "name": "熊猫探长",
+    "rarity": "sr"
+   },
+   {
+    "look": "codex_4",
+    "name": "狐狸商人",
+    "rarity": "r"
+   },
+   {
+    "look": "codex_5",
+    "name": "猫头鹰学者",
+    "rarity": "r"
+   },
+   {
+    "look": "codex_6",
+    "name": "企鹅船长",
+    "rarity": "sr"
+   },
+   {
+    "look": "deepseek_1",
+    "name": "茶馆姑娘",
+    "rarity": "n"
+   },
+   {
+    "look": "deepseek_2",
+    "name": "古镇向导",
+    "rarity": "n"
+   },
+   {
+    "look": "deepseek_3",
+    "name": "江湖游侠",
+    "rarity": "r"
+   },
+   {
+    "look": "deepseek_4",
+    "name": "书院学子",
+    "rarity": "n"
+   },
+   {
+    "look": "deepseek_5",
+    "name": "竹林剑客",
+    "rarity": "r"
+   },
+   {
+    "look": "deepseek_6",
+    "name": "灯笼掌柜",
+    "rarity": "sr"
+   },
+   {
+    "look": "special_1",
+    "name": "太空旅人",
+    "rarity": "ssr"
+   },
+   {
+    "look": "special_2",
+    "name": "深海潜水员",
+    "rarity": "sr"
+   },
+   {
+    "look": "special_3",
+    "name": "星际快递员",
+    "rarity": "ssr"
+   },
+   {
+    "look": "special_4",
+    "name": "时光旅者",
+    "rarity": "ssr"
+   }
+  ]
+ },
+ "achievements": [
+  {
+   "id": "first_deal",
+   "name": "开张大吉",
+   "desc": "完成第一笔买卖",
+   "stat": "deals",
+   "goal": 1
+  },
+  {
+   "id": "deals_50",
+   "name": "熟练工",
+   "desc": "累计成交 50 笔",
+   "stat": "deals",
+   "goal": 50
+  },
+  {
+   "id": "deals_300",
+   "name": "回收站老板",
+   "desc": "累计成交 300 笔",
+   "stat": "deals",
+   "goal": 300
+  },
+  {
+   "id": "liar_1",
+   "name": "火眼金睛",
+   "desc": "第一次揭穿骗子",
+   "stat": "liars",
+   "goal": 1
+  },
+  {
+   "id": "liar_30",
+   "name": "人形测谎仪",
+   "desc": "累计揭穿 30 个骗子",
+   "stat": "liars",
+   "goal": 30
+  },
+  {
+   "id": "liar_100",
+   "name": "骗子克星",
+   "desc": "累计揭穿 100 个骗子",
+   "stat": "liars",
+   "goal": 100
+  },
+  {
+   "id": "wrong_accuse",
+   "name": "冤枉好人",
+   "desc": "质疑了一位老实人",
+   "stat": "wrong_accuse",
+   "goal": 1,
+   "hidden": true
+  },
+  {
+   "id": "big_profit",
+   "name": "捡大漏",
+   "desc": "一笔买卖赚 ¥500 以上",
+   "stat": "best_profit",
+   "goal": 500
+  },
+  {
+   "id": "huge_profit",
+   "name": "改变命运的一单",
+   "desc": "一笔买卖赚 ¥2000 以上",
+   "stat": "best_profit",
+   "goal": 2000
+  },
+  {
+   "id": "big_loss",
+   "name": "交学费",
+   "desc": "一笔买卖亏 ¥300 以上",
+   "stat": "worst_loss",
+   "goal": 300,
+   "hidden": true
+  },
+  {
+   "id": "lowball",
+   "name": "铁公鸡",
+   "desc": "用 3 成的价钱成交",
+   "stat": "lowball",
+   "goal": 1
+  },
+  {
+   "id": "fair_10",
+   "name": "街坊口碑",
+   "desc": "口碑达到 10",
+   "stat": "best_rep",
+   "goal": 10
+  },
+  {
+   "id": "fair_25",
+   "name": "远近闻名",
+   "desc": "口碑达到 25",
+   "stat": "best_rep",
+   "goal": 25
+  },
+  {
+   "id": "day_profit_1000",
+   "name": "日进斗金",
+   "desc": "一天净赚 ¥1000 以上",
+   "stat": "best_day",
+   "goal": 1000
+  },
+  {
+   "id": "survive_3",
+   "name": "第一笔贷款",
+   "desc": "撑到第 3 天并还上贷款",
+   "stat": "loans_paid",
+   "goal": 1
+  },
+  {
+   "id": "win_1",
+   "name": "这家店归我了",
+   "desc": "撑过 7 天，还清全部贷款",
+   "stat": "wins",
+   "goal": 1
+  },
+  {
+   "id": "win_5",
+   "name": "连锁经营",
+   "desc": "通关 5 次",
+   "stat": "wins",
+   "goal": 5
+  },
+  {
+   "id": "rich",
+   "name": "小金库",
+   "desc": "手上同时有 ¥10000 现金",
+   "stat": "best_cash",
+   "goal": 10000
+  },
+  {
+   "id": "bankrupt",
+   "name": "人生起起落落",
+   "desc": "破产一次",
+   "stat": "bankrupts",
+   "goal": 1,
+   "hidden": true
+  },
+  {
+   "id": "comeback",
+   "name": "绝地翻盘",
+   "desc": "借过应急款，还是通关了",
+   "stat": "comebacks",
+   "goal": 1,
+   "hidden": true
+  },
+  {
+   "id": "order_10",
+   "name": "懂行情",
+   "desc": "卖出 10 件符合今日订单的货",
+   "stat": "order_items",
+   "goal": 10
+  },
+  {
+   "id": "approve_1",
+   "name": "远程老板",
+   "desc": "第一次在手机上批准 AI 的请求",
+   "stat": "approvals",
+   "goal": 1
+  },
+  {
+   "id": "approve_100",
+   "name": "批准机器",
+   "desc": "在手机上处理 100 个请求",
+   "stat": "approvals",
+   "goal": 100
+  },
+  {
+   "id": "report_20",
+   "name": "耐心的听众",
+   "desc": "听完 20 份员工汇报",
+   "stat": "reports",
+   "goal": 20
+  },
+  {
+   "id": "staff_6",
+   "name": "团队扩张",
+   "desc": "同时有 6 名员工",
+   "stat": "staff",
+   "goal": 6
+  },
+  {
+   "id": "gift_100",
+   "name": "拆箱狂魔",
+   "desc": "累计拆开 100 个包裹",
+   "stat": "gifts",
+   "goal": 100
+  },
+  {
+   "id": "col_50",
+   "name": "收藏入门",
+   "desc": "收集 50 件不同的收藏品",
+   "stat": "collection",
+   "goal": 50
+  },
+  {
+   "id": "col_300",
+   "name": "收藏家",
+   "desc": "收集 300 件不同的收藏品",
+   "stat": "collection",
+   "goal": 300
+  },
+  {
+   "id": "col_1000",
+   "name": "博物馆馆长",
+   "desc": "收集 1000 件不同的收藏品",
+   "stat": "collection",
+   "goal": 1000
+  },
+  {
+   "id": "series_1",
+   "name": "凑齐一套",
+   "desc": "集齐任意一个系列",
+   "stat": "series_done",
+   "goal": 1
+  },
+  {
+   "id": "legend",
+   "name": "传说降临",
+   "desc": "拿到一件五星收藏品",
+   "stat": "legend_items",
+   "goal": 1
+  },
+  {
+   "id": "gacha_1",
+   "name": "试试手气",
+   "desc": "抽一次员工皮肤",
+   "stat": "draws",
+   "goal": 1
+  },
+  {
+   "id": "gacha_ssr",
+   "name": "欧皇",
+   "desc": "抽到传说皮肤",
+   "stat": "ssr",
+   "goal": 1
+  },
+  {
+   "id": "skins_all",
+   "name": "衣柜爆满",
+   "desc": "集齐全部员工皮肤",
+   "stat": "skins",
+   "goal": 22
+  },
+  {
+   "id": "upgrade_1",
+   "name": "小店装修",
+   "desc": "买下第一个店铺升级",
+   "stat": "upgrades",
+   "goal": 1
+  },
+  {
+   "id": "upgrade_max",
+   "name": "豪华旗舰店",
+   "desc": "所有店铺升级都买到最高级",
+   "stat": "maxed_upgrades",
+   "goal": 8
+  },
+  {
+   "id": "rename_1",
+   "name": "起个好名字",
+   "desc": "给员工改一次名",
+   "stat": "renames",
+   "goal": 1
+  },
+  {
+   "id": "night_owl",
+   "name": "夜猫子",
+   "desc": "凌晨 0 点到 5 点之间开店",
+   "stat": "night",
+   "goal": 1,
+   "hidden": true
+  }
+ ]
+}
