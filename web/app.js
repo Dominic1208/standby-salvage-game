@@ -471,7 +471,7 @@ window.addEventListener("message", (e) => {
   if (e.data?.type === "sfx") { sound.unlock(); sound.sfx(String(e.data.name)); }
   if (e.data?.type === "bgm") { sound.bgm(String(e.data.name || "")); }
   if (e.data?.type === "save") backupSave(e.data.data);
-  if (e.data?.type === "game-ready") tellGame({ type: "employees", list: state.employees });
+  if (e.data?.type === "game-ready" || e.data?.type === "need-employees") tellGame({ type: "employees", list: state.employees });
   if (e.data?.type === "volume") sound.setVolume(Number(e.data.music), Number(e.data.sfx));
   if (e.data?.type === "rename-employee") renameEmployee(String(e.data.id), String(e.data.name || ""));
   if (e.data?.type === "reroll-employee" && state.token) {

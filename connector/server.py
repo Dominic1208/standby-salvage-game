@@ -38,13 +38,14 @@ SAVES_DIR = DATA_DIR / "saves"
 SAVES_DIR.mkdir(exist_ok=True)
 DEVICES_FILE = DATA_DIR / "devices.json"
 EMPLOYEES_FILE = DATA_DIR / "employees.json"
-# 员工形象池：Claude 冷峻风、Codex 动物、DeepSeek 温柔风，其他 AI 用通用店员；偶尔混入特别员工
+# 员工（外出探险的冒险家）形象池：Claude 冷峻风、Codex 动物、DeepSeek 温柔风（亚洲面孔），
+# 其他 AI 用通用冒险家；偶尔混入特别员工（太空人、外星人……）
 LOOK_POOLS = {
     "claude": [f"claude_{i}" for i in range(1, 7)],
     "codex": [f"codex_{i}" for i in range(1, 7)],
     "deepseek": [f"deepseek_{i}" for i in range(1, 7)],
 }
-GENERIC_LOOKS = [f"staff_{i}" for i in range(1, 17)]
+GENERIC_LOOKS = [f"staff_{i}" for i in range(1, 9)]
 SPECIAL_LOOKS = [f"special_{i}" for i in range(1, 5)]
 SPECIAL_EVERY = 6             # 每第 6 位新员工是特别员工（太空人、外星人……）
 

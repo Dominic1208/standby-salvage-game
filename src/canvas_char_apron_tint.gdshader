@@ -1,12 +1,12 @@
-// 待机回收站 · 店员围裙染色
-// 用途：把店员图里的白色围裙染成所属 AI 的代表色，同一家 AI 的员工一眼认得出来。
+// 待机回收站 · 员工领巾染色
+// 用途：把冒险家员工脖子上的白色领巾染成所属 AI 的代表色，同一家 AI 的员工一眼认得出来。
 // 目标：Compatibility 渲染器（网页导出），每像素 1 次采样，无分支。
 shader_type canvas_item;
 
-group_uniforms apron;
+group_uniforms scarf;
 /** 所属 AI 的代表色 */
 uniform vec4 tint_color : source_color = vec4(1.0);
-/** 最暗通道高于这个值才算“白色”（围裙的阴影也要算进去） */
+/** 最暗通道高于这个值才算“白色”（领巾的阴影也要算进去） */
 uniform float white_min : hint_range(0.0, 1.0) = 0.58;
 /** 渐变宽度，避免染色边缘生硬 */
 uniform float white_soft : hint_range(0.0, 0.5) = 0.16;

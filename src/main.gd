@@ -106,7 +106,9 @@ const AGENT_COLORS := {"claude": Color("e8875f"), "codex": Color("6fd3a0"), "dee
 	"copilot": Color("4fd1d9"), "cursor": Color("e6e6e6")}
 const AGENT_NAMES := {"claude": "Claude", "codex": "Codex", "deepseek": "DeepSeek", "kimi": "Kimi",
 	"glm": "智谱", "gemini": "Gemini", "qwen": "Qwen", "copilot": "Copilot", "cursor": "Cursor"}
-const APRON_SHADER := preload("res://canvas_char_apron_tint.gdshader")
+const SCARF_SHADER := preload("res://canvas_char_apron_tint.gdshader")
+## 本身就有大片白色（熊猫、企鹅、宇航服）的形象不染色，只靠工牌和光圈区分
+const NO_TINT_LOOKS := ["codex_3", "codex_6", "special_1", "claude_4"]
 const STATUS_TEXT := {"working": "干活中", "waiting": "等你拍板！", "resting": "歇着呢"}
 var employees: Array = []     ## 外壳发来的员工名单 [{id, agent, name, look, status}]
 var home_layer: Control
@@ -147,6 +149,7 @@ func _ready() -> void:
 	if not _load_game():
 		_start_day()
 	_show_home.call_deferred()
+	_request_employees()
 
 
 func _process(delta: float) -> void:
@@ -531,6 +534,14 @@ func _float_text(text: String, color: Color) -> void:
 
 # ---------------- 主页：员工推门进来 ----------------
 
+## 向外壳要员工名单；外壳可能比游戏先收到名单，所以没拿到就隔 2 秒再要，最多 10 次
+func _request_employees(tries := 10) -> void:
+	if not _web or tries <= 0 or not employees.is_empty():
+		return
+	_post_shell("need-employees", {})
+	get_tree().create_timer(2.0).timeout.connect(_request_employees.bind(tries - 1))
+
+
 func _show_home() -> void:
 	home_info.text = "第 %d 天　¥%d　口碑 %d" % [day, cash, reputation]
 	home_layer.visible = true
@@ -604,7 +615,7 @@ func _make_staff(e: Dictionary) -> Control:
 	var look = e.get("look", "staff_1")
 	var tex := _art(look if typeof(look) == TYPE_STRING else "staff_%d" % int(look))
 	if tex == null:
-		tex = _art("staff_%d" % (absi(hash(str(e.id))) % 8 + 1))  # 新形象还没画好时先用通用店员
+		tex = _art("staff_%d" % (absi(hash(str(e.id))) % 8 + 1))  # 新形象还没画好时先用通用冒险家
 	if tex:
 		var tr := TextureRect.new()
 		# 先设缩放方式再设大小，否则会按原图尺寸撑大
@@ -613,10 +624,11 @@ func _make_staff(e: Dictionary) -> Control:
 		tr.texture = tex
 		tr.position = Vector2(0, 0)
 		tr.size = Vector2(160, 226)
-		var mat := ShaderMaterial.new()
-		mat.shader = APRON_SHADER
-		mat.set_shader_parameter("tint_color", color)
-		tr.material = mat
+		if not NO_TINT_LOOKS.has(str(look)):
+			var mat := ShaderMaterial.new()
+			mat.shader = SCARF_SHADER
+			mat.set_shader_parameter("tint_color", color)
+			tr.material = mat
 		box.add_child(tr)
 	else:
 		var fig := Control.new()
@@ -834,7 +846,7 @@ func _build_settings_layer() -> void:
 	col.add_child(_label("音效", 24, COL_INK))
 	sfx_slider = _slider(settings.sfx)
 	col.add_child(sfx_slider)
-	var tip := _label("点主页上的员工可以给他改名。\n员工按“AI 工具 + 项目”区分：同一个 AI 的员工工牌颜色相同。", 20, COL_INK_SOFT, true)
+	var tip := _label("点主页上的员工可以给他改名。\n员工按“AI 工具 + 项目”区分：同一个 AI 的员工领巾和工牌颜色相同。", 20, COL_INK_SOFT, true)
 	col.add_child(tip)
 	var close := _button("好", COL_NEON, Color("1a1208"))
 	close.pressed.connect(func() -> void:
