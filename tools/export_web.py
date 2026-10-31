@@ -27,7 +27,23 @@ def patch_secure_context_check(html: Path) -> None:
     html.write_text(text.replace(old, new), "utf-8")
 
 
+STAFF_OUT = ROOT / "web" / "staff"
+STAFF_PREFIXES = ("staff_", "claude_", "codex_", "deepseek_", "special_")
+
+
+def copy_staff_portraits() -> None:
+    """员工立绘给网页外壳的对话框用（员工推门来找你时显示）。"""
+    from PIL import Image
+    STAFF_OUT.mkdir(parents=True, exist_ok=True)
+    for f in (ROOT / "src" / "assets" / "art").glob("*.png"):
+        if f.name.startswith(STAFF_PREFIXES):
+            im = Image.open(f)
+            im.thumbnail((360, 480))
+            im.save(STAFF_OUT / f.name, optimize=True)
+
+
 def main() -> None:
+    copy_staff_portraits()
     OUT.mkdir(parents=True, exist_ok=True)
     for f in OUT.iterdir():
         f.unlink()

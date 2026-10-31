@@ -186,3 +186,4 @@ release/
 build_tmp/
 *.spec
 src/assets/art/codex_log*.txt
+web/staff/

@@ -34,14 +34,14 @@
   </div>
 </main>
 
-<!-- 员工推门：入口提示（外壳绘制，风格贴近游戏） -->
+<!-- 员工推门来找你：文字冒险风对话框（外壳绘制，风格贴近游戏）。这里只是入口，真实批准在下面的卡片里 -->
 <div id="door" class="hidden" role="alert">
-  <div class="door-avatar" id="door-avatar">🧑‍🔧</div>
-  <div class="door-text">
-    <div class="door-who" id="door-who">Claude 员工推门进来</div>
+  <img id="door-portrait" class="door-portrait" alt="">
+  <div class="door-box">
+    <div class="door-plate" id="door-who">员工</div>
     <div class="door-say" id="door-say">“老板，有件事要你批一下。”</div>
+    <div class="door-actions"><button id="door-open" class="door-btn">查看</button></div>
   </div>
-  <button id="door-open" class="door-btn">查看</button>
 </div>
 
 <!-- 真实批准卡片：全屏、系统风格、纯文字，不套游戏皮肤 -->

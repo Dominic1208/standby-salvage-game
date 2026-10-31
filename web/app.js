@@ -10,7 +10,17 @@ const AGENTS = {
   gemini: { name: "Gemini 员工", avatar: "🧑‍🚀" }, qwen: { name: "Qwen 员工", avatar: "🧑‍🍳" },
   copilot: { name: "Copilot 员工", avatar: "🧑‍✈️" }, cursor: { name: "Cursor 员工", avatar: "🧑‍🎨" },
 };
-const UNLOCK_DELAY = 1000; // 卡片出现后 1 秒内按钮不可点，防止玩游戏时误触
+const UNLOCK_DELAY = 1000;
+const AGENT_COLORS = { claude: "#e8875f", codex: "#6fd3a0", deepseek: "#4d6bfe", kimi: "#f06292", glm: "#26a69a",
+  gemini: "#f2c14e", qwen: "#a98bff", copilot: "#4fd1d9", cursor: "#e6e6e6" };
+function showPortrait(look, agent, who) {
+  const img = $("door-portrait");
+  img.style.display = look ? "" : "none";
+  if (look) img.src = `/staff/${look}.png`;
+  $("door-who").textContent = who;
+  $("door-who").style.background = AGENT_COLORS[agent] || "var(--neon)";
+  $("door-who").style.color = agent === "deepseek" ? "#fff" : "#1a1208";
+} // 卡片出现后 1 秒内按钮不可点，防止玩游戏时误触
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -232,18 +242,15 @@ function nextDoor() {
     const a = state.approvals.get(item.id);
     if (!a || a.status !== "pending") return nextDoor();
     const ag = AGENTS[a.agent] || { name: `${a.label || a.agent} 员工`, avatar: "🧑" };
-    $("door-avatar").textContent = ag.avatar;
-    $("door-who").textContent = `${a.employeeName || "员工"}（${ag.name.replace(" 员工", "")}）推门进来`;
-    $("door-say").textContent = `“老板，我要${a.summary}，批不批？”`;
+    showPortrait(a.employeeLook, a.agent, `${a.employeeName || "员工"} · ${ag.name.replace(" 员工", "")}`);
+    $("door-say").textContent = `“老板，我要${a.summary}，这一步得你拍板。”`;
     $("door-open").textContent = "查看";
     $("door-open").onclick = () => { $("door").classList.add("hidden"); openCard(a.id); };
     tellGame({ type: "employee", agent: a.agent, kind: "approval", employeeId: a.employeeId, name: a.employeeName });
   } else {
     const ev = item.ev;
     const ag = AGENTS[ev.agent] || { name: ev.agent, avatar: "🧑" };
-    $("door-avatar").textContent = ag.avatar;
-    const who = `${ev.employeeName || "员工"}（${ag.name.replace(" 员工", "")}）`;
-    $("door-who").textContent = ev.kind === "done" ? `${who}回来汇报` : `${who}发来消息`;
+    showPortrait(ev.employeeLook, ev.agent, `${ev.employeeName || "员工"} · ${ag.name.replace(" 员工", "")}`);
     $("door-say").textContent = `“${ev.text}”`;
     $("door-open").textContent = ev.kind === "done" ? "看看成果" : "知道了";
     $("door-open").onclick = () => {
@@ -473,6 +480,10 @@ window.addEventListener("message", (e) => {
   if (e.data?.type === "save") backupSave(e.data.data);
   if (e.data?.type === "game-ready" || e.data?.type === "need-employees") tellGame({ type: "employees", list: state.employees });
   if (e.data?.type === "volume") sound.setVolume(Number(e.data.music), Number(e.data.sfx));
+  if (e.data?.type === "open-pending") {
+    const a = pending().find((x) => x.employeeId === e.data.employeeId) || pending()[0];
+    if (a) { $("door").classList.add("hidden"); openCard(a.id); } else openConsole();
+  }
   if (e.data?.type === "rename-employee") renameEmployee(String(e.data.id), String(e.data.name || ""));
   if (e.data?.type === "reroll-employee" && state.token) {
     fetch("/api/employee/reroll", { method: "POST", headers: { "Content-Type": "application/json", "X-Device-Token": state.token },

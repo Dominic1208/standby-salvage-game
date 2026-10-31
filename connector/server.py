@@ -173,7 +173,7 @@ class State:
 
 def public(a: dict) -> dict:
     """手机端能看到的字段（不含内部 future）。"""
-    keys = ("id", "agent", "label", "employeeId", "employeeName", "sessionId", "cwd", "toolName", "summary", "detail",
+    keys = ("id", "agent", "label", "employeeId", "employeeName", "employeeLook", "sessionId", "cwd", "toolName", "summary", "detail",
             "hash", "status", "created", "resolvedBy", "simulated")
     return {k: a.get(k) for k in keys}
 
@@ -226,6 +226,7 @@ async def create_approval(agent: str, session_id: str, cwd: str, tool_name: str,
         "label": label or agent,
         "employeeId": emp["id"],
         "employeeName": emp["name"],
+        "employeeLook": emp["look"],
         "hash": content_hash(body),
         "status": "pending",
         "created": now(),
@@ -282,7 +283,8 @@ async def resolve(approval_id: str, status: str, by: str) -> bool:
 async def add_event(kind: str, agent: str, text: str, session_id: str = "", emp: dict | None = None) -> None:
     ev = {"id": secrets.token_urlsafe(6), "kind": kind, "agent": agent,
           "text": text, "sessionId": session_id, "time": now(),
-          "employeeId": emp["id"] if emp else "", "employeeName": emp["name"] if emp else ""}
+          "employeeId": emp["id"] if emp else "", "employeeName": emp["name"] if emp else "",
+          "employeeLook": emp["look"] if emp else ""}
     STATE.events.append(ev)
     STATE.events = STATE.events[-50:]
     await STATE.broadcast({"type": "event", "event": ev})

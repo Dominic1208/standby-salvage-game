@@ -11,7 +11,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 ART = ROOT / "src" / "assets" / "art"
 SOURCE = ROOT / "art_source"
-SIZES = {"customer_": 512, "item_": 384, "shop_bg": 1024}
+SIZES = {"customer_": 512, "item_": 384, "shop_bg": 1024, "lounge_bg": 1536}
 
 
 def main() -> None:

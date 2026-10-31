@@ -112,12 +112,17 @@ const NO_TINT_LOOKS := ["codex_3", "codex_6", "special_1", "claude_4"]
 const STATUS_TEXT := {"working": "干活中", "waiting": "等你拍板！", "resting": "歇着呢"}
 var employees: Array = []     ## 外壳发来的员工名单 [{id, agent, name, look, status}]
 var home_layer: Control
-var staff_area: Control
+var room: HomeRoom
 var home_info: Label
 var home_empty: Label
+var dialog_layer: Control
+var dialog_portrait: TextureRect
+var dialog_name: Label
+var dialog_text: Label
+var dialog_buttons: HBoxContainer
+var _dialog_tween: Tween
 var settings_layer: ColorRect
-var staff_menu: ColorRect
-var staff_menu_box: VBoxContainer
+
 var music_slider: HSlider
 var sfx_slider: HSlider
 var settings := {"music": 0.6, "sfx": 1.0}
@@ -185,14 +190,8 @@ func _on_shell_message(m: Dictionary) -> void:
 		"gift":
 			_receive_gift(str(m.get("tier", "small")), str(m.get("agent", "")))
 		"employee":
-			var who := "Claude 员工" if m.get("agent", "") == "claude" else "Codex 员工"
-			var kind := str(m.get("kind", ""))
-			if kind == "approval":
-				pause_label.text = "%s推门进来\n“老板，有件事要你拍板。”\n\n生意会原样等你回来" % who
-			elif kind == "done":
-				pause_label.text = "%s回来汇报了" % who
-			else:
-				pause_label.text = "%s发来消息" % who
+			# 员工的对话框由网页外壳画（带立绘），这里只把游戏调暗、挡住点击
+			pause_label.text = ""
 			_show_pause(true)
 
 
@@ -547,8 +546,226 @@ func _show_home() -> void:
 	home_layer.visible = true
 	home_layer.modulate.a = 0.0
 	create_tween().tween_property(home_layer, "modulate:a", 1.0, 0.25)
-	_layout_staff(true)
+	room.replay_entry()
 	_sfx("tap")
+
+
+func _set_employees(list: Array) -> void:
+	var fresh := employees.is_empty()
+	employees = list
+	home_empty.visible = list.is_empty()
+	room.set_employees(list, not fresh)
+	if fresh and home_layer.visible:
+		room.replay_entry()
+
+
+# ---------------- 主页：大本营 ----------------
+
+func _build_home_layer() -> void:
+	home_layer = Control.new()
+	home_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	room = HomeRoom.new()
+	room.art_loader = _art
+	room.colors = AGENT_COLORS
+	room.tint_shader = SCARF_SHADER
+	room.no_tint = NO_TINT_LOOKS
+	room.set_anchors_preset(Control.PRESET_FULL_RECT)
+	room.open_shop.connect(_hide_home)
+	room.staff_tapped.connect(_open_dialog)
+	home_layer.add_child(room)
+
+	# 顶部：招牌 + 进度，右上角两个小按钮
+	var top := VBoxContainer.new()
+	top.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	top.offset_top = 18
+	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var title := _label("待机回收站", 52, COL_NEON_PINK)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_constant_override("outline_size", 16)
+	title.add_theme_color_override("font_outline_color", Color(0.1, 0.03, 0.05, 0.85))
+	top.add_child(title)
+	home_info = _label("", 22, COL_TEXT)
+	home_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	home_info.add_theme_constant_override("outline_size", 8)
+	home_info.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.75))
+	top.add_child(home_info)
+	home_layer.add_child(top)
+
+	var corner := VBoxContainer.new()
+	corner.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	corner.offset_left = -150
+	corner.offset_right = -16
+	corner.offset_top = 120
+	corner.add_theme_constant_override("separation", 10)
+	var book := _button("收藏室", Color(0.08, 0.06, 0.05, 0.75), COL_NEON, COL_NEON)
+	book.custom_minimum_size = Vector2(134, 54)
+	book.add_theme_font_size_override("font_size", 22)
+	book.pressed.connect(_open_book)
+	var setting := _button("设置", Color(0.08, 0.06, 0.05, 0.75), COL_TEXT, Color("6a5a4c"))
+	setting.custom_minimum_size = Vector2(134, 54)
+	setting.add_theme_font_size_override("font_size", 22)
+	setting.pressed.connect(func() -> void:
+		settings_layer.visible = true
+		_sfx("tap"))
+	corner.add_child(book)
+	corner.add_child(setting)
+	home_layer.add_child(corner)
+
+	home_empty = _label("还没有员工报到。\n在电脑设置页把你的 AI 连进来，\n他们就会推门进来。", 24, COL_TEXT, true)
+	home_empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	home_empty.add_theme_constant_override("outline_size", 8)
+	home_empty.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	home_empty.set_anchors_preset(Control.PRESET_CENTER)
+	home_empty.offset_left = -300
+	home_empty.offset_right = 300
+	home_empty.offset_top = -60
+	home_empty.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	home_empty.visible = false  # 收到名单、确认是空的才显示
+	home_layer.add_child(home_empty)
+	add_child(home_layer)
+
+
+# ---------------- 对话框：立绘 + 台词（文字冒险风） ----------------
+
+const DIALOG_LINES := {
+	"claude": {"working": ["在忙「{p}」。很快。", "别担心，「{p}」交给我。"],
+		"resting": ["「{p}」那边做完了。有新任务再叫我。", "……我在休息。"],
+		"waiting": ["「{p}」有一步需要你拍板。", "老板，这一步我不能自己决定。"]},
+	"codex": {"working": ["嘿嘿，「{p}」正在搞，别催别催~", "我在「{p}」里翻来翻去找东西！"],
+		"resting": ["偷偷吃个小鱼干……老板别告诉别人。", "活干完啦，可以摸会儿鱼吗？"],
+		"waiting": ["老板老板！「{p}」有个东西要你点头！", "这个我不敢乱动，你来看看嘛。"]},
+	"deepseek": {"working": ["「{p}」我在认真做，你先忙你的。", "慢慢来，会做好的。"],
+		"resting": ["老板辛苦啦，我泡了茶，要不要来一杯？", "「{p}」做完了，你要不要看看？"],
+		"waiting": ["「{p}」有一步想先问问你的意见。", "不好意思打扰一下，这一步需要你确认。"]},
+	"_": {"working": ["正在忙「{p}」。"], "resting": ["「{p}」告一段落，我歇会儿。"],
+		"waiting": ["老板，「{p}」有件事要你拍板。"]},
+}
+
+
+func _open_dialog(e: Dictionary) -> void:
+	_sfx("tap")
+	var look = e.get("look", "staff_1")
+	dialog_portrait.texture = _art(str(look))
+	var color: Color = AGENT_COLORS.get(e.agent, COL_NEON)
+	if not NO_TINT_LOOKS.has(str(look)):
+		var mat := ShaderMaterial.new()
+		mat.shader = SCARF_SHADER
+		mat.set_shader_parameter("tint_color", color)
+		dialog_portrait.material = mat
+	else:
+		dialog_portrait.material = null
+	dialog_name.text = "%s · %s" % [str(e.get("name", "员工")), AGENT_NAMES.get(e.agent, str(e.get("label", e.agent)))]
+	var plate: StyleBoxFlat = dialog_name.get_parent().get_theme_stylebox("panel")
+	plate.bg_color = color
+	var status := str(e.get("status", "working"))
+	var lines: Dictionary = DIALOG_LINES.get(e.agent, DIALOG_LINES["_"])
+	var pool: Array = lines.get(status, DIALOG_LINES["_"][status])
+	dialog_text.text = str(pool[rng.randi_range(0, pool.size() - 1)]).replace("{p}", str(e.get("project", "")))
+	for c in dialog_buttons.get_children():
+		c.queue_free()
+	if status == "waiting":
+		_dialog_button("去看看", COL_NEON, func() -> void:
+			_close_dialog()
+			_post_shell("open-pending", {"employeeId": str(e.id)}))
+	_dialog_button("改名", Color(0.95, 0.9, 0.82), func() -> void:
+		_close_dialog()
+		_post_shell("rename-employee", {"id": str(e.id), "name": str(e.get("name", ""))}))
+	_dialog_button("换个样子", Color(0.95, 0.9, 0.82), func() -> void:
+		_close_dialog()
+		_sfx("gift")
+		_post_shell("reroll-employee", {"id": str(e.id)}))
+	dialog_layer.visible = true
+	# 立绘滑入 + 文字逐字出现
+	dialog_portrait.modulate.a = 0.0
+	dialog_portrait.position.x = -60
+	dialog_text.visible_ratio = 0.0
+	if _dialog_tween:
+		_dialog_tween.kill()
+	_dialog_tween = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_dialog_tween.tween_property(dialog_portrait, "modulate:a", 1.0, 0.25)
+	_dialog_tween.parallel().tween_property(dialog_portrait, "position:x", 0.0, 0.3)
+	_dialog_tween.tween_property(dialog_text, "visible_ratio", 1.0, 0.03 * dialog_text.text.length())
+
+
+func _dialog_button(text: String, color: Color, action: Callable) -> void:
+	var b := _button(text, color, Color("1a1208"))
+	b.custom_minimum_size = Vector2(0, 60)
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.add_theme_font_size_override("font_size", 22)
+	b.pressed.connect(action)
+	dialog_buttons.add_child(b)
+
+
+func _close_dialog() -> void:
+	dialog_layer.visible = false
+
+
+func _build_dialog_layer() -> void:
+	dialog_layer = Control.new()
+	dialog_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dialog_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	var shade := ColorRect.new()
+	shade.color = Color(0, 0, 0, 0.35)
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shade.gui_input.connect(func(ev: InputEvent) -> void:
+		if ev is InputEventMouseButton and ev.pressed:
+			_close_dialog())
+	dialog_layer.add_child(shade)
+	# 大立绘：站在对话框左上方
+	var stage := Control.new()
+	stage.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	stage.offset_top = -900
+	stage.offset_bottom = -250
+	stage.offset_left = 0
+	stage.offset_right = 470
+	stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dialog_portrait = TextureRect.new()
+	dialog_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	dialog_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	dialog_portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dialog_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage.add_child(dialog_portrait)
+	dialog_layer.add_child(stage)
+	# 对话框
+	var box := PanelContainer.new()
+	box.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	box.offset_left = 16
+	box.offset_right = -16
+	box.offset_top = -300
+	box.offset_bottom = -20
+	var bsb := _box(Color(0.1, 0.07, 0.05, 0.94), 20)
+	bsb.border_color = Color("6a5040")
+	bsb.set_border_width_all(3)
+	bsb.content_margin_left = 26
+	bsb.content_margin_right = 26
+	bsb.content_margin_top = 44
+	bsb.content_margin_bottom = 20
+	box.add_theme_stylebox_override("panel", bsb)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 16)
+	dialog_text = _label("", 30, COL_TEXT, true)
+	dialog_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(dialog_text)
+	dialog_buttons = HBoxContainer.new()
+	dialog_buttons.add_theme_constant_override("separation", 12)
+	col.add_child(dialog_buttons)
+	box.add_child(col)
+	dialog_layer.add_child(box)
+	# 名字牌：压在对话框左上角，用 AI 代表色
+	var plate := PanelContainer.new()
+	var psb := _box(COL_NEON, 12)
+	psb.content_margin_top = 6
+	psb.content_margin_bottom = 6
+	plate.add_theme_stylebox_override("panel", psb)
+	plate.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	plate.offset_left = 40
+	plate.offset_top = -322
+	plate.offset_bottom = -276
+	dialog_name = _label("", 24, Color("1a1208"))
+	plate.add_child(dialog_name)
+	dialog_layer.add_child(plate)
+	dialog_layer.visible = false
+	add_child(dialog_layer)
 
 
 func _hide_home() -> void:
@@ -556,268 +773,11 @@ func _hide_home() -> void:
 	_sfx("door")
 
 
-func _set_employees(list: Array) -> void:
-	var old_ids := employees.map(func(e): return e.id)
-	employees = list
-	var has_new := list.any(func(e): return not old_ids.has(e.id))
-	if home_layer.visible:
-		_layout_staff(has_new)
-
-
-## 摆放员工。animate=true 时从门口一个个走进来。
-func _layout_staff(animate: bool) -> void:
-	for c in staff_area.get_children():
-		c.queue_free()
-	home_empty.visible = employees.is_empty()
-	var area := staff_area.size
-	var shown := employees.slice(0, 8)
-	var per_row := mini(4, maxi(1, shown.size()))
-	var cell := Vector2(area.x / per_row, 300)
-	var door := Vector2(area.x / 2 - 80, -40)
-	for i in shown.size():
-		var e: Dictionary = shown[i]
-		var row := i / 4
-		var count_in_row := mini(4, shown.size() - row * 4)
-		var x0 := (area.x - count_in_row * cell.x) / 2
-		var slot := Vector2(x0 + (i % 4) * cell.x + (cell.x - 160) / 2, 20 + row * cell.y)
-		var node := _make_staff(e)
-		staff_area.add_child(node)
-		if animate:
-			node.position = door
-			node.scale = Vector2(0.55, 0.55)
-			node.modulate.a = 0.0
-			var tw := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-			tw.tween_interval(0.45 * i + 0.2)
-			tw.tween_callback(_sfx.bind("door"))
-			tw.tween_property(node, "modulate:a", 1.0, 0.15)
-			tw.parallel().tween_property(node, "position", slot, 0.7)
-			tw.parallel().tween_property(node, "scale", Vector2.ONE, 0.7)
-		else:
-			node.position = slot
-	if employees.size() > 8:
-		var more := _label("还有 %d 位员工" % (employees.size() - 8), 22, COL_MUTED)
-		more.position = Vector2(0, 2 * cell.y + 10)
-		staff_area.add_child(more)
-
-
-func _make_staff(e: Dictionary) -> Control:
-	var color: Color = AGENT_COLORS.get(e.agent, COL_NEON)
-	var box := Control.new()
-	box.size = Vector2(160, 290)
-	box.pivot_offset = Vector2(80, 290)
-	# 脚下的代表色光圈
-	var glow := Panel.new()
-	glow.position = Vector2(20, 214)
-	glow.size = Vector2(120, 22)
-	var gsb := _box(Color(color.r, color.g, color.b, 0.35), 60)
-	glow.add_theme_stylebox_override("panel", gsb)
-	box.add_child(glow)
-	var look = e.get("look", "staff_1")
-	var tex := _art(look if typeof(look) == TYPE_STRING else "staff_%d" % int(look))
-	if tex == null:
-		tex = _art("staff_%d" % (absi(hash(str(e.id))) % 8 + 1))  # 新形象还没画好时先用通用冒险家
-	if tex:
-		var tr := TextureRect.new()
-		# 先设缩放方式再设大小，否则会按原图尺寸撑大
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tr.texture = tex
-		tr.position = Vector2(0, 0)
-		tr.size = Vector2(160, 226)
-		if not NO_TINT_LOOKS.has(str(look)):
-			var mat := ShaderMaterial.new()
-			mat.shader = SCARF_SHADER
-			mat.set_shader_parameter("tint_color", color)
-			tr.material = mat
-		box.add_child(tr)
-	else:
-		var fig := Control.new()
-		fig.size = Vector2(160, 226)
-		fig.draw.connect(func() -> void:
-			fig.draw_circle(Vector2(80, 70), 38, color.lightened(0.3))
-			var body := StyleBoxFlat.new()
-			body.bg_color = color.darkened(0.1)
-			body.corner_radius_top_left = 50
-			body.corner_radius_top_right = 50
-			body.draw(fig.get_canvas_item(), Rect2(30, 110, 100, 116)))
-		box.add_child(fig)
-	# 工牌：代表色 + 名字 + 工具名
-	var tag := PanelContainer.new()
-	var tsb := _box(color, 10)
-	tsb.content_margin_left = 8
-	tsb.content_margin_right = 8
-	tag.add_theme_stylebox_override("panel", tsb)
-	tag.position = Vector2(0, 232)
-	tag.custom_minimum_size = Vector2(160, 0)
-	var tcol := VBoxContainer.new()
-	tcol.add_theme_constant_override("separation", 0)
-	var nm := _label(str(e.get("name", "员工")), 22, Color("1a1208"))
-	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	nm.custom_minimum_size = Vector2(144, 0)
-	tcol.add_child(nm)
-	var sub := _label(AGENT_NAMES.get(e.agent, str(e.get("label", e.agent))), 15, Color(0.1, 0.07, 0.03, 0.75))
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	tcol.add_child(sub)
-	tag.add_child(tcol)
-	box.add_child(tag)
-	# 状态气泡
-	var st := str(e.get("status", "working"))
-	var bubble_lbl := _label(STATUS_TEXT.get(st, st), 18, Color("1a1208") if st != "waiting" else Color.WHITE)
-	var bp := PanelContainer.new()
-	bp.add_theme_stylebox_override("panel", _box(COL_PAPER if st != "waiting" else COL_STAMP, 12))
-	bp.position = Vector2(30, -26)
-	bp.add_child(bubble_lbl)
-	box.add_child(bp)
-	if st == "waiting":
-		var tw := create_tween().set_loops()
-		tw.tween_property(bp, "position:y", -34.0, 0.4)
-		tw.tween_property(bp, "position:y", -26.0, 0.4)
-	# 点员工改名（输入框在网页外壳里弹出，iPhone 上更好用）
-	var hit := Button.new()
-	hit.flat = true
-	hit.size = box.size
-	hit.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	hit.pressed.connect(_open_staff_menu.bind(e))
-	box.add_child(hit)
-	return box
-
-
-## 点员工：改名 / 随机换个形象（纯随机，不捏脸）
-func _open_staff_menu(e: Dictionary) -> void:
-	_sfx("tap")
-	for c in staff_menu_box.get_children():
-		c.queue_free()
-	var color: Color = AGENT_COLORS.get(e.agent, COL_NEON)
-	var title := _label(str(e.get("name", "员工")), 32, COL_INK)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	staff_menu_box.add_child(title)
-	var sub := _label("%s 的员工 · 项目：%s" % [AGENT_NAMES.get(e.agent, str(e.get("label", e.agent))), str(e.get("project", ""))],
-		20, color.darkened(0.35), true)
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	staff_menu_box.add_child(sub)
-	var rename := _button("改名", COL_NEON, Color("1a1208"))
-	rename.pressed.connect(func() -> void:
-		staff_menu.visible = false
-		_post_shell("rename-employee", {"id": str(e.id), "name": str(e.get("name", ""))}))
-	staff_menu_box.add_child(rename)
-	var reroll := _button("随机换个形象", Color(0, 0, 0, 0), COL_INK, COL_INK_SOFT)
-	reroll.pressed.connect(func() -> void:
-		staff_menu.visible = false
-		_sfx("gift")
-		_post_shell("reroll-employee", {"id": str(e.id)}))
-	staff_menu_box.add_child(reroll)
-	var close := _button("关闭", Color(0, 0, 0, 0), COL_INK_SOFT, COL_PAPER_DARK)
-	close.pressed.connect(func() -> void: staff_menu.visible = false)
-	staff_menu_box.add_child(close)
-	staff_menu.visible = true
-
-
 func _post_shell(type: String, fields: Dictionary) -> void:
 	if _web:
 		var msg := fields.duplicate()
 		msg["type"] = type
 		JavaScriptBridge.eval("window.parent.postMessage(%s,location.origin)" % JSON.stringify(msg), true)
-
-
-func _build_staff_menu() -> void:
-	staff_menu = ColorRect.new()
-	staff_menu.color = Color(0.03, 0.02, 0.02, 0.8)
-	staff_menu.set_anchors_preset(Control.PRESET_FULL_RECT)
-	staff_menu.mouse_filter = Control.MOUSE_FILTER_STOP
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(560, 0)
-	var sb := _box(COL_PAPER, 22)
-	sb.content_margin_left = 28
-	sb.content_margin_right = 28
-	sb.content_margin_top = 24
-	sb.content_margin_bottom = 24
-	card.add_theme_stylebox_override("panel", sb)
-	staff_menu_box = VBoxContainer.new()
-	staff_menu_box.add_theme_constant_override("separation", 14)
-	card.add_child(staff_menu_box)
-	center.add_child(card)
-	staff_menu.add_child(center)
-	staff_menu.visible = false
-	add_child(staff_menu)
-
-
-func _build_home_layer() -> void:
-	home_layer = Control.new()
-	home_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
-	home_layer.mouse_filter = Control.MOUSE_FILTER_STOP
-	var bg := TextureRect.new()
-	bg.texture = _art("shop_bg")
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	home_layer.add_child(bg)
-	var shade := ColorRect.new()
-	shade.color = Color(0.05, 0.035, 0.03, 0.55)
-	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	home_layer.add_child(shade)
-
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for side in ["left", "right"]:
-		margin.add_theme_constant_override("margin_" + side, 28)
-	margin.add_theme_constant_override("margin_top", 40)
-	margin.add_theme_constant_override("margin_bottom", 34)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 14)
-	var title := _label("待机回收站", 64, COL_NEON_PINK)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_constant_override("outline_size", 18)
-	title.add_theme_color_override("font_outline_color", Color(1, 0.42, 0.55, 0.3))
-	col.add_child(title)
-	home_info = _label("", 24, COL_TEXT)
-	home_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(home_info)
-	var hint := _label("AI 在外面干活，员工有事会推门来找你", 20, COL_MUTED)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(hint)
-
-	staff_area = Control.new()
-	staff_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	staff_area.custom_minimum_size = Vector2(0, 600)
-	staff_area.resized.connect(func() -> void:
-		if home_layer.visible:
-			_layout_staff(false))
-	home_empty = _label("还没有员工。\n在电脑上的设置页把你的 AI 连接进来，\n他们就会推门进来报到。", 24, COL_MUTED, true)
-	home_empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	home_empty.set_anchors_preset(Control.PRESET_CENTER)
-	home_empty.position = Vector2(0, 220)
-	home_empty.size = Vector2(664, 160)
-	var staff_wrap := Control.new()
-	staff_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	staff_wrap.add_child(home_empty)
-	staff_wrap.add_child(staff_area)
-	staff_area.set_anchors_preset(Control.PRESET_FULL_RECT)
-	col.add_child(staff_wrap)
-
-	var open_btn := _button("开 店", COL_NEON, Color("1a1208"))
-	open_btn.custom_minimum_size = Vector2(0, 96)
-	open_btn.add_theme_font_size_override("font_size", 36)
-	open_btn.pressed.connect(_hide_home)
-	col.add_child(open_btn)
-	var brow := HBoxContainer.new()
-	brow.add_theme_constant_override("separation", 14)
-	var book := _button("收藏室", Color(0.1, 0.08, 0.06, 0.85), COL_NEON, COL_NEON)
-	book.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	book.pressed.connect(_open_book)
-	var setting := _button("设置", Color(0.1, 0.08, 0.06, 0.85), COL_TEXT, Color("4a3f36"))
-	setting.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	setting.pressed.connect(func() -> void:
-		settings_layer.visible = true
-		_sfx("tap"))
-	brow.add_child(book)
-	brow.add_child(setting)
-	col.add_child(brow)
-	margin.add_child(col)
-	home_layer.add_child(margin)
-	add_child(home_layer)
 
 
 func _build_settings_layer() -> void:
@@ -1217,7 +1177,7 @@ func _build_ui() -> void:
 	add_child(float_layer)
 	_build_result_layer()
 	_build_home_layer()
-	_build_staff_menu()
+	_build_dialog_layer()
 	_build_settings_layer()
 	_build_gift_layer()
 	_build_book_layer()
