@@ -48,7 +48,7 @@ description: 把"待机回收站"接到你（正在读这份说明的 AI 编程�
 - 从 stdin 读你传来的 JSON，自动识别常见字段（`tool_name`/`toolName`、`tool_input`/`toolArgs`、`command`、`cwd`、`session_id`）。
 - 手机上批准 → 输出"允许"；拒绝 → 输出"拒绝"并附原因。
 - **永远不会自动批准**：
-  - 待机回收站没开、或手机一直没处理时：Claude Code 和 Codex 交回电脑上的确认框；Qwen、Copilot 输出"在电脑上询问"（ask）；Gemini、Cursor、generic 输出"拒绝"，原因写明"手机上没处理，请在电脑上重试"。
+  - 待机回收站没开、或手机一直没处理时：钩子不输出任何决定（Qwen、Copilot 明确输出 ask），你的工具按它原本的规则在电脑上询问用户——效果等于没装待机回收站。
 - "完成"类事件只通知手机（员工回店汇报），不阻塞你。
 
 ## 第 3 步：测试

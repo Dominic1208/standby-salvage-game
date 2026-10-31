@@ -7,8 +7,8 @@
 --agent 决定怎么读输入、怎么写输出（见 PROFILES）。不认识的名字按 generic 处理。
 
 安全原则：
-- 连接程序没开、或手机一直没处理 → 绝不自动批准。
-  能"交回电脑询问"的工具就交回；不能的工具（没输出就等于放行）就拦下并说明原因。
+- 连接程序没开、或手机一直没处理 → 绝不自动批准：钩子不输出（或输出 ask），
+  AI 工具按它原本的规则在电脑上问你，效果等于没装待机回收站。
 - 只认手机上的批准/拒绝，钩子本身从不替用户做决定。
 """
 
@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import os
+import socket
 import sys
 import time
 import urllib.request
@@ -24,17 +25,16 @@ BASE = "http://127.0.0.1:8787"
 POLL = 25
 
 # 每种工具的输出格式。fallback 是"没有手机决定时"的处理：
-#   "silent"  什么都不输出，工具照常在电脑上询问（只有 Claude 的 PermissionRequest 是这样）
-#   "ask"     输出 ask，让工具在电脑上询问
-#   "deny"    输出拒绝并说明原因（用于"没输出就放行"的工具，防止超时被自动执行）
+#   "silent"  什么都不输出 = 钩子不发表意见，工具按它原本的规则在电脑上询问（等于没装待机回收站）
+#   "ask"     明确输出 ask，让工具在电脑上询问
 PROFILES = {
     "claude": {"fallback": "silent", "max_wait": 55 * 60},
     "codex": {"fallback": "silent", "max_wait": 55 * 60},
     "qwen": {"fallback": "ask", "max_wait": 9 * 60},
     "copilot": {"fallback": "ask", "max_wait": 9 * 60},
-    "gemini": {"fallback": "deny", "max_wait": 9 * 60},
-    "cursor": {"fallback": "deny", "max_wait": 9 * 60},
-    "generic": {"fallback": "deny", "max_wait": 9 * 60},
+    "gemini": {"fallback": "silent", "max_wait": 9 * 60},
+    "cursor": {"fallback": "silent", "max_wait": 9 * 60},
+    "generic": {"fallback": "silent", "max_wait": 9 * 60},
 }
 # Claude Code 可以改接国内模型的兼容接口：按接口地址识别，员工算在对应模型名下
 PROVIDERS = (("deepseek", "deepseek", "DeepSeek"), ("moonshot", "kimi", "Kimi"),
@@ -202,11 +202,22 @@ def display_agent(agent: str) -> tuple[str, str]:
     return agent, LABELS.get(agent, agent)
 
 
+def server_up() -> bool:
+    """先快速探测待机回收站有没有开：没开就立刻退出，不拖慢 AI 的每一步。"""
+    try:
+        with socket.create_connection(("127.0.0.1", int(BASE.rsplit(":", 1)[1])), timeout=0.3):
+            return True
+    except OSError:
+        return False
+
+
 def run(agent: str) -> None:
     try:
         raw = json.loads(sys.stdin.buffer.read().decode("utf-8") or "{}")
     except ValueError:
         return
+    if not server_up():
+        return  # 不输出 = 钩子不发表意见，AI 照常在电脑上问你
     hook = normalize(raw)
     event = hook["event"]
     # 只通知、不需要决定的事件

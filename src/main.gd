@@ -965,6 +965,9 @@ func _on_gift_action() -> void:
 		gift_layer.visible = false
 		_refresh()
 		return
+	if gift_queue.is_empty():  # 包裹窗口开着时存档被替换（例如从电脑恢复存档）
+		gift_layer.visible = false
+		return
 	var tier: String = gift_queue.pop_front()
 	var bonus := float(gifts_data.tiers[tier].bonus)
 	var o: Dictionary = _pick_weighted_outcome(tier)
