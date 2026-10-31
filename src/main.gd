@@ -100,6 +100,25 @@ var book_layer: ColorRect
 var book_grid: GridContainer
 var book_count: Label
 const SAVE_PATH := "user://save.json"
+## 每个 AI 工具一种代表色：同一个工具的员工共用颜色，长相不同
+const AGENT_COLORS := {"claude": Color("e8875f"), "codex": Color("6fd3a0"), "deepseek": Color("4d6bfe"),
+	"kimi": Color("f06292"), "glm": Color("26a69a"), "gemini": Color("f2c14e"), "qwen": Color("a98bff"),
+	"copilot": Color("4fd1d9"), "cursor": Color("e6e6e6")}
+const AGENT_NAMES := {"claude": "Claude", "codex": "Codex", "deepseek": "DeepSeek", "kimi": "Kimi",
+	"glm": "智谱", "gemini": "Gemini", "qwen": "Qwen", "copilot": "Copilot", "cursor": "Cursor"}
+const APRON_SHADER := preload("res://canvas_char_apron_tint.gdshader")
+const STATUS_TEXT := {"working": "干活中", "waiting": "等你拍板！", "resting": "歇着呢"}
+var employees: Array = []     ## 外壳发来的员工名单 [{id, agent, name, look, status}]
+var home_layer: Control
+var staff_area: Control
+var home_info: Label
+var home_empty: Label
+var settings_layer: ColorRect
+var staff_menu: ColorRect
+var staff_menu_box: VBoxContainer
+var music_slider: HSlider
+var sfx_slider: HSlider
+var settings := {"music": 0.6, "sfx": 1.0}
 
 var _web := false
 var _poll := 0.0
@@ -127,6 +146,7 @@ func _ready() -> void:
 	_bgm("shop")
 	if not _load_game():
 		_start_day()
+	_show_home.call_deferred()
 
 
 func _process(delta: float) -> void:
@@ -153,6 +173,12 @@ func _on_shell_message(m: Dictionary) -> void:
 			_show_pause(true)
 		"resume":
 			_show_pause(false)
+		"employees":
+			_set_employees(m.get("list", []))
+		"load-save":
+			if _apply_save(m.get("data")):
+				_float_text("已从电脑恢复存档", COL_NEON)
+				_refresh()
 		"gift":
 			_receive_gift(str(m.get("tier", "small")), str(m.get("agent", "")))
 		"employee":
@@ -503,6 +529,354 @@ func _float_text(text: String, color: Color) -> void:
 	tw.tween_callback(l.queue_free)
 
 
+# ---------------- 主页：员工推门进来 ----------------
+
+func _show_home() -> void:
+	home_info.text = "第 %d 天　¥%d　口碑 %d" % [day, cash, reputation]
+	home_layer.visible = true
+	home_layer.modulate.a = 0.0
+	create_tween().tween_property(home_layer, "modulate:a", 1.0, 0.25)
+	_layout_staff(true)
+	_sfx("tap")
+
+
+func _hide_home() -> void:
+	home_layer.visible = false
+	_sfx("door")
+
+
+func _set_employees(list: Array) -> void:
+	var old_ids := employees.map(func(e): return e.id)
+	employees = list
+	var has_new := list.any(func(e): return not old_ids.has(e.id))
+	if home_layer.visible:
+		_layout_staff(has_new)
+
+
+## 摆放员工。animate=true 时从门口一个个走进来。
+func _layout_staff(animate: bool) -> void:
+	for c in staff_area.get_children():
+		c.queue_free()
+	home_empty.visible = employees.is_empty()
+	var area := staff_area.size
+	var shown := employees.slice(0, 8)
+	var per_row := mini(4, maxi(1, shown.size()))
+	var cell := Vector2(area.x / per_row, 300)
+	var door := Vector2(area.x / 2 - 80, -40)
+	for i in shown.size():
+		var e: Dictionary = shown[i]
+		var row := i / 4
+		var count_in_row := mini(4, shown.size() - row * 4)
+		var x0 := (area.x - count_in_row * cell.x) / 2
+		var slot := Vector2(x0 + (i % 4) * cell.x + (cell.x - 160) / 2, 20 + row * cell.y)
+		var node := _make_staff(e)
+		staff_area.add_child(node)
+		if animate:
+			node.position = door
+			node.scale = Vector2(0.55, 0.55)
+			node.modulate.a = 0.0
+			var tw := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			tw.tween_interval(0.45 * i + 0.2)
+			tw.tween_callback(_sfx.bind("door"))
+			tw.tween_property(node, "modulate:a", 1.0, 0.15)
+			tw.parallel().tween_property(node, "position", slot, 0.7)
+			tw.parallel().tween_property(node, "scale", Vector2.ONE, 0.7)
+		else:
+			node.position = slot
+	if employees.size() > 8:
+		var more := _label("还有 %d 位员工" % (employees.size() - 8), 22, COL_MUTED)
+		more.position = Vector2(0, 2 * cell.y + 10)
+		staff_area.add_child(more)
+
+
+func _make_staff(e: Dictionary) -> Control:
+	var color: Color = AGENT_COLORS.get(e.agent, COL_NEON)
+	var box := Control.new()
+	box.size = Vector2(160, 290)
+	box.pivot_offset = Vector2(80, 290)
+	# 脚下的代表色光圈
+	var glow := Panel.new()
+	glow.position = Vector2(20, 214)
+	glow.size = Vector2(120, 22)
+	var gsb := _box(Color(color.r, color.g, color.b, 0.35), 60)
+	glow.add_theme_stylebox_override("panel", gsb)
+	box.add_child(glow)
+	var look = e.get("look", "staff_1")
+	var tex := _art(look if typeof(look) == TYPE_STRING else "staff_%d" % int(look))
+	if tex == null:
+		tex = _art("staff_%d" % (absi(hash(str(e.id))) % 8 + 1))  # 新形象还没画好时先用通用店员
+	if tex:
+		var tr := TextureRect.new()
+		# 先设缩放方式再设大小，否则会按原图尺寸撑大
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture = tex
+		tr.position = Vector2(0, 0)
+		tr.size = Vector2(160, 226)
+		var mat := ShaderMaterial.new()
+		mat.shader = APRON_SHADER
+		mat.set_shader_parameter("tint_color", color)
+		tr.material = mat
+		box.add_child(tr)
+	else:
+		var fig := Control.new()
+		fig.size = Vector2(160, 226)
+		fig.draw.connect(func() -> void:
+			fig.draw_circle(Vector2(80, 70), 38, color.lightened(0.3))
+			var body := StyleBoxFlat.new()
+			body.bg_color = color.darkened(0.1)
+			body.corner_radius_top_left = 50
+			body.corner_radius_top_right = 50
+			body.draw(fig.get_canvas_item(), Rect2(30, 110, 100, 116)))
+		box.add_child(fig)
+	# 工牌：代表色 + 名字 + 工具名
+	var tag := PanelContainer.new()
+	var tsb := _box(color, 10)
+	tsb.content_margin_left = 8
+	tsb.content_margin_right = 8
+	tag.add_theme_stylebox_override("panel", tsb)
+	tag.position = Vector2(0, 232)
+	tag.custom_minimum_size = Vector2(160, 0)
+	var tcol := VBoxContainer.new()
+	tcol.add_theme_constant_override("separation", 0)
+	var nm := _label(str(e.get("name", "员工")), 22, Color("1a1208"))
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	nm.custom_minimum_size = Vector2(144, 0)
+	tcol.add_child(nm)
+	var sub := _label(AGENT_NAMES.get(e.agent, str(e.get("label", e.agent))), 15, Color(0.1, 0.07, 0.03, 0.75))
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tcol.add_child(sub)
+	tag.add_child(tcol)
+	box.add_child(tag)
+	# 状态气泡
+	var st := str(e.get("status", "working"))
+	var bubble_lbl := _label(STATUS_TEXT.get(st, st), 18, Color("1a1208") if st != "waiting" else Color.WHITE)
+	var bp := PanelContainer.new()
+	bp.add_theme_stylebox_override("panel", _box(COL_PAPER if st != "waiting" else COL_STAMP, 12))
+	bp.position = Vector2(30, -26)
+	bp.add_child(bubble_lbl)
+	box.add_child(bp)
+	if st == "waiting":
+		var tw := create_tween().set_loops()
+		tw.tween_property(bp, "position:y", -34.0, 0.4)
+		tw.tween_property(bp, "position:y", -26.0, 0.4)
+	# 点员工改名（输入框在网页外壳里弹出，iPhone 上更好用）
+	var hit := Button.new()
+	hit.flat = true
+	hit.size = box.size
+	hit.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	hit.pressed.connect(_open_staff_menu.bind(e))
+	box.add_child(hit)
+	return box
+
+
+## 点员工：改名 / 随机换个形象（纯随机，不捏脸）
+func _open_staff_menu(e: Dictionary) -> void:
+	_sfx("tap")
+	for c in staff_menu_box.get_children():
+		c.queue_free()
+	var color: Color = AGENT_COLORS.get(e.agent, COL_NEON)
+	var title := _label(str(e.get("name", "员工")), 32, COL_INK)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	staff_menu_box.add_child(title)
+	var sub := _label("%s 的员工 · 项目：%s" % [AGENT_NAMES.get(e.agent, str(e.get("label", e.agent))), str(e.get("project", ""))],
+		20, color.darkened(0.35), true)
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	staff_menu_box.add_child(sub)
+	var rename := _button("改名", COL_NEON, Color("1a1208"))
+	rename.pressed.connect(func() -> void:
+		staff_menu.visible = false
+		_post_shell("rename-employee", {"id": str(e.id), "name": str(e.get("name", ""))}))
+	staff_menu_box.add_child(rename)
+	var reroll := _button("随机换个形象", Color(0, 0, 0, 0), COL_INK, COL_INK_SOFT)
+	reroll.pressed.connect(func() -> void:
+		staff_menu.visible = false
+		_sfx("gift")
+		_post_shell("reroll-employee", {"id": str(e.id)}))
+	staff_menu_box.add_child(reroll)
+	var close := _button("关闭", Color(0, 0, 0, 0), COL_INK_SOFT, COL_PAPER_DARK)
+	close.pressed.connect(func() -> void: staff_menu.visible = false)
+	staff_menu_box.add_child(close)
+	staff_menu.visible = true
+
+
+func _post_shell(type: String, fields: Dictionary) -> void:
+	if _web:
+		var msg := fields.duplicate()
+		msg["type"] = type
+		JavaScriptBridge.eval("window.parent.postMessage(%s,location.origin)" % JSON.stringify(msg), true)
+
+
+func _build_staff_menu() -> void:
+	staff_menu = ColorRect.new()
+	staff_menu.color = Color(0.03, 0.02, 0.02, 0.8)
+	staff_menu.set_anchors_preset(Control.PRESET_FULL_RECT)
+	staff_menu.mouse_filter = Control.MOUSE_FILTER_STOP
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(560, 0)
+	var sb := _box(COL_PAPER, 22)
+	sb.content_margin_left = 28
+	sb.content_margin_right = 28
+	sb.content_margin_top = 24
+	sb.content_margin_bottom = 24
+	card.add_theme_stylebox_override("panel", sb)
+	staff_menu_box = VBoxContainer.new()
+	staff_menu_box.add_theme_constant_override("separation", 14)
+	card.add_child(staff_menu_box)
+	center.add_child(card)
+	staff_menu.add_child(center)
+	staff_menu.visible = false
+	add_child(staff_menu)
+
+
+func _build_home_layer() -> void:
+	home_layer = Control.new()
+	home_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	home_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	var bg := TextureRect.new()
+	bg.texture = _art("shop_bg")
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	home_layer.add_child(bg)
+	var shade := ColorRect.new()
+	shade.color = Color(0.05, 0.035, 0.03, 0.55)
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	home_layer.add_child(shade)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for side in ["left", "right"]:
+		margin.add_theme_constant_override("margin_" + side, 28)
+	margin.add_theme_constant_override("margin_top", 40)
+	margin.add_theme_constant_override("margin_bottom", 34)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 14)
+	var title := _label("待机回收站", 64, COL_NEON_PINK)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_constant_override("outline_size", 18)
+	title.add_theme_color_override("font_outline_color", Color(1, 0.42, 0.55, 0.3))
+	col.add_child(title)
+	home_info = _label("", 24, COL_TEXT)
+	home_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(home_info)
+	var hint := _label("AI 在外面干活，员工有事会推门来找你", 20, COL_MUTED)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(hint)
+
+	staff_area = Control.new()
+	staff_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	staff_area.custom_minimum_size = Vector2(0, 600)
+	staff_area.resized.connect(func() -> void:
+		if home_layer.visible:
+			_layout_staff(false))
+	home_empty = _label("还没有员工。\n在电脑上的设置页把你的 AI 连接进来，\n他们就会推门进来报到。", 24, COL_MUTED, true)
+	home_empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	home_empty.set_anchors_preset(Control.PRESET_CENTER)
+	home_empty.position = Vector2(0, 220)
+	home_empty.size = Vector2(664, 160)
+	var staff_wrap := Control.new()
+	staff_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	staff_wrap.add_child(home_empty)
+	staff_wrap.add_child(staff_area)
+	staff_area.set_anchors_preset(Control.PRESET_FULL_RECT)
+	col.add_child(staff_wrap)
+
+	var open_btn := _button("开 店", COL_NEON, Color("1a1208"))
+	open_btn.custom_minimum_size = Vector2(0, 96)
+	open_btn.add_theme_font_size_override("font_size", 36)
+	open_btn.pressed.connect(_hide_home)
+	col.add_child(open_btn)
+	var brow := HBoxContainer.new()
+	brow.add_theme_constant_override("separation", 14)
+	var book := _button("收藏室", Color(0.1, 0.08, 0.06, 0.85), COL_NEON, COL_NEON)
+	book.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	book.pressed.connect(_open_book)
+	var setting := _button("设置", Color(0.1, 0.08, 0.06, 0.85), COL_TEXT, Color("4a3f36"))
+	setting.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	setting.pressed.connect(func() -> void:
+		settings_layer.visible = true
+		_sfx("tap"))
+	brow.add_child(book)
+	brow.add_child(setting)
+	col.add_child(brow)
+	margin.add_child(col)
+	home_layer.add_child(margin)
+	add_child(home_layer)
+
+
+func _build_settings_layer() -> void:
+	settings_layer = ColorRect.new()
+	settings_layer.color = Color(0.03, 0.02, 0.02, 0.88)
+	settings_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	settings_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(600, 0)
+	var sb := _box(COL_PAPER, 22)
+	sb.content_margin_left = 30
+	sb.content_margin_right = 30
+	sb.content_margin_top = 26
+	sb.content_margin_bottom = 26
+	card.add_theme_stylebox_override("panel", sb)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 16)
+	var title := _label("设置", 34, COL_INK)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(title)
+	col.add_child(_label("背景音乐", 24, COL_INK))
+	music_slider = _slider(settings.music)
+	col.add_child(music_slider)
+	col.add_child(_label("音效", 24, COL_INK))
+	sfx_slider = _slider(settings.sfx)
+	col.add_child(sfx_slider)
+	var tip := _label("点主页上的员工可以给他改名。\n员工按“AI 工具 + 项目”区分：同一个 AI 的员工工牌颜色相同。", 20, COL_INK_SOFT, true)
+	col.add_child(tip)
+	var close := _button("好", COL_NEON, Color("1a1208"))
+	close.pressed.connect(func() -> void:
+		settings_layer.visible = false
+		_save_game())
+	col.add_child(close)
+	card.add_child(col)
+	center.add_child(card)
+	settings_layer.add_child(center)
+	settings_layer.visible = false
+	add_child(settings_layer)
+
+
+func _slider(value: float) -> HSlider:
+	var sl := HSlider.new()
+	sl.min_value = 0.0
+	sl.max_value = 1.0
+	sl.step = 0.05
+	sl.value = value
+	sl.custom_minimum_size = Vector2(0, 56)
+	var grabber_bg := _box(COL_PAPER_DARK, 8)
+	grabber_bg.content_margin_top = 8
+	grabber_bg.content_margin_bottom = 8
+	sl.add_theme_stylebox_override("slider", grabber_bg)
+	sl.add_theme_stylebox_override("grabber_area", _box(COL_NEON, 8))
+	sl.add_theme_stylebox_override("grabber_area_highlight", _box(COL_NEON, 8))
+	sl.value_changed.connect(func(_v: float) -> void:
+		settings.music = music_slider.value if music_slider else settings.music
+		settings.sfx = sfx_slider.value if sfx_slider else settings.sfx
+		_apply_volume())
+	return sl
+
+
+func _apply_volume() -> void:
+	if music_slider:
+		music_slider.set_value_no_signal(float(settings.music))
+		sfx_slider.set_value_no_signal(float(settings.sfx))
+	if _web:
+		JavaScriptBridge.eval("window.parent.postMessage({type:'volume',music:%f,sfx:%f},location.origin)"
+			% [float(settings.music), float(settings.sfx)], true)
+
+
 # ---------------- 员工包裹 ----------------
 
 ## 外壳通知：员工带回一个包裹。批准和拒绝给的一样，避免诱导无脑批准。
@@ -651,21 +1025,33 @@ func _open_book() -> void:
 func _save_game() -> void:
 	var data := {"day": day, "cash": cash, "reputation": reputation, "inventory": inventory,
 		"time_left": time_left, "order_tag": order_tag, "run_state": run_state,
-		"collection": collection, "gift_queue": gift_queue, "gifts_today": gifts_today, "intel": intel}
+		"collection": collection, "gift_queue": gift_queue, "gifts_today": gifts_today, "intel": intel,
+		"settings": settings}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(data))
 		f.close()
+	if _web:  # 电脑上也备份一份
+		JavaScriptBridge.eval("window.parent.postMessage({type:'save',data:%s},location.origin)" % JSON.stringify(data), true)
 
 
-## 读档成功返回 true。一局结束（输/赢）后只保留收藏品。
+## 读档成功返回 true。
 func _load_game() -> bool:
 	if not FileAccess.file_exists(SAVE_PATH):
+		if _web:  # 手机上没有存档（换了网址或清了数据）：向电脑要备份
+			JavaScriptBridge.eval("window.parent.postMessage({type:'need-save'},location.origin)", true)
 		return false
 	var d = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
+	return _apply_save(d)
+
+
+## 用存档数据恢复进度。一局结束（输/赢）后只保留收藏品。
+func _apply_save(d) -> bool:
 	if typeof(d) != TYPE_DICTIONARY:
 		return false
 	collection = d.get("collection", {})
+	settings = d.get("settings", settings)
+	_apply_volume()
 	gift_queue = d.get("gift_queue", [])
 	intel = int(d.get("intel", 0))
 	if str(d.get("run_state", "")) in ["lost", "won"]:
@@ -818,6 +1204,9 @@ func _build_ui() -> void:
 	float_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(float_layer)
 	_build_result_layer()
+	_build_home_layer()
+	_build_staff_menu()
+	_build_settings_layer()
 	_build_gift_layer()
 	_build_book_layer()
 	_build_pause_layer()
@@ -838,6 +1227,11 @@ func _build_hud() -> Control:
 	day_pill.add_theme_stylebox_override("panel", sb)
 	hud_day = _label("", 24, COL_NEON)
 	day_pill.add_child(hud_day)
+	var home_btn := _button("主页", Color(0, 0, 0, 0), COL_TEXT, Color("4a3f36"))
+	home_btn.custom_minimum_size = Vector2(0, 44)
+	home_btn.add_theme_font_size_override("font_size", 20)
+	home_btn.pressed.connect(_show_home)
+	row.add_child(home_btn)
 	row.add_child(day_pill)
 
 	var sign_label := _label("待机回收站", 36, COL_NEON_PINK)

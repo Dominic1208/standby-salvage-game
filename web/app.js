@@ -4,7 +4,12 @@
 "use strict";
 
 const $ = (id) => document.getElementById(id);
-const AGENTS = { claude: { name: "Claude 员工", avatar: "🧑‍🔧" }, codex: { name: "Codex 员工", avatar: "🧑‍💻" } };
+const AGENTS = {
+  claude: { name: "Claude 员工", avatar: "🧑‍🔧" }, codex: { name: "Codex 员工", avatar: "🦊" },
+  deepseek: { name: "DeepSeek 员工", avatar: "🐳" }, kimi: { name: "Kimi 员工", avatar: "🌙" }, glm: { name: "智谱员工", avatar: "🧑‍🏫" },
+  gemini: { name: "Gemini 员工", avatar: "🧑‍🚀" }, qwen: { name: "Qwen 员工", avatar: "🧑‍🍳" },
+  copilot: { name: "Copilot 员工", avatar: "🧑‍✈️" }, cursor: { name: "Cursor 员工", avatar: "🧑‍🎨" },
+};
 const UNLOCK_DELAY = 1000; // 卡片出现后 1 秒内按钮不可点，防止玩游戏时误触
 
 const store = {
@@ -19,6 +24,7 @@ const state = {
   events: [],
   doorShown: new Set(),
   doorQueue: [],
+  employees: [],
   cardId: null,
   ws: null,
   retry: 0,
@@ -30,6 +36,12 @@ const state = {
 const sound = {
   ctx: null, buffers: new Map(), bgmNode: null, bgmName: "", wantBgm: "", gain: null,
   muted: store.get("muted") === "1",
+  music: Number(store.get("vol_music") ?? 0.6), sfxVol: Number(store.get("vol_sfx") ?? 1),
+  setVolume(music, sfx) {
+    this.music = music; this.sfxVol = sfx;
+    store.set("vol_music", String(music)); store.set("vol_sfx", String(sfx));
+    if (this.musicGain) { this.musicGain.gain.value = music; this.sfxGain.gain.value = sfx; }
+  },
   unlock() {
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
@@ -38,6 +50,11 @@ const sound = {
       this.gain = this.ctx.createGain();
       this.gain.gain.value = this.muted ? 0 : 1;
       this.gain.connect(this.ctx.destination);
+      this.musicGain = this.ctx.createGain();
+      this.sfxGain = this.ctx.createGain();
+      this.musicGain.connect(this.gain);
+      this.sfxGain.connect(this.gain);
+      this.setVolume(this.music, this.sfxVol);
     }
     if (this.ctx.state === "suspended") this.ctx.resume();
     if (this.wantBgm && this.bgmName !== this.wantBgm) this.bgm(this.wantBgm);
@@ -55,7 +72,7 @@ const sound = {
       const buf = await this.load(name);
       const src = this.ctx.createBufferSource();
       src.buffer = buf;
-      src.connect(this.gain);
+      src.connect(this.sfxGain);
       src.start();
     } catch {}
   },
@@ -73,7 +90,7 @@ const sound = {
       vol.gain.value = 0.35;
       src.buffer = buf;
       src.loop = name === "shop";
-      src.connect(vol).connect(this.gain);
+      src.connect(vol).connect(this.musicGain);
       src.start();
       this.bgmNode = src;
     } catch {}
@@ -106,6 +123,11 @@ fetch("/game/index.html", { method: "HEAD" }).then((r) => {
 
 // ---------------- 配对 ----------------
 function showPair() { $("pair").classList.remove("hidden"); $("pair-code").focus(); }
+async function pairWith(code) {
+  $("pair-code").value = code;
+  await $("pair-go").onclick();
+  if (!state.token) showPair();
+}
 $("pair-go").onclick = async () => {
   const code = $("pair-code").value.trim();
   $("pair-err").textContent = "";
@@ -140,12 +162,14 @@ function connect() {
   ws.onmessage = (ev) => handle(JSON.parse(ev.data));
   ws.onclose = (ev) => {
     setConn(false, "已断开，重连中…");
-    if (ev.code === 1006 && state.retry > 2) {
-      // 多次失败时检查是不是令牌失效（比如电脑端删除了设备）
-      fetch("/api/push/key").then(() => {}).catch(() => {});
+    if (state.retry > 1) {
+      // 多次失败时检查令牌是否失效（比如电脑端换了数据目录），失效就重新配对
+      fetch("/api/save", { headers: { "X-Device-Token": state.token || "" } }).then((r) => {
+        if (r.status === 401) { state.token = null; store.del("deviceToken"); setConn(false, "需要重新配对"); showPair(); }
+      }).catch(() => {});
     }
     const delay = Math.min(15000, 1000 * 2 ** state.retry++);
-    setTimeout(connect, delay);
+    setTimeout(() => { if (state.token) connect(); }, delay);
   };
 }
 
@@ -160,6 +184,8 @@ function handle(msg) {
     state.approvals.clear();
     for (const a of msg.approvals) state.approvals.set(a.id, a);
     state.events = msg.events || [];
+    state.employees = msg.employees || [];
+    tellGame({ type: "employees", list: state.employees });
     for (const a of msg.approvals) if (a.status === "pending") queueDoor({ kind: "approval", id: a.id });
     openFromUrl();
   } else if (msg.type === "approval") {
@@ -167,6 +193,9 @@ function handle(msg) {
     state.approvals.set(a.id, a);
     if (a.status === "pending") queueDoor({ kind: "approval", id: a.id });
     if (state.cardId === a.id) renderCardStatus(a);
+  } else if (msg.type === "employees") {
+    state.employees = msg.employees || [];
+    tellGame({ type: "employees", list: state.employees });
   } else if (msg.type === "event") {
     state.events.push(msg.event);
     queueDoor({ kind: "event", ev: msg.event });
@@ -202,18 +231,19 @@ function nextDoor() {
   if (item.kind === "approval") {
     const a = state.approvals.get(item.id);
     if (!a || a.status !== "pending") return nextDoor();
-    const ag = AGENTS[a.agent] || { name: a.agent, avatar: "🧑" };
+    const ag = AGENTS[a.agent] || { name: `${a.label || a.agent} 员工`, avatar: "🧑" };
     $("door-avatar").textContent = ag.avatar;
-    $("door-who").textContent = `${ag.name}推门进来`;
+    $("door-who").textContent = `${a.employeeName || "员工"}（${ag.name.replace(" 员工", "")}）推门进来`;
     $("door-say").textContent = `“老板，我要${a.summary}，批不批？”`;
     $("door-open").textContent = "查看";
     $("door-open").onclick = () => { $("door").classList.add("hidden"); openCard(a.id); };
-    tellGame({ type: "employee", agent: a.agent, kind: "approval" });
+    tellGame({ type: "employee", agent: a.agent, kind: "approval", employeeId: a.employeeId, name: a.employeeName });
   } else {
     const ev = item.ev;
     const ag = AGENTS[ev.agent] || { name: ev.agent, avatar: "🧑" };
     $("door-avatar").textContent = ag.avatar;
-    $("door-who").textContent = ev.kind === "done" ? `${ag.name}回来汇报` : `${ag.name}发来消息`;
+    const who = `${ev.employeeName || "员工"}（${ag.name.replace(" 员工", "")}）`;
+    $("door-who").textContent = ev.kind === "done" ? `${who}回来汇报` : `${who}发来消息`;
     $("door-say").textContent = `“${ev.text}”`;
     $("door-open").textContent = ev.kind === "done" ? "看看成果" : "知道了";
     $("door-open").onclick = () => {
@@ -222,7 +252,7 @@ function nextDoor() {
       if (ev.kind === "done") tellGame({ type: "gift", tier: "big", agent: ev.agent });
       nextDoor();
     };
-    tellGame({ type: "employee", agent: ev.agent, kind: ev.kind });
+    tellGame({ type: "employee", agent: ev.agent, kind: ev.kind, employeeId: ev.employeeId, name: ev.employeeName });
   }
   pauseGame();
   sound.sfx("notify");
@@ -238,7 +268,7 @@ function openCard(id) {
   state.cardId = id;
   pauseGame();
   const ag = AGENTS[a.agent] || { name: a.agent };
-  $("f-agent").textContent = `${ag.name}（${a.agent === "claude" ? "Claude Code" : a.agent}）`;
+  $("f-agent").textContent = `${a.employeeName || ag.name}（${a.label || a.agent}）`;
   $("f-task").textContent = `${a.cwd || "未知目录"}　会话 ${String(a.sessionId).slice(0, 8)}`;
   $("f-summary").textContent = `${a.summary}（工具：${a.toolName}）`;
   $("f-detail").textContent = a.detail || "（无）";
@@ -440,7 +470,52 @@ window.addEventListener("message", (e) => {
   if (e.data?.type === "game-ready" && !$("door").classList.contains("hidden")) pauseGame();
   if (e.data?.type === "sfx") { sound.unlock(); sound.sfx(String(e.data.name)); }
   if (e.data?.type === "bgm") { sound.bgm(String(e.data.name || "")); }
+  if (e.data?.type === "save") backupSave(e.data.data);
+  if (e.data?.type === "game-ready") tellGame({ type: "employees", list: state.employees });
+  if (e.data?.type === "volume") sound.setVolume(Number(e.data.music), Number(e.data.sfx));
+  if (e.data?.type === "rename-employee") renameEmployee(String(e.data.id), String(e.data.name || ""));
+  if (e.data?.type === "reroll-employee" && state.token) {
+    fetch("/api/employee/reroll", { method: "POST", headers: { "Content-Type": "application/json", "X-Device-Token": state.token },
+      body: JSON.stringify({ id: String(e.data.id) }) }).catch(() => {});
+  }
+  if (e.data?.type === "need-save") restoreSave();
 });
 
-connect();
+// ---------------- 员工改名（文字输入放在网页里，iPhone 上更好用） ----------------
+async function renameEmployee(id, current) {
+  const name = window.prompt("给这位员工起个名字（最多 12 个字）", current);
+  if (!name || !name.trim() || !state.token) return;
+  await fetch("/api/employee/rename", { method: "POST",
+    headers: { "Content-Type": "application/json", "X-Device-Token": state.token },
+    body: JSON.stringify({ id, name: name.trim() }) }).catch(() => {});
+}
+
+// ---------------- 存档备份（电脑上也存一份） ----------------
+let saveTimer = null;
+function backupSave(data) {
+  if (!state.token) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    fetch("/api/save", { method: "POST", headers: { "Content-Type": "application/json", "X-Device-Token": state.token },
+      body: JSON.stringify(data) }).catch(() => {});
+  }, 800);
+}
+async function restoreSave() {
+  if (!state.token) return;
+  try {
+    const r = await fetch("/api/save", { headers: { "X-Device-Token": state.token } });
+    const data = r.ok ? await r.json() : null;
+    if (data) tellGame({ type: "load-save", data });
+  } catch {}
+}
+
+// ---------------- 启动：扫码带来的配对码自动配对 ----------------
+(async () => {
+  const code = new URLSearchParams(location.search).get("pair");
+  if (code) {
+    history.replaceState(null, "", "/");
+    if (!state.token) { await pairWith(code); restoreSave(); return; }
+  }
+  connect();
+})();
 renderStatus();

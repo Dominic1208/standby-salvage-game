@@ -182,3 +182,7 @@ web/game/
 __pycache__/
 art_source/
 src/assets/art/codex_log*.txt
+release/
+build_tmp/
+*.spec
+src/assets/art/codex_log*.txt

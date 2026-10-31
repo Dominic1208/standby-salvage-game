@@ -6,13 +6,17 @@
 - 把手机上的决定交回给正在等待的钩子
 - 托管手机网页（web/）和导出的游戏（web/game/）
 
-运行：python connector/server.py   （默认端口 8787）
+运行：python connector/main.py   （默认端口 8787，会自动打开电脑上的设置页）
 """
 
 from __future__ import annotations
 
 import asyncio
+import base64
 import hashlib
+import io
+import os
+import socket
 import json
 import mimetypes
 import secrets
@@ -24,11 +28,32 @@ from aiohttp import web
 
 from push import PushSender
 
+FROZEN = getattr(sys, "frozen", False)   # 打包成 exe 时为 True
 ROOT = Path(__file__).resolve().parent
-WEB_DIR = ROOT.parent / "web"
-DATA_DIR = ROOT / "data"
-DATA_DIR.mkdir(exist_ok=True)
+WEB_DIR = Path(sys._MEIPASS) / "web" if FROZEN else ROOT.parent / "web"
+# 打包版把数据放在用户目录，升级覆盖程序文件夹也不会丢配对和存档
+DATA_DIR = Path(os.environ.get("APPDATA", Path.home())) / "StandbySalvage" if FROZEN else ROOT / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+SAVES_DIR = DATA_DIR / "saves"
+SAVES_DIR.mkdir(exist_ok=True)
 DEVICES_FILE = DATA_DIR / "devices.json"
+EMPLOYEES_FILE = DATA_DIR / "employees.json"
+# 员工形象池：Claude 冷峻风、Codex 动物、DeepSeek 温柔风，其他 AI 用通用店员；偶尔混入特别员工
+LOOK_POOLS = {
+    "claude": [f"claude_{i}" for i in range(1, 7)],
+    "codex": [f"codex_{i}" for i in range(1, 7)],
+    "deepseek": [f"deepseek_{i}" for i in range(1, 7)],
+}
+GENERIC_LOOKS = [f"staff_{i}" for i in range(1, 17)]
+SPECIAL_LOOKS = [f"special_{i}" for i in range(1, 5)]
+SPECIAL_EVERY = 6             # 每第 6 位新员工是特别员工（太空人、外星人……）
+
+
+def pick_look(agent: str, same_agent_count: int, total: int) -> str:
+    if total % SPECIAL_EVERY == SPECIAL_EVERY - 1:
+        return SPECIAL_LOOKS[(total // SPECIAL_EVERY) % len(SPECIAL_LOOKS)]
+    pool = LOOK_POOLS.get(agent, GENERIC_LOOKS)
+    return pool[same_agent_count % len(pool)]
 
 PORT = 8787
 PAIR_CODE_TTL = 1800         # 配对码有效期（秒）
@@ -58,6 +83,12 @@ class State:
         self.pair_code = ""
         self.pair_expires = 0.0
         self.devices: dict[str, dict] = self._load_devices()
+        self.employees: dict[str, dict] = (json.loads(EMPLOYEES_FILE.read_text("utf-8"))
+                                           if EMPLOYEES_FILE.exists() else {})
+        for i, e in enumerate(sorted(self.employees.values(), key=lambda e: e["created"])):
+            if isinstance(e.get("look"), int):  # 旧版数字形象 → 按新规则重新分配
+                same = [x for x in self.employees.values() if x["agent"] == e["agent"] and x["created"] < e["created"]]
+                e["look"] = pick_look(e["agent"], len(same), i)
         self.push = PushSender(DATA_DIR)
 
     # ---- 设备与配对 ----
@@ -82,6 +113,37 @@ class State:
                 return dev
         return None
 
+    # ---- 员工：每个“AI 工具 + 项目”是一位员工 ----
+    def save_employees(self) -> None:
+        EMPLOYEES_FILE.write_text(json.dumps(self.employees, ensure_ascii=False, indent=2), "utf-8")
+
+    def employee_for(self, agent: str, label: str, cwd: str) -> dict:
+        project = Path(cwd.replace("\\", "/")).name if cwd else ""
+        project = project or "未命名项目"
+        key = f"{agent}:{project.lower()}"
+        emp = self.employees.get(key)
+        if not emp:
+            same_agent = [e for e in self.employees.values() if e["agent"] == agent]
+            emp = {"id": secrets.token_urlsafe(6), "key": key, "agent": agent, "label": label or agent,
+                   "project": project, "name": project,
+                   "look": pick_look(agent, len(same_agent), len(self.employees)),
+                   "index": len(same_agent), "created": now(), "status": "working"}
+            self.employees[key] = emp
+        emp["last_seen"] = now()
+        self.save_employees()
+        return emp
+
+    def employees_public(self) -> list:
+        waiting = {a.get("employeeId") for a in self.approvals.values() if a["status"] == "pending"}
+        out = []
+        for e in sorted(self.employees.values(), key=lambda e: e["created"]):
+            status = "waiting" if e["id"] in waiting else e.get("status", "working")
+            if status == "working" and now() - e.get("last_seen", 0) > 3600:
+                status = "resting"
+            out.append({k: e.get(k) for k in ("id", "agent", "label", "project", "name", "look", "index")}
+                       | {"status": status})
+        return out
+
     # ---- 广播 ----
     def snapshot(self) -> dict:
         pending = [a for a in self.approvals.values() if a["status"] == "pending"]
@@ -92,6 +154,7 @@ class State:
             "pendingCount": len(pending),
             "approvals": [public(a) for a in recent],
             "events": self.events[-20:],
+            "employees": self.employees_public(),
         }
 
     async def broadcast(self, msg: dict) -> None:
@@ -109,7 +172,7 @@ class State:
 
 def public(a: dict) -> dict:
     """手机端能看到的字段（不含内部 future）。"""
-    keys = ("id", "agent", "sessionId", "cwd", "toolName", "summary", "detail",
+    keys = ("id", "agent", "label", "employeeId", "employeeName", "sessionId", "cwd", "toolName", "summary", "detail",
             "hash", "status", "created", "resolvedBy", "simulated")
     return {k: a.get(k) for k in keys}
 
@@ -117,15 +180,15 @@ def public(a: dict) -> dict:
 def describe_tool(tool_name: str, tool_input: dict) -> tuple[str, str]:
     """把 Claude Code 的工具调用翻译成一句摘要 + 原文细节。"""
     ti = tool_input or {}
-    if tool_name == "Bash":
-        return "运行命令", ti.get("command", "")
-    if tool_name in ("Write", "Edit", "MultiEdit", "NotebookEdit"):
-        return "修改文件", ti.get("file_path") or ti.get("notebook_path", "")
-    if tool_name == "WebFetch":
-        return "访问网页", ti.get("url", "")
-    if tool_name == "PowerShell":
-        return "运行 PowerShell 命令", ti.get("command", "")
-    return f"使用工具 {tool_name}", json.dumps(ti, ensure_ascii=False, indent=2)[:2000]
+    name = (tool_name or "").lower()
+    path = ti.get("file_path") or ti.get("path") or ti.get("notebook_path") or ti.get("absolute_path") or ""
+    if ti.get("command") or name in ("bash", "shell", "run_shell_command", "powershell", "exec"):
+        return "运行命令", str(ti.get("command") or ti.get("cmd") or json.dumps(ti, ensure_ascii=False))
+    if path or any(k in name for k in ("write", "edit", "replace", "patch", "create")):
+        return "修改文件", str(path or json.dumps(ti, ensure_ascii=False)[:2000])
+    if ti.get("url") or "fetch" in name or "web" in name:
+        return "访问网页", str(ti.get("url") or json.dumps(ti, ensure_ascii=False)[:2000])
+    return f"使用工具 {tool_name or '（未知）'}", json.dumps(ti, ensure_ascii=False, indent=2)[:2000]
 
 
 STATE = State()
@@ -145,7 +208,8 @@ def require_device(request: web.Request) -> dict:
 
 
 async def create_approval(agent: str, session_id: str, cwd: str, tool_name: str,
-                          tool_input: dict, simulated: bool = False) -> dict:
+                          tool_input: dict, simulated: bool = False, label: str = "") -> dict:
+    emp = STATE.employee_for(agent, label, "D:/演示项目" if simulated else cwd)
     # 同一会话出现新请求，说明旧请求已在电脑上处理过：标记失效
     for old in STATE.approvals.values():
         if old["status"] == "pending" and old["sessionId"] == session_id and not simulated:
@@ -158,6 +222,9 @@ async def create_approval(agent: str, session_id: str, cwd: str, tool_name: str,
         "id": secrets.token_urlsafe(9),
         **body,
         "summary": summary,
+        "label": label or agent,
+        "employeeId": emp["id"],
+        "employeeName": emp["name"],
         "hash": content_hash(body),
         "status": "pending",
         "created": now(),
@@ -167,14 +234,17 @@ async def create_approval(agent: str, session_id: str, cwd: str, tool_name: str,
     STATE.approvals[a["id"]] = a
     STATE.waiters[a["id"]] = asyncio.get_running_loop().create_future()
     await STATE.broadcast({"type": "approval", "approval": public(a)})
-    title = f"{agent_label(agent)}请示：{summary}"
+    await STATE.broadcast({"type": "employees", "employees": STATE.employees_public()})
+    title = f"{emp['name']}（{agent_label(agent)}）请示：{summary}"
     STATE.push.send_all(STATE.devices, title, short(detail), a["id"])
     asyncio.create_task(remind(a["id"]))
     return a
 
 
 def agent_label(agent: str) -> str:
-    return {"claude": "Claude 员工", "codex": "Codex 员工"}.get(agent, agent)
+    names = {"claude": "Claude", "codex": "Codex", "deepseek": "DeepSeek", "kimi": "Kimi", "glm": "智谱",
+             "gemini": "Gemini", "qwen": "Qwen", "copilot": "Copilot", "cursor": "Cursor"}
+    return f"{names.get(agent, agent)} 员工"
 
 
 def short(text: str, n: int = 90) -> str:
@@ -204,17 +274,20 @@ async def resolve(approval_id: str, status: str, by: str) -> bool:
     if fut and not fut.done():
         fut.set_result(status)
     await STATE.broadcast({"type": "approval", "approval": public(a)})
+    await STATE.broadcast({"type": "employees", "employees": STATE.employees_public()})
     return True
 
 
-async def add_event(kind: str, agent: str, text: str, session_id: str = "") -> None:
+async def add_event(kind: str, agent: str, text: str, session_id: str = "", emp: dict | None = None) -> None:
     ev = {"id": secrets.token_urlsafe(6), "kind": kind, "agent": agent,
-          "text": text, "sessionId": session_id, "time": now()}
+          "text": text, "sessionId": session_id, "time": now(),
+          "employeeId": emp["id"] if emp else "", "employeeName": emp["name"] if emp else ""}
     STATE.events.append(ev)
     STATE.events = STATE.events[-50:]
     await STATE.broadcast({"type": "event", "event": ev})
     label = {"done": "完成汇报", "help": "求援", "idle": "在等你"}.get(kind, kind)
-    STATE.push.send_all(STATE.devices, f"{agent_label(agent)}{label}", short(text), None)
+    who = f"{emp['name']}（{agent_label(agent)}）" if emp else agent_label(agent)
+    STATE.push.send_all(STATE.devices, f"{who}{label}", short(text), None)
 
 
 # ---------------- 钩子接口（仅本机） ----------------
@@ -240,6 +313,7 @@ async def hook_permission(request: web.Request) -> web.Response:
             cwd=hook.get("cwd", ""),
             tool_name=hook.get("tool_name", ""),
             tool_input=hook.get("tool_input", {}),
+            label=data.get("label", ""),
         )
     if a["status"] != "pending":
         return web.json_response({"approvalId": a["id"], "decision": a["status"]})
@@ -272,13 +346,18 @@ async def hook_event(request: web.Request) -> web.Response:
         for a in list(STATE.approvals.values()):
             if a["status"] == "pending" and a["sessionId"] == sid and not a["simulated"]:
                 await resolve(a["id"], "stale", "电脑端")
+    emp = STATE.employee_for(agent, data.get("label", ""), hook.get("cwd", ""))
+    emp["status"] = "working"
     if name == "Stop":
-        project = Path(hook.get("cwd", "")).name or "任务"
-        await add_event("done", agent, f"{project}：这一轮工作完成了，回来看看结果吧", sid)
+        emp["status"] = "resting"
+        await add_event("done", agent, "老板，这一轮工作做完了，回来看看结果吧", sid, emp)
     elif name == "Notification":
         msg = hook.get("message", "")
         if "permission" not in msg.lower():   # 批准类已由 PermissionRequest 处理
-            await add_event("idle", agent, msg or "在等你回复", sid)
+            emp["status"] = "waiting"
+            await add_event("idle", agent, msg or "在等你回复", sid, emp)
+    STATE.save_employees()
+    await STATE.broadcast({"type": "employees", "employees": STATE.employees_public()})
     return web.json_response({"ok": True})
 
 
@@ -321,6 +400,42 @@ async def push_subscribe(request: web.Request) -> web.Response:
     return web.json_response({"ok": True})
 
 
+async def pending(request: web.Request) -> web.Response:
+    """已配对设备查询当前待批请求（测试和以后的小组件用）。"""
+    require_device(request)
+    return web.json_response([public(a) for a in STATE.approvals.values() if a["status"] == "pending"])
+
+
+async def rename_employee(request: web.Request) -> web.Response:
+    require_device(request)
+    data = await request.json()
+    name = str(data.get("name", "")).strip()[:12]
+    for e in STATE.employees.values():
+        if e["id"] == data.get("id") and name:
+            e["name"] = name
+            STATE.save_employees()
+            await STATE.broadcast({"type": "employees", "employees": STATE.employees_public()})
+            return web.json_response({"ok": True})
+    return web.json_response({"ok": False}, status=404)
+
+
+async def reroll_employee(request: web.Request) -> web.Response:
+    """随机换一个形象：从这家 AI 的风格池里抽，偶尔抽到特别员工。"""
+    require_device(request)
+    data = await request.json()
+    for e in STATE.employees.values():
+        if e["id"] == data.get("id"):
+            pool = LOOK_POOLS.get(e["agent"], GENERIC_LOOKS)
+            if secrets.randbelow(100) < 15:
+                pool = SPECIAL_LOOKS
+            choices = [x for x in pool if x != e.get("look")] or pool
+            e["look"] = choices[secrets.randbelow(len(choices))]
+            STATE.save_employees()
+            await STATE.broadcast({"type": "employees", "employees": STATE.employees_public()})
+            return web.json_response({"ok": True, "look": e["look"]})
+    return web.json_response({"ok": False}, status=404)
+
+
 async def push_key(request: web.Request) -> web.Response:
     return web.json_response({"publicKey": STATE.push.public_key})
 
@@ -329,7 +444,8 @@ async def simulate(request: web.Request) -> web.Response:
     """模拟一条请求，用来在没有真实 AI 任务时体验流程（卡片会标明“模拟”）。"""
     require_device(request)
     if request.query.get("kind") == "done":
-        await add_event("done", "claude", "demo-project：这一轮工作完成了，回来看看结果吧（模拟）", "demo")
+        emp = STATE.employee_for("claude", "Claude Code", "D:/演示项目")
+        await add_event("done", "claude", "老板，这一轮工作做完了（模拟）", "demo", emp)
         return web.json_response({"ok": True})
     a = await create_approval("claude", "demo", "D:/demo-project", "Bash",
                               {"command": "npm install left-pad"}, simulated=True)
@@ -344,6 +460,74 @@ async def _auto_clear_sim(approval_id: str) -> None:
             await asyncio.wait_for(asyncio.shield(fut), timeout=1800)
         except asyncio.TimeoutError:
             await resolve(approval_id, "stale", "模拟请求过期")
+
+
+def lan_ip() -> str:
+    """本机在局域网里的地址（手机要用它来访问）。"""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("10.255.255.255", 1))
+            return s.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+
+
+def qr_svg(text: str) -> str:
+    try:
+        import qrcode
+        import qrcode.image.svg
+    except ImportError:
+        return ""
+    img = qrcode.make(text, image_factory=qrcode.image.svg.SvgPathImage, box_size=12, border=2)
+    buf = io.BytesIO()
+    img.save(buf)
+    return buf.getvalue().decode()
+
+
+async def setup_info(request: web.Request) -> web.Response:
+    """电脑上的设置页用：手机网址、二维码、配对码、给 AI 的连接说明路径。只限本机。"""
+    local_only(request)
+    if request.query.get("new") == "1" or not STATE.pair_code or now() > STATE.pair_expires:
+        STATE.new_pair_code()
+    url = f"http://{lan_ip()}:{PORT}/?pair={STATE.pair_code}"
+    skill = (Path(sys.executable).parent if FROZEN else ROOT.parent) / "connect-ai" / "SKILL.md"
+    hook_cmd = (f'"{sys.executable}" hook --agent <你的工具名>' if FROZEN
+                else f'python "{ROOT / "main.py"}" hook --agent <你的工具名>')
+    return web.json_response({
+        "url": url, "code": STATE.pair_code, "expiresIn": int(STATE.pair_expires - now()),
+        "qr": base64.b64encode(qr_svg(url).encode()).decode(),
+        "devices": [{"name": d["name"], "paired": d["paired"]} for d in STATE.devices.values()],
+        "skillPath": str(skill), "hookCommand": hook_cmd,
+        "prompt": f"请阅读 {skill}，按里面的步骤把“待机回收站”连接到你自己身上，完成后帮我做一次测试。",
+    })
+
+
+async def setup_test(request: web.Request) -> web.Response:
+    """设置页的“试一下”：给手机发一条模拟请求。只限本机。"""
+    local_only(request)
+    a = await create_approval("claude", "demo", "D:/demo-project", "Bash",
+                              {"command": "npm install left-pad"}, simulated=True, label="测试")
+    asyncio.create_task(_auto_clear_sim(a["id"]))
+    return web.json_response({"approvalId": a["id"]})
+
+
+async def setup_page(request: web.Request) -> web.FileResponse:
+    local_only(request)
+    return web.FileResponse(WEB_DIR / "setup.html")
+
+
+async def save_get(request: web.Request) -> web.Response:
+    dev = require_device(request)
+    f = SAVES_DIR / f"{dev['id']}.json"
+    return web.json_response(json.loads(f.read_text("utf-8")) if f.exists() else None)
+
+
+async def save_put(request: web.Request) -> web.Response:
+    """手机上的存档在电脑上也备份一份：换了网络地址、清了浏览器数据都能找回。"""
+    dev = require_device(request)
+    data = await request.json()
+    (SAVES_DIR / f"{dev['id']}.json").write_text(json.dumps(data, ensure_ascii=False), "utf-8")
+    return web.json_response({"ok": True})
 
 
 async def ws_handler(request: web.Request) -> web.WebSocketResponse:
@@ -381,22 +565,38 @@ def make_app() -> web.Application:
     app.router.add_post("/api/decide", decide)
     app.router.add_post("/api/push/subscribe", push_subscribe)
     app.router.add_get("/api/push/key", push_key)
+    app.router.add_get("/api/pending", pending)
+    app.router.add_post("/api/employee/rename", rename_employee)
+    app.router.add_post("/api/employee/reroll", reroll_employee)
     app.router.add_post("/api/simulate", simulate)
     app.router.add_get("/ws", ws_handler)
+    app.router.add_get("/setup", setup_page)
+    app.router.add_get("/api/setup-info", setup_info)
+    app.router.add_post("/api/setup-test", setup_test)
+    app.router.add_get("/api/save", save_get)
+    app.router.add_post("/api/save", save_put)
     app.router.add_get("/", index)
     app.router.add_static("/", WEB_DIR, show_index=False)
     return app
 
 
-def main() -> None:
-    sys.stdout.reconfigure(encoding="utf-8")
-    code = STATE.new_pair_code()
-    print("=" * 52)
-    print("  待机回收站 · 连接程序")
-    print(f"  本机地址:  http://localhost:{PORT}")
-    print(f"  配对码:    {code}   （{PAIR_CODE_TTL // 60} 分钟内有效，只能用一次）")
-    print(f"  已配对设备: {len(STATE.devices)} 台")
-    print("=" * 52)
+def main(open_browser: bool = True) -> None:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+    STATE.new_pair_code()
+    phone = f"http://{lan_ip()}:{PORT}"
+    print("=" * 56)
+    print("  待机回收站 已启动（关掉这个窗口就会停止）")
+    print(f"  手机打开：  {phone}   （手机和电脑连同一个 Wi-Fi）")
+    print(f"  电脑设置页：http://localhost:{PORT}/setup   （扫码配对、连接 AI）")
+    print(f"  已配对手机：{len(STATE.devices)} 台")
+    print("=" * 56)
+    if open_browser:
+        import threading
+        import webbrowser
+        threading.Timer(1.2, lambda: webbrowser.open(f"http://localhost:{PORT}/setup")).start()
     web.run_app(make_app(), host="0.0.0.0", port=PORT, print=None)
 
 
