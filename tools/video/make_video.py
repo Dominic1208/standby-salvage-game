@@ -158,7 +158,7 @@ def place_phones(canvas, names, area):
         if im.width / im.height > 0.75:   # 横图
             items.append(framed(im, (x1 - x0) / len(imgs) - 20, y1 - y0 - 40))
         else:
-            items.append(phone(im, int(min(y1 - y0 - 40, 820 if len(imgs) < 3 else 740))))
+            items.append(phone(im, int(min(y1 - y0 - 40, (1150 if VERTICAL else 820) if len(imgs) < 3 else 740))))
     total = sum(i.width for i in items) - 30 * (len(items) - 1)
     if total > x1 - x0:   # 太宽就缩小
         k = (x1 - x0) / total
@@ -183,6 +183,12 @@ def render(frame, chapter):
         d.text((140, 330), frame["title"], font=font(150, True), fill=C_PINK)
         for i, line in enumerate(wrap(d, frame.get("sub", ""), font(50), 960)):
             d.text((146, 560 + i * 72), line, font=font(50), fill=C_TEXT)
+    elif lay == "terminal":
+        d.text((W / 2, 120), frame["head"], font=font(62, True), fill=C_NEON, anchor="mm")
+        terminal(c, (360, 240, W - 360, 900), frame["state"], frame.get("badge"))
+    elif lay == "collage":
+        d.text((W / 2, 120), frame["head"], font=font(62, True), fill=C_NEON, anchor="mm")
+        collage(c, (260, 200, W - 260, 900))
     elif lay == "clip":
         frame["_slot"] = place_clip(c, (60, 50, 1040, 900))
         head_and_points(c, 1080, 170, W - 1080 - 120, frame.get("head", ""), frame.get("points"))
@@ -307,6 +313,112 @@ class ClipReader:
         self.p.kill()
 
 
+# ---------------- 画出来的终端、“谁做了什么” ----------------
+TERM_WORK = ["> 帮我把商店页面改成竖屏", "", "● Read  src/main.gd", "● Read  src/home_room.gd",
+             "● Edit  src/main.gd   +42  -17", "● Edit  src/shell.css   +8  -3", "● Bash  npm run build && npm test"]
+
+
+def terminal(canvas, area, state, badge=None):
+    """一个终端窗口：AI 在干活（work）/ 弹框问你能不能跑（ask）/ 一直在等（wait，右上角挂个牌子）。"""
+    x0, y0, x1, y1 = area
+    d = ImageDraw.Draw(canvas)
+    w = x1 - x0
+    lines = TERM_WORK + ([] if state == "work" else ["", "ASK"])
+    fs = int(w / 22)
+    lh = int(fs * 1.55)
+    h = 90 + lh * (len(lines) + (4 if state != "work" else 1))
+    y0 = y0 + max(0, (y1 - y0 - h) // 2)
+    d.rounded_rectangle((x0, y0, x1, y0 + h), 24, fill=(18, 16, 15), outline=(80, 68, 58), width=3)
+    d.rounded_rectangle((x0, y0, x1, y0 + 56), 24, fill=(42, 36, 32))
+    d.rectangle((x0, y0 + 32, x1, y0 + 56), fill=(42, 36, 32))
+    for i, col in enumerate(((255, 95, 87), (255, 189, 46), (40, 200, 64))):
+        d.ellipse((x0 + 24 + i * 34, y0 + 18, x0 + 44 + i * 34, y0 + 38), fill=col)
+    d.text((x0 + w / 2, y0 + 28), "终端 — AI 写代码中", font=font(int(fs * 0.8)), fill=C_MUTED, anchor="mm")
+    y = y0 + 80
+    for line in lines:
+        if line == "ASK":
+            bh = lh * 3 + 30
+            d.rounded_rectangle((x0 + 30, y, x1 - 30, y + bh), 16, outline=C_NEON, width=3)
+            d.text((x0 + 60, y + 18), "要运行这条命令吗？", font=font(fs, True), fill=C_NEON)
+            d.text((x0 + 60, y + 18 + lh), "> 1. 是", font=font(fs), fill=C_TEXT)
+            d.text((x0 + 60, y + 18 + lh * 2), "  2. 否", font=font(fs), fill=C_MUTED)
+            y += bh
+            continue
+        f = font(fs, mono=not any(ord(ch) > 127 for ch in line))
+        col = C_NEON if line.startswith(">") else (120, 200, 140) if line.startswith("●") else C_TEXT
+        d.text((x0 + 36, y), line, font=f, fill=col)
+        y += lh
+    if state == "work":   # 光标
+        d.rectangle((x0 + 36, y + 6, x0 + 36 + fs * 0.6, y + fs + 4), fill=C_TEXT)
+    if badge:
+        fb = font(int(fs * 1.3), True)
+        bw = text_w(d, badge, fb) + 70
+        bx, by = x1 - bw + 20, y0 - 50
+        d.rounded_rectangle((bx, by, bx + bw, by + fs * 2.3), 30, fill=C_PINK)
+        d.text((bx + bw / 2, by + fs * 1.15), badge, font=fb, fill=(30, 10, 14), anchor="mm")
+
+
+_wave = None
+
+
+def waveform(w, h):
+    """背景音乐的波形图（“音乐是 AI 做的”那一格用）。"""
+    global _wave
+    if _wave is None:
+        raw = subprocess.run(["ffmpeg", "-v", "error", "-t", "20", "-i", str(ROOT / "web" / "audio" / "bgm_shop.mp3"),
+                              "-ac", "1", "-ar", "2000", "-f", "u8", "-"], capture_output=True).stdout
+        _wave = raw
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    n = 90
+    step = len(_wave) // n
+    for i in range(n):
+        chunk = _wave[i * step:(i + 1) * step]
+        amp = max(abs(b - 128) for b in chunk) / 128 if chunk else 0
+        bh = max(6, amp * h * 0.95)
+        x = i * w / n
+        d.rounded_rectangle((x + 2, h / 2 - bh / 2, x + w / n - 2, h / 2 + bh / 2), 3, fill=C_PINK)
+    return im
+
+
+def collage(canvas, area):
+    """代码 / 美术 / 音乐 各一行：左边写谁做的，右边放真东西。"""
+    x0, y0, x1, y1 = area
+    d = ImageDraw.Draw(canvas)
+    rows = [("代码", "Claude"), ("美术", "Codex"), ("音乐", "ACE-Step")]
+    rh = (y1 - y0) / 3
+    for i, (what, who) in enumerate(rows):
+        y = y0 + i * rh
+        d.rounded_rectangle((x0, y + 10, x1, y + rh - 10), 26, fill=(30, 24, 20), outline=(90, 74, 62), width=2)
+        d.text((x0 + 40, y + rh / 2 - 34), what, font=font(46), fill=C_MUTED, anchor="lm")
+        d.text((x0 + 40, y + rh / 2 + 30), who, font=font(54, True), fill=C_NEON, anchor="lm")
+        bx0, by0, bx1, by1 = x0 + 330, y + 34, x1 - 30, y + rh - 34
+        if what == "代码":
+            src = (ROOT / "src" / "home_room.gd").read_text("utf-8").splitlines()[314:326]
+            fc = font(25, mono=True)
+            d.rounded_rectangle((bx0, by0, bx1, by1), 14, fill=(14, 12, 11))
+            for j, line in enumerate(src):
+                if by0 + 18 + j * 30 > by1 - 30:
+                    break
+                line = line.replace("\t", "  ")
+                f = fc if all(ord(ch) < 128 for ch in line) else font(25)
+                d.text((bx0 + 18, by0 + 14 + j * 30), line[:52], font=f, fill=(150, 200, 255) if "func" in line else C_TEXT)
+        elif what == "美术":
+            pics = ["staff_2", "claude_2", "deepseek_3", "codex_1"]
+            pw = (bx1 - bx0) / len(pics)
+            for j, name in enumerate(pics):
+                p = ROOT / "src" / "assets" / "art" / f"{name}.png"
+                if not p.exists():
+                    continue
+                im = Image.open(p).convert("RGBA")
+                k = min((pw - 10) / im.width, (by1 - by0) / im.height)
+                im = im.resize((int(im.width * k), int(im.height * k)), Image.LANCZOS)
+                canvas.alpha_composite(im, (int(bx0 + j * pw + (pw - im.width) / 2), int(by1 - im.height)))
+        else:
+            wv = waveform(int(bx1 - bx0), int(by1 - by0))
+            canvas.alpha_composite(wv, (int(bx0), int(by0)))
+
+
 # ---------------- 竖版画面 ----------------
 def head_v(c, head, points, y=150):
     d = ImageDraw.Draw(c)
@@ -343,6 +455,20 @@ def render_v(frame):
             if len(names) == 3:   # 竖屏放三部太小：只放前两部
                 names = names[:2]
             place_phones(c, names, area)
+    elif lay == "terminal":
+        y = head_v(c, frame.get("head", ""), None, y=300)
+        terminal(c, (60, y + 80, W - 60, 1420), frame["state"], frame.get("badge"))
+    elif lay == "collage":
+        y = head_v(c, frame.get("head", ""), None, y=220)
+        collage(c, (60, y + 40, W - 60, 1420))
+    elif lay == "image":
+        y = head_v(c, frame.get("head", ""), None)
+        im = framed(load(frame["image"]), 900, 760)
+        c.alpha_composite(im, ((W - im.width) // 2, y + 10))
+        y += im.height + 40
+        for i, p in enumerate(frame.get("points") or []):
+            d.text((150, y), f"{'①②③④'[i]}  {p}", font=font(46), fill=C_TEXT)
+            y += 72
     elif lay == "card":
         has_body = frame.get("code") or frame.get("big")
         y = 520 if has_body else 760

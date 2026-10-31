@@ -18,14 +18,16 @@ from tts import voice_name  # noqa: E402
 
 VOICE = ROOT / "build_tmp" / "video" / "voice"
 WORK = ROOT / "build_tmp" / "video" / "myrec"
-VOICE_ID = "self:zhuzi-v2"
+VOICE_ID = "self:zhuzi-v3"
 
 # 口播修音：去低频浑浊、提 2-5k 清晰度和“往前冲”的感觉、加空气感、压缩得紧一点让每个字都饱满、去齿音、
 # 响度到短视频常用的 -14 LUFS
-FX = ("highpass=f=90,afftdn=nr=10:nf=-50,"
-      "equalizer=f=300:t=q:w=1:g=-4,equalizer=f=2500:t=q:w=1:g=3,equalizer=f=4500:t=q:w=1.2:g=3,"
-      "treble=g=4:f=9000,"
-      "acompressor=threshold=-24dB:ratio=4:attack=5:release=80:makeup=4,deesser=i=0.5,"
+# aexciter 给高频补一点泛音，声音更“亮”、更透，不只是把高音调大
+FX = ("highpass=f=100,afftdn=nr=10:nf=-50,"
+      "equalizer=f=200:t=q:w=1:g=-2,equalizer=f=350:t=q:w=1:g=-5,"
+      "equalizer=f=2800:t=q:w=1:g=4,equalizer=f=5000:t=q:w=1.2:g=4,equalizer=f=8000:t=q:w=1.5:g=3,"
+      "treble=g=4:f=10000,aexciter=amount=2:drive=6:freq=4500:blend=0,"
+      "acompressor=threshold=-24dB:ratio=4:attack=5:release=80:makeup=4,deesser=i=0.6,"
       "loudnorm=I=-14:TP=-1.2:LRA=5")
 TEMPO = 1.10   # 快一点，口播更有精神
 PITCH = 1.04   # 音调抬高一点点（约 0.7 个半音，保留共振峰，不会变成“小黄人”），声音不那么低沉
@@ -64,7 +66,8 @@ CUTS = [
                (116.95, 118.75, "我是竹子，我们下期再见。", "k_end:3")]),
 ]
 
-# 换成实机录屏的句子：(段, 第几句) → 画面。clip 是 src/dev/demo.gd 录的片段名，offset 是从片段开头往后几秒
+# 换掉口播稿里的画面：(段, 第几句) → 画面。clip 是 src/dev/demo.gd 录的实机片段，offset 是从片段开头往后几秒；
+# terminal 是画出来的终端窗口（AI 干活、停下来问你）；collage 是“谁做了什么”配真实的美术图
 def clip(name, head, offset=0.0, points=None):
     return {"layout": "clip", "clip": name, "offset": offset, "head": head, "points": points or []}
 
@@ -80,6 +83,17 @@ GAME_FOOTAGE = {
     ("k_game", 3): "same",
     ("k_game", 4): clip("gacha", "升级店铺 · 抽员工皮肤"),
     ("k_game", 5): clip("book", "1000 多件收藏品"),
+    # 原来只有几行字的画面
+    ("k_hook", 1): {"layout": "collage", "head": "全是 AI 做的"},
+    ("k_pain", 0): {"layout": "terminal", "head": "它干活，你干等", "state": "work"},
+    ("k_pain", 1): "same",
+    ("k_pain", 2): {"layout": "terminal", "head": "它还停下来问你", "state": "ask"},
+    ("k_pain", 3): {"layout": "terminal", "head": "你不在电脑前？", "state": "wait", "badge": "等待你的确认…"},
+    ("k_pain", 4): {"layout": "terminal", "head": "它干等了半小时", "state": "wait", "badge": "已等待 32:07"},
+    ("k_feat", 3): {"layout": "phones", "phones": ["approve_card"], "head": "手一滑批错了？", "points": ["不会"]},
+    ("k_end", 1): {"layout": "image", "image": "10-电脑设置页-扫码和连接AI", "head": "想玩？三步",
+                   "points": ["GitHub 下载，解压，双击", "手机连同一个 Wi-Fi，扫码", "点一下“连接你的 AI”"]},
+    ("k_end", 2): clip("home", "AI 做游戏，能做到什么程度？", 0.5),
 }
 
 
