@@ -1,16 +1,15 @@
 {
- "_doc": "讲解视频（介绍版）：先放钩子（AI 做的、没写一行代码），再打招呼；口语、轻松，只讲为什么做、功能、玩法、怎么玩上。每段 scene 的 lines 是逐句解说；frames 和 lines 一一对应。{name} 换成作者的名字。",
+ "_doc": "讲解视频（口播版）：开头先甩结果（一行代码没写），再打招呼；对着观众说话，短句，先痛点再解法，结尾互动。每段 scene 的 lines 是逐句解说；frames 和 lines 一一对应，\"same\" 沿用上一句画面。{name} 换成作者的名字。",
  "name": "竹子",
  "voice": "zh-CN-YunxiNeural",
  "rate": "+6%",
  "scenes": [
   {
-   "id": "h_hook",
+   "id": "k_hook",
    "chapter": "",
    "lines": [
-    "这是一个用 AI 做的游戏。",
-    "我差不多就花了一天，全程一行代码都没写。",
-    "代码是 Claude 写的，美术是 Codex 画的，连背景音乐都是 AI 生成的。"
+    "这个游戏，我一行代码都没写。",
+    "代码、画面、音乐，全是 AI 搞的。我就动动嘴，一天，做完了。"
    ],
    "frames": [
     {
@@ -20,13 +19,8 @@
       "exposed",
       "gacha_result"
      ],
-     "head": "一个用 AI 做的游戏",
+     "head": "一行代码都没写",
      "points": []
-    },
-    {
-     "layout": "card",
-     "head": "差不多一天",
-     "big": "一行代码都没写"
     },
     {
      "layout": "card",
@@ -36,11 +30,10 @@
    ]
   },
   {
-   "id": "h_hello",
-   "chapter": "开场",
+   "id": "k_hi",
+   "chapter": "",
    "lines": [
-    "大家好，我是{name}。",
-    "今天给大家看看这个小东西，它叫《待机回收站》。"
+    "哈喽大家好，我是{name}。"
    ],
    "frames": [
     {
@@ -50,25 +43,18 @@
      "phones": [
       "home"
      ]
-    },
-    {
-     "layout": "title",
-     "title": "待机回收站",
-     "sub": "回收站经营游戏 × 电脑上 AI 的遥控器",
-     "phones": [
-      "approve_final"
-     ]
     }
    ]
   },
   {
-   "id": "h_why",
-   "chapter": "为什么做它",
+   "id": "k_pain",
+   "chapter": "",
    "lines": [
-    "用 AI 写代码的朋友应该都有这个体会：它干活，你干等。",
-    "等就算了，它还隔三岔五问你一句：这命令能跑吗？你不点，它就一直卡那儿。",
-    "所以我干脆做了个游戏：它要我点头的时候，店里就进来一个员工找我，我在手机上滑一下，搞定。",
-    "Claude Code、Codex 都能接，接了 DeepSeek 的 Claude Code 也行。"
+    "你要是也用 AI 写代码，肯定遇到过这种事。",
+    "你让它干活，它干到一半，停了。",
+    "弹个框问你：这个命令，我能跑吗？",
+    "你不在电脑跟前？行，那它就一直等着。",
+    "有时候我去倒个水，回来一看，它已经干等了半个小时。"
    ],
    "frames": [
     {
@@ -76,38 +62,80 @@
      "head": "它干活，你干等",
      "big": "……"
     },
+    "same",
     {
      "layout": "card",
-     "head": "它还时不时问你",
+     "head": "它还停下来问你",
      "code": "Allow this command?\n\n  npm run build && npm test\n\n  [ Yes ]   [ No ]"
     },
     {
-     "layout": "phones",
-     "phones": [
-      "home",
-      "approve_final"
-     ],
-     "head": "我的想法",
-     "points": [
-      "等 AI 的时候玩手机游戏",
-      "它要批准 → 员工推门进来",
-      "点一下就处理掉"
-     ]
+     "layout": "card",
+     "head": "你不在电脑前？",
+     "big": "它就一直等着"
     },
     {
      "layout": "card",
-     "head": "支持的 AI",
-     "code": "Claude Code\nCodex\nClaude Code + DeepSeek"
+     "head": "去倒个水回来",
+     "big": "它干等了半小时"
     }
    ]
   },
   {
-   "id": "h_feat",
-   "chapter": "功能",
+   "id": "k_fix",
+   "chapter": "",
    "lines": [
-    "每开一个 AI 对话，店里就多一个员工，看围巾颜色就知道是哪家的 AI。",
-    "活干完了，他们会回来跟你汇报，想听就听，不想听直接跳过。",
-    "放心，批准卡片跟游戏是分开的，不会手滑点错；你不理它，它也绝不会自己放行。"
+    "所以我干脆做了个游戏，叫《待机回收站》。",
+    "AI 在电脑上干活，我在手机上开回收站。",
+    "它要我拍板的时候，店门一推，进来个员工：老板，这事儿得你点头。",
+    "我手指一滑，那边 AI 接着干。完事。"
+   ],
+   "frames": [
+    {
+     "layout": "title",
+     "title": "待机回收站",
+     "sub": "回收站经营游戏 × 电脑上 AI 的遥控器",
+     "phones": [
+      "approve_final"
+     ]
+    },
+    {
+     "layout": "phones",
+     "phones": [
+      "home"
+     ],
+     "head": "AI 在电脑上干活",
+     "points": [
+      "我在手机上开回收站"
+     ]
+    },
+    {
+     "layout": "phones",
+     "phones": [
+      "approve_dialog",
+      "approve_final"
+     ],
+     "head": "“老板，这事儿得你点头”",
+     "points": []
+    },
+    {
+     "layout": "phones",
+     "phones": [
+      "approve_card",
+      "approved"
+     ],
+     "head": "手指一滑，AI 接着干",
+     "points": []
+    }
+   ]
+  },
+  {
+   "id": "k_feat",
+   "chapter": "",
+   "lines": [
+    "每个 AI 对话就是一个员工。橙围巾的是 Claude，蓝的是 DeepSeek，白的是 Codex。",
+    "活干完了，员工还会回来跟我汇报，顺手给我带个包裹。",
+    "你可能会担心：玩着玩着手一滑，批了不该批的咋办？",
+    "放心，批准卡片跟游戏是完全分开的。我不理它，它也绝不自己放行。"
    ],
    "frames": [
     {
@@ -116,25 +144,26 @@
       "console",
       "queue"
      ],
-     "head": "围巾颜色 = 哪家的 AI",
+     "head": "一个 AI 对话 = 一个员工",
      "points": [
-      "Claude：橙色",
-      "DeepSeek：蓝色",
-      "Codex：白色"
+      "橙色：Claude",
+      "蓝色：DeepSeek",
+      "白色：Codex"
      ]
     },
     {
      "layout": "phones",
      "phones": [
       "report_dialog",
-      "report_full"
+      "gift_weird_open"
      ],
-     "head": "AI 这一轮说的所有话",
-     "points": [
-      "一页页听",
-      "跳过",
-      "展开全文"
-     ]
+     "head": "回来汇报，顺手带个包裹",
+     "points": []
+    },
+    {
+     "layout": "card",
+     "head": "手一滑批错了？",
+     "big": "不会"
     },
     {
      "layout": "phones",
@@ -151,13 +180,14 @@
    ]
   },
   {
-   "id": "h_game",
-   "chapter": "玩法",
+   "id": "k_game",
+   "chapter": "",
    "lines": [
-    "不等 AI 的时候，这就是个回收站经营游戏。",
-    "顾客来卖东西，你得验货、砍价，还得防着有人编故事骗你。",
-    "每天打烊结算，还有贷款要还，一不小心就破产。",
-    "赚了钱可以升级店铺、抽员工皮肤；员工出门还会给你带包裹，里面有一千多件收藏品等你集。"
+    "不等 AI 的时候，它就是个正经的经营游戏。",
+    "顾客来卖东西，你得验货、砍价。",
+    "还得防着点，有人会编故事坑你。",
+    "戳穿他？那他只能乖乖按实价卖。",
+    "赚了钱，升级店铺、抽员工皮肤，包裹里还藏着一千多件收藏品。"
    ],
    "frames": [
     {
@@ -165,67 +195,62 @@
      "phones": [
       "shop"
      ],
-     "head": "什么都收的回收站",
+     "head": "正经的经营游戏",
      "points": [
-      "1800 多种货"
+      "什么都收的回收站"
      ]
     },
     {
      "layout": "phones",
      "phones": [
       "clues",
-      "haggle",
-      "exposed"
+      "haggle"
      ],
-     "head": "检查 · 质疑 · 砍价",
-     "points": [
-      "线索和来历对不上 → 揭穿",
-      "揭穿后按真实价钱卖",
-      "3 / 5 / 7 / 9 成快捷出价"
-     ]
+     "head": "验货 · 砍价",
+     "points": []
     },
     {
      "layout": "phones",
      "phones": [
-      "deal"
+      "shop"
      ],
-     "head": "打烊结算，按时还贷",
+     "head": "有人会编故事坑你",
+     "points": []
+    },
+    {
+     "layout": "phones",
+     "phones": [
+      "exposed"
+     ],
+     "head": "戳穿他！",
      "points": [
-      "第 3 天还 ¥1200",
-      "第 7 天还 ¥3000",
-      "还不上，店被收走"
+      "只能乖乖按实价卖"
      ]
     },
     {
      "layout": "phones",
      "phones": [
       "upgrades",
-      "gacha_panel",
-      "gacha_result"
+      "gacha_result",
+      "book"
      ],
-     "head": "钱花在哪",
+     "head": "升级 · 抽皮肤 · 集收藏",
      "points": [
-      "8 种店铺升级，永久保留",
-      "抽员工造型：22 个，4 档稀有度",
-      "花多了，可能还不上贷款"
+      "1000 多件收藏品"
      ]
     }
    ]
   },
   {
-   "id": "h_get",
-   "chapter": "怎么玩上",
+   "id": "k_end",
+   "chapter": "",
    "lines": [
-    "想玩的话，GitHub 下载，双击，手机扫个码，连上你的 AI 就行。",
-    "代码全部开源，你可以让你自己的 AI 随便改。",
-    "好啦，我是{name}，咱们下期见！"
+    "想玩的话，代码我全开源了，链接放评论区。",
+    "下载、双击、手机扫个码，连上你的 AI，就能开店。",
+    "你觉得 AI 做游戏，能做到什么程度？评论区聊聊。",
+    "我是{name}，下期见。"
    ],
    "frames": [
-    {
-     "layout": "card",
-     "head": "想玩？三步",
-     "code": "①  GitHub 下载压缩包，解压，双击\n②  手机连同一个 Wi-Fi，扫码\n③  点一下“连接你的 AI”"
-    },
     {
      "layout": "title",
      "title": "待机回收站",
@@ -233,6 +258,16 @@
      "phones": [
       "deal"
      ]
+    },
+    {
+     "layout": "card",
+     "head": "想玩？三步",
+     "code": "①  GitHub 下载压缩包，解压，双击\n②  手机连同一个 Wi-Fi，扫码\n③  点一下“连接你的 AI”"
+    },
+    {
+     "layout": "card",
+     "head": "你觉得",
+     "big": "AI 做游戏能做到什么程度？"
     },
     {
      "layout": "title",
