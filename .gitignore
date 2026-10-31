@@ -187,3 +187,7 @@ build_tmp/
 *.spec
 src/assets/art/codex_log*.txt
 web/staff/
+
+# 视频成品和录音（太大，不进仓库）
+devlog/video/*.mp4
+devlog/video/*.mp3

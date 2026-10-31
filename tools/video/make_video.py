@@ -27,6 +27,7 @@ W, H, FPS = 1920, 1080, 30
 GAP = 0.35          # 每句之间的停顿（秒）
 SCENE_PAD = 0.6     # 每段结束多停一会
 FADE = 0.3          # 画面切换的交叉淡化（秒）
+VOICE_GAIN = 1.3    # 配音音量（真人原声已经修过音、响度够了，脚本里会设成 1.0）
 
 FONT = "C:/Windows/Fonts/msyh.ttc"
 FONT_B = "C:/Windows/Fonts/msyhbd.ttc"
@@ -258,7 +259,12 @@ def subtitle(img, s):
 def main():
     global BG
     sys.stdout.reconfigure(encoding="utf-8")
-    script = json.loads((HERE / "script.json").read_text("utf-8"))
+    name = sys.argv[sys.argv.index("--script") + 1] if "--script" in sys.argv else "script.json"
+    script = json.loads((HERE / name).read_text("utf-8"))
+    global GAP, SCENE_PAD, VOICE_GAIN
+    GAP = script.get("gap", GAP)
+    SCENE_PAD = script.get("scene_pad", SCENE_PAD)
+    VOICE_GAIN = script.get("voice_gain", VOICE_GAIN)
     durations = json.loads((VOICE / "durations.json").read_text("utf-8"))
     BG = make_background()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -339,7 +345,7 @@ def mux(segs, total, silent):
     for i, s in enumerate(segs):
         inputs += ["-i", str(s["voice"])]
         ms = int((s["start"] + 0.1) * 1000)
-        filters.append(f"[{i + 1}:a]adelay={ms}|{ms},volume=1.3[v{i}]")   # 第 0 路输入是画面
+        filters.append(f"[{i + 1}:a]adelay={ms}|{ms},volume={VOICE_GAIN}[v{i}]")   # 第 0 路输入是画面
     n = len(segs)
     bgm = ROOT / "web" / "audio" / "bgm_shop.mp3"
     door = ROOT / "web" / "audio" / "sfx_door.wav"
@@ -348,7 +354,7 @@ def mux(segs, total, silent):
     filters.append(f"[{n + 2}:a]adelay=200|200,volume=0.6[door]")
     mix = "".join(f"[v{i}]" for i in range(n)) + "[bgm][door]"
     filters.append(f"{mix}amix=inputs={n + 2}:normalize=0,alimiter=limit=0.89,atrim=0:{total:.2f}[a]")
-    out = OUT_DIR / "待机回收站-讲解.mp4"
+    out = OUT_DIR / ("待机回收站-口播.mp4" if "script_self" in " ".join(sys.argv) else "待机回收站-讲解.mp4")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(silent), *inputs,
                     "-filter_complex", ";".join(filters), "-map", "0:v", "-map", "[a]",
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", str(out)], check=True)
