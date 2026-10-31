@@ -18,14 +18,17 @@ from tts import voice_name  # noqa: E402
 
 VOICE = ROOT / "build_tmp" / "video" / "voice"
 WORK = ROOT / "build_tmp" / "video" / "myrec"
-VOICE_ID = "self:zhuzi-v1"
+VOICE_ID = "self:zhuzi-v2"
 
-# 口播修音：去低频浑浊、提 3-5k 清晰度、加一点空气感、压缩让音量稳、去齿音、响度到短视频常用的 -16 LUFS
-FX = ("highpass=f=80,afftdn=nr=10:nf=-50,"
-      "equalizer=f=250:t=q:w=1:g=-3,equalizer=f=4000:t=q:w=1.2:g=3.5,treble=g=3:f=9000,"
-      "acompressor=threshold=-22dB:ratio=3:attack=8:release=120:makeup=3,deesser=i=0.4,"
-      "loudnorm=I=-16:TP=-1.5:LRA=7")
-TEMPO = 1.05   # 稍微快一点，口播更有精神（不变调）
+# 口播修音：去低频浑浊、提 2-5k 清晰度和“往前冲”的感觉、加空气感、压缩得紧一点让每个字都饱满、去齿音、
+# 响度到短视频常用的 -14 LUFS
+FX = ("highpass=f=90,afftdn=nr=10:nf=-50,"
+      "equalizer=f=300:t=q:w=1:g=-4,equalizer=f=2500:t=q:w=1:g=3,equalizer=f=4500:t=q:w=1.2:g=3,"
+      "treble=g=4:f=9000,"
+      "acompressor=threshold=-24dB:ratio=4:attack=5:release=80:makeup=4,deesser=i=0.5,"
+      "loudnorm=I=-14:TP=-1.2:LRA=5")
+TEMPO = 1.10   # 快一点，口播更有精神
+PITCH = 1.04   # 音调抬高一点点（约 0.7 个半音，保留共振峰，不会变成“小黄人”），声音不那么低沉
 
 CUTS = [
     # 开头钩子
@@ -61,6 +64,24 @@ CUTS = [
                (116.95, 118.75, "我是竹子，我们下期再见。", "k_end:3")]),
 ]
 
+# 换成实机录屏的句子：(段, 第几句) → 画面。clip 是 src/dev/demo.gd 录的片段名，offset 是从片段开头往后几秒
+def clip(name, head, offset=0.0, points=None):
+    return {"layout": "clip", "clip": name, "offset": offset, "head": head, "points": points or []}
+
+
+GAME_FOOTAGE = {
+    ("k_hook", 0): clip("expose", "一行代码都没写", -0.3),
+    ("k_fix", 0): clip("home", "待机回收站", 0.0, ["回收站经营游戏", "也是电脑上 AI 的遥控器"]),
+    ("k_fix", 1): "same",
+    ("k_feat", 2): clip("gift", "回来汇报，顺手带个包裹"),
+    ("k_game", 0): clip("shop", "验货 · 砍价 · 揭穿骗子", 0.0, ["什么都收的回收站"]),
+    ("k_game", 1): "same",
+    ("k_game", 2): "same",
+    ("k_game", 3): "same",
+    ("k_game", 4): clip("gacha", "升级店铺 · 抽员工皮肤"),
+    ("k_game", 5): clip("book", "1000 多件收藏品"),
+}
+
 
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -91,10 +112,10 @@ def main() -> None:
             # 每句前后留一点点气口，淡入淡出 30 毫秒免得切口“咔”一声
             fade = f"afade=t=in:d=0.03,afade=t=out:st={(b - a) / TEMPO - 0.04:.3f}:d=0.04"
             subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{a:.2f}", "-to", f"{b:.2f}", "-i", str(fixed),
-                            "-af", f"atempo={TEMPO},{fade}", "-ar", "44100", "-b:a", "192k", str(out)], check=True)
+                            "-af", f"rubberband=tempo={TEMPO}:pitch={PITCH}:formant=preserved,{fade}", "-ar", "44100", "-b:a", "192k", str(out)], check=True)
             durations[out.name] = (b - a) / TEMPO
             sc["lines"].append(text)
-            sc["frames"].append(frame(ref))
+            sc["frames"].append(GAME_FOOTAGE.get((sid, i)) or frame(ref))
         scenes.append(sc)
 
     dur_file = VOICE / "durations.json"
@@ -104,7 +125,7 @@ def main() -> None:
     # 口播版脚本另存一份，make_video 用它出片
     script["scenes"] = scenes
     script["voice"] = VOICE_ID
-    script["gap"] = 0.12          # 句子之间收紧：口播节奏快
+    script["gap"] = 0.08          # 句子之间收紧：口播节奏快
     script["scene_pad"] = 0.3
     script["voice_gain"] = 1.0    # 已经修过音、响度够了
     (HERE / "script_self.json").write_text(json.dumps(script, ensure_ascii=False, indent=1), "utf-8")

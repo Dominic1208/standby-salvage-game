@@ -1,7 +1,7 @@
 {
  "_doc": "讲解视频（口播版）：开头先甩结果（一行代码没写），再打招呼；对着观众说话，短句，先痛点再解法，结尾互动。每段 scene 的 lines 是逐句解说；frames 和 lines 一一对应，\"same\" 沿用上一句画面。{name} 换成作者的名字。",
  "name": "竹子",
- "voice": "self:zhuzi-v1",
+ "voice": "self:zhuzi-v2",
  "rate": "+6%",
  "scenes": [
   {
@@ -13,12 +13,9 @@
    ],
    "frames": [
     {
-     "layout": "phones",
-     "phones": [
-      "shop",
-      "exposed",
-      "gacha_result"
-     ],
+     "layout": "clip",
+     "clip": "expose",
+     "offset": -0.3,
      "head": "一行代码都没写",
      "points": []
     },
@@ -92,23 +89,16 @@
    ],
    "frames": [
     {
-     "layout": "title",
-     "title": "待机回收站",
-     "sub": "回收站经营游戏 × 电脑上 AI 的遥控器",
-     "phones": [
-      "approve_final"
-     ]
-    },
-    {
-     "layout": "phones",
-     "phones": [
-      "home"
-     ],
-     "head": "AI 在电脑上干活",
+     "layout": "clip",
+     "clip": "home",
+     "offset": 0.0,
+     "head": "待机回收站",
      "points": [
-      "我在手机上开回收站"
+      "回收站经营游戏",
+      "也是电脑上 AI 的遥控器"
      ]
     },
+    "same",
     {
      "layout": "phones",
      "phones": [
@@ -157,11 +147,9 @@
     },
     "same",
     {
-     "layout": "phones",
-     "phones": [
-      "report_dialog",
-      "gift_weird_open"
-     ],
+     "layout": "clip",
+     "clip": "gift",
+     "offset": 0.0,
      "head": "回来汇报，顺手带个包裹",
      "points": []
     },
@@ -198,55 +186,31 @@
    ],
    "frames": [
     {
-     "layout": "phones",
-     "phones": [
-      "shop"
-     ],
-     "head": "正经的经营游戏",
+     "layout": "clip",
+     "clip": "shop",
+     "offset": 0.0,
+     "head": "验货 · 砍价 · 揭穿骗子",
      "points": [
       "什么都收的回收站"
      ]
     },
+    "same",
+    "same",
+    "same",
     {
-     "layout": "phones",
-     "phones": [
-      "clues",
-      "haggle"
-     ],
-     "head": "验货 · 砍价",
+     "layout": "clip",
+     "clip": "gacha",
+     "offset": 0.0,
+     "head": "升级店铺 · 抽员工皮肤",
      "points": []
     },
     {
-     "layout": "phones",
-     "phones": [
-      "shop"
-     ],
-     "head": "有人会编故事坑你",
+     "layout": "clip",
+     "clip": "book",
+     "offset": 0.0,
+     "head": "1000 多件收藏品",
      "points": []
-    },
-    {
-     "layout": "phones",
-     "phones": [
-      "exposed"
-     ],
-     "head": "戳穿他！",
-     "points": [
-      "只能乖乖按实价卖"
-     ]
-    },
-    {
-     "layout": "phones",
-     "phones": [
-      "upgrades",
-      "gacha_result",
-      "book"
-     ],
-     "head": "升级 · 抽皮肤 · 集收藏",
-     "points": [
-      "1000 多件收藏品"
-     ]
-    },
-    "same"
+    }
    ]
   },
   {
@@ -288,7 +252,7 @@
    ]
   }
  ],
- "gap": 0.12,
+ "gap": 0.08,
  "scene_pad": 0.3,
  "voice_gain": 1.0
 }

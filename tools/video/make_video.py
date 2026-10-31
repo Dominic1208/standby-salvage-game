@@ -1,10 +1,11 @@
-"""把解说稿合成讲解视频（1920x1080，30 帧）。
+"""把解说稿合成讲解视频（横版 1920x1080；加 --vertical 出竖版 1080x1920，发抖音/视频号用；30 帧）。
 
 用法：
   python tools/video/tts.py          # 先配音
   python tools/video/make_video.py   # 再合成  →  devlog/video/待机回收站-讲解.mp4
 
 画面用 Pillow 一帧帧画，直接喂给 ffmpeg：手机框截图、大标题、要点、示意图、字幕。
+layout 为 clip 的画面放实机录屏（src/dev/demo.gd 用 Godot Movie Maker 录的，片段起点在 clips.txt）。
 """
 
 import json
@@ -22,8 +23,12 @@ ROOT = HERE.parent.parent
 VOICE = ROOT / "build_tmp" / "video" / "voice"
 SHOTS = ROOT / "build_tmp" / "video" / "shots"
 SCREENS = ROOT / "devlog" / "screens"
+GAME = ROOT / "build_tmp" / "video" / "game"     # 实机录屏 demo.avi + clips.txt
 OUT_DIR = ROOT / "devlog" / "video"
 W, H, FPS = 1920, 1080, 30
+VERTICAL = "--vertical" in sys.argv
+if VERTICAL:
+    W, H = 1080, 1920
 GAP = 0.35          # 每句之间的停顿（秒）
 SCENE_PAD = 0.6     # 每段结束多停一会
 FADE = 0.3          # 画面切换的交叉淡化（秒）
@@ -167,6 +172,8 @@ def place_phones(canvas, names, area):
 
 # ---------------- 各种画面 ----------------
 def render(frame, chapter):
+    if VERTICAL:
+        return render_v(frame)
     c = BG.convert("RGBA").copy()
     d = ImageDraw.Draw(c)
     lay = frame["layout"]
@@ -176,6 +183,9 @@ def render(frame, chapter):
         d.text((140, 330), frame["title"], font=font(150, True), fill=C_PINK)
         for i, line in enumerate(wrap(d, frame.get("sub", ""), font(50), 960)):
             d.text((146, 560 + i * 72), line, font=font(50), fill=C_TEXT)
+    elif lay == "clip":
+        frame["_slot"] = place_clip(c, (60, 50, 1040, 900))
+        head_and_points(c, 1080, 170, W - 1080 - 120, frame.get("head", ""), frame.get("points"))
     elif lay == "phones":
         n = len(frame["phones"])
         right = 1040 if n == 1 else 1180 if n == 2 else 1260
@@ -244,8 +254,132 @@ def render(frame, chapter):
     return c.convert("RGB")
 
 
+# ---------------- 实机录屏 ----------------
+def place_clip(canvas, area):
+    """在 area 里放一个空手机框，返回录屏要贴进去的位置 (x, y, w, h, mask)。"""
+    x0, y0, x1, y1 = area
+    vw, vh = CLIP_SIZE
+    h = int(min(y1 - y0 - 40, (x1 - x0 - 68) * vh / vw))
+    sw = int(h * vw / vh) // 2 * 2
+    ph = phone(Image.new("RGB", (sw, h)), h)
+    px, py = int(x0 + (x1 - x0 - ph.width) / 2), int(y0 + (y1 - y0 - ph.height) / 2)
+    canvas.alpha_composite(ph, (px, py))
+    mask = Image.new("L", (sw, h), 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, sw, h), 32, fill=255)
+    return (px + 34, py + 34, sw, h, mask)
+
+
+CLIP_SIZE = (640, 1386)
+CLIP_AT = {}
+
+
+def load_clips():
+    global CLIP_SIZE
+    for line in (GAME / "clips.txt").read_text("utf-8").splitlines():
+        parts = line.split()
+        if len(parts) == 3 and parts[0] == "CLIP":
+            CLIP_AT[parts[1]] = float(parts[2])
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height",
+                          "-of", "csv=p=0", str(GAME / "demo.avi")], capture_output=True, text=True).stdout
+    CLIP_SIZE = tuple(int(v) for v in out.strip().split(","))
+
+
+class ClipReader:
+    """按顺序从 demo.avi 读一段，缩放到手机框里的大小。读到头就停在最后一帧。"""
+
+    def __init__(self, start, w, h):
+        self.w, self.h, self.n, self.last = w, h, 0, None
+        self.p = subprocess.Popen(["ffmpeg", "-v", "error", "-ss", f"{max(0.0, start):.3f}", "-i", str(GAME / "demo.avi"),
+                                   "-vf", f"scale={w}:{h}:flags=lanczos", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+                                  stdout=subprocess.PIPE)
+
+    def at(self, t):
+        want = int(t * FPS)
+        while self.n <= want:
+            buf = self.p.stdout.read(self.w * self.h * 3)
+            if len(buf) < self.w * self.h * 3:
+                break
+            self.last = Image.frombytes("RGB", (self.w, self.h), buf)
+            self.n += 1
+        return self.last
+
+    def close(self):
+        self.p.kill()
+
+
+# ---------------- 竖版画面 ----------------
+def head_v(c, head, points, y=150):
+    d = ImageDraw.Draw(c)
+    for line in wrap(d, head, font(76, True), 960):
+        d.text((W / 2, y), line, font=font(76, True), fill=C_NEON, anchor="mt")
+        y += 96
+    if points:
+        y += 6
+        for line in wrap(d, "　·　".join(points), font(40), 960):
+            d.text((W / 2, y), line, font=font(40), fill=C_TEXT, anchor="mt")
+            y += 56
+    return y
+
+
+def render_v(frame):
+    c = BG.convert("RGBA").copy()
+    d = ImageDraw.Draw(c)
+    lay = frame["layout"]
+    if lay == "title":
+        d.text((W / 2, 230), frame["title"], font=font(140, True), fill=C_PINK, anchor="mt")
+        y = 420
+        for line in wrap(d, frame.get("sub", ""), font(48), 940):
+            d.text((W / 2, y), line, font=font(48), fill=C_TEXT, anchor="mt")
+            y += 68
+        if frame.get("phones"):
+            place_phones(c, frame["phones"][:2], (90, y + 30, W - 90, 1440))
+    elif lay in ("phones", "clip"):
+        y = head_v(c, frame.get("head", ""), frame.get("points"))
+        area = (60, y + 10, W - 60, 1440)
+        if lay == "clip":
+            frame["_slot"] = place_clip(c, area)
+        else:
+            names = frame["phones"]
+            if len(names) == 3:   # 竖屏放三部太小：只放前两部
+                names = names[:2]
+            place_phones(c, names, area)
+    elif lay == "card":
+        has_body = frame.get("code") or frame.get("big")
+        y = 520 if has_body else 760
+        for line in wrap(d, frame["head"], font(84, True), 960):
+            d.text((W / 2, y), line, font=font(84, True), fill=C_NEON, anchor="mt")
+            y += 110
+        y += 40
+        if frame.get("big"):
+            for line in wrap(d, frame["big"], font(96, True), 960):
+                d.text((W / 2, y), line, font=font(96, True), fill=C_TEXT, anchor="mt")
+                y += 124
+            y += 30
+        if frame.get("code"):
+            lines = frame["code"].split("\n")
+            fcode = font(46)
+            lh = 70
+            cw = min(1000, max(text_w(d, l, fcode) for l in lines) + 100)
+            ch = len(lines) * lh + 80
+            x = (W - cw) / 2
+            d.rounded_rectangle((x, y, x + cw, y + ch), 28, fill=(22, 18, 15), outline=(90, 74, 62), width=3)
+            for i, l in enumerate(lines):
+                d.text((x + 50, y + 40 + i * lh), l, font=fcode, fill=C_TEXT)
+    else:
+        raise SystemExit(f"竖版还不支持这种画面：{lay}")
+    d.text((W / 2, 70), "待机回收站", font=font(34, True), fill=C_PINK, anchor="mt")
+    return c.convert("RGB")
+
+
 def subtitle(img, s):
     d = ImageDraw.Draw(img, "RGBA")
+    if VERTICAL:   # 竖版：字幕放在画面下方三分之一，避开抖音底部的按钮和文案
+        f = font(58, True)
+        y = 1500
+        for line in wrap(d, s, f, 940):
+            d.text((W / 2, y), line, font=f, fill=(255, 255, 255), anchor="mt", stroke_width=6, stroke_fill=(0, 0, 0))
+            y += 78
+        return img
     f = font(46, True)
     lines = wrap(d, s, f, 1640)
     y = H - 60 - len(lines) * 62
@@ -267,6 +401,8 @@ def main():
     VOICE_GAIN = script.get("voice_gain", VOICE_GAIN)
     durations = json.loads((VOICE / "durations.json").read_text("utf-8"))
     BG = make_background()
+    if any(fr != "same" and fr["layout"] == "clip" for sc in script["scenes"] for fr in sc["frames"]):
+        load_clips()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # 时间线：每句一段 [开始, 结束]，画面、字幕、配音
@@ -295,7 +431,7 @@ def main():
         s["img"] = cache[key]
     print(f"画面 {len(cache)} 张，开始逐帧合成…")
 
-    silent = OUT_DIR / "_video.mp4"
+    silent = OUT_DIR / ("_video_v.mp4" if VERTICAL else "_video.mp4")
     if "--audio-only" in sys.argv and silent.exists():
         mux(segs, total, silent)
         return
@@ -304,6 +440,7 @@ def main():
                              "-crf", "20", "-pix_fmt", "yuv420p", str(silent)], stdin=subprocess.PIPE)
     n_frames = int(total * FPS)
     si = 0
+    reader, reader_for = None, None
     for fi in range(n_frames):
         tt = fi / FPS
         while si < len(segs) - 1 and tt >= segs[si + 1]["start"]:
@@ -319,6 +456,17 @@ def main():
         k = (tt - segs[g0]["start"]) / max(0.1, segs[g1]["end"] - segs[g0]["start"])
         zoom = 1.0 + 0.04 * min(1.0, max(0.0, k))
         img = s["img"]
+        fr = s["frame"]
+        if fr["layout"] == "clip":   # 实机录屏：每帧把录屏贴进手机框
+            if reader_for is not fr:
+                if reader:
+                    reader.close()
+                reader, reader_for = ClipReader(CLIP_AT[fr["clip"]] + fr.get("offset", 0.0), *fr["_slot"][2:4]), fr
+            shot = reader.at(tt - segs[g0]["start"])
+            if shot is not None:
+                img = img.copy()
+                img.paste(shot, fr["_slot"][:2], fr["_slot"][4])
+            zoom = 1.0   # 录屏本身在动，不再推镜头
         cw, ch = W / zoom, H / zoom
         frame = img.crop(((W - cw) / 2, (H - ch) / 2, (W + cw) / 2, (H + ch) / 2)).resize((W, H), Image.BILINEAR)
         # 换画面时交叉淡化
@@ -354,7 +502,8 @@ def mux(segs, total, silent):
     filters.append(f"[{n + 2}:a]adelay=200|200,volume=0.6[door]")
     mix = "".join(f"[v{i}]" for i in range(n)) + "[bgm][door]"
     filters.append(f"{mix}amix=inputs={n + 2}:normalize=0,alimiter=limit=0.89,atrim=0:{total:.2f}[a]")
-    out = OUT_DIR / ("待机回收站-口播.mp4" if "script_self" in " ".join(sys.argv) else "待机回收站-讲解.mp4")
+    out = OUT_DIR / (("待机回收站-口播" if "script_self" in " ".join(sys.argv) else "待机回收站-讲解")
+                     + ("-竖版" if VERTICAL else "") + ".mp4")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(silent), *inputs,
                     "-filter_complex", ";".join(filters), "-map", "0:v", "-map", "[a]",
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", str(out)], check=True)
