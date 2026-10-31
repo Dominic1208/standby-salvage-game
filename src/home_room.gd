@@ -57,7 +57,7 @@ func _ready() -> void:
 		_bg.texture = art_loader.call("shop_bg")
 	add_child(_bg)
 	_hint = Label.new()
-	_hint.text = ""
+	_hint.text = "点吧台开店"
 	_hint.add_theme_font_size_override("font_size", 24)
 	_hint.add_theme_color_override("font_color", Color("ffb347"))
 	_hint.add_theme_constant_override("outline_size", 8)
@@ -390,6 +390,19 @@ func _on_actor_input(event: InputEvent, id: String) -> void:
 		staff_tapped.emit(_actors[id].e)
 
 
-## 以前点吧台就开店，滑动时很容易误触；现在只能点主页底部的“开始营业”按钮
-func _gui_input(_event: InputEvent) -> void:
-	pass
+## 点吧台开店：只认吧台正中间一小块（“点吧台开店”字的周围），而且必须是“点一下”——
+## 按下和抬起在同一个地方、中间没怎么移动。手指滑动、拖动都不算，免得误触进店。
+const BAR_TAP := Rect2(0.28, 0.72, 0.44, 0.12)
+const TAP_SLOP := 14.0
+var _press_at := Vector2(-1, -1)
+
+
+func _gui_input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton) or event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	var n := to_norm(event.position)
+	if event.pressed:
+		_press_at = event.position if BAR_TAP.has_point(n) else Vector2(-1, -1)
+	elif _press_at.x >= 0.0 and event.position.distance_to(_press_at) <= TAP_SLOP and BAR_TAP.has_point(n):
+		_press_at = Vector2(-1, -1)
+		open_shop.emit()
