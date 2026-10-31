@@ -546,6 +546,22 @@ def lan_ip() -> str:
         return "127.0.0.1"
 
 
+def lan_ips() -> list[str]:
+    """这台电脑所有的局域网地址。开了 VPN、虚拟网卡时会有好几个，让用户自己挑能用的那个。"""
+    ips = [lan_ip()]
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            ip = info[4][0]
+            if ip not in ips and not ip.startswith(("127.", "169.254.")):
+                ips.append(ip)
+    except OSError:
+        pass
+    return [ip for ip in ips if ip != "127.0.0.1"] or ["127.0.0.1"]
+
+
+_chosen_ip = ""   # 用户在设置页手动选的地址（空 = 自动）
+
+
 def qr_svg(text: str) -> str:
     try:
         import qrcode
@@ -561,14 +577,19 @@ def qr_svg(text: str) -> str:
 async def setup_info(request: web.Request) -> web.Response:
     """电脑上的设置页用：手机网址、二维码、配对码、给 AI 的连接说明路径。只限本机。"""
     local_only(request)
+    global _chosen_ip
     if request.query.get("new") == "1" or not STATE.pair_code or now() > STATE.pair_expires:
         STATE.new_pair_code()
-    url = f"http://{lan_ip()}:{PORT}/?pair={STATE.pair_code}"
+    ips = lan_ips()
+    if request.query.get("ip") in ips:
+        _chosen_ip = request.query["ip"]
+    ip = _chosen_ip if _chosen_ip in ips else ips[0]
+    url = f"http://{ip}:{PORT}/?pair={STATE.pair_code}"
     skill = (Path(sys.executable).parent if FROZEN else ROOT.parent) / "connect-ai" / "SKILL.md"
     hook_cmd = (f'"{sys.executable}" hook --agent <你的工具名>' if FROZEN
                 else f'python "{ROOT / "main.py"}" hook --agent <你的工具名>')
     return web.json_response({
-        "url": url, "code": STATE.pair_code, "expiresIn": int(STATE.pair_expires - now()),
+        "url": url, "code": STATE.pair_code, "expiresIn": int(STATE.pair_expires - now()), "ips": ips, "ip": ip,
         "qr": base64.b64encode(qr_svg(url).encode()).decode(),
         "devices": [{"name": d["name"], "paired": d["paired"]} for d in STATE.devices.values()],
         "skillPath": str(skill), "hookCommand": hook_cmd,

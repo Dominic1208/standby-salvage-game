@@ -24,7 +24,12 @@ def patch_secure_context_check(html: Path) -> None:
            ".filter((m) => GODOT_THREADS_ENABLED || !m.startsWith('Secure Context'));")
     if old not in text:
         raise SystemExit("index.html 结构变了，找不到安全上下文检查，请检查 Godot 版本")
-    html.write_text(text.replace(old, new), "utf-8")
+    text = text.replace(old, new)
+    # iPhone 上手指拖动会让整页跟着滑、回弹，按钮点起来卡、还会误触：把页面钉住，滑动交给游戏自己处理
+    lock = ("<style>html,body{position:fixed;inset:0;overflow:hidden;overscroll-behavior:none;"
+            "touch-action:none;-webkit-user-select:none;user-select:none}</style>")
+    text = text.replace("</head>", lock + "</head>", 1)
+    html.write_text(text, "utf-8")
 
 
 STAFF_OUT = ROOT / "web" / "staff"

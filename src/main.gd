@@ -721,8 +721,7 @@ func _build_home_layer() -> void:
 		settings_layer.visible = true
 		_sfx("tap"))
 	corner.add_child(book)
-	for entry in [["升级", func() -> void: meta_ui.open_upgrades()], ["抽造型", func() -> void: meta_ui.open_gacha()],
-			["成就", func() -> void: meta_ui.open_achievements()]]:
+	for entry in [["升级", func() -> void: meta_ui.open_upgrades()], ["成就", func() -> void: meta_ui.open_achievements()]]:
 		var mb := _button(entry[0], Color(0.08, 0.06, 0.05, 0.75), COL_NEON, COL_NEON)
 		mb.custom_minimum_size = Vector2(134, 54)
 		mb.add_theme_font_size_override("font_size", 22)
@@ -730,6 +729,33 @@ func _build_home_layer() -> void:
 		corner.add_child(mb)
 	corner.add_child(setting)
 	home_layer.add_child(corner)
+
+	# 底部两个大按钮：抽造型（粉色、带星光，和右边的小按钮不一样）+ 开始营业
+	var bottom := HBoxContainer.new()
+	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	bottom.offset_left = 24
+	bottom.offset_right = -24
+	bottom.offset_top = -132
+	bottom.offset_bottom = -36
+	bottom.add_theme_constant_override("separation", 16)
+	var gacha := _button("★ 抽造型 ★", COL_NEON_PINK, Color.WHITE, Color("ffd1dc"))
+	gacha.custom_minimum_size = Vector2(0, 96)
+	gacha.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	gacha.size_flags_stretch_ratio = 0.8
+	gacha.add_theme_font_size_override("font_size", 30)
+	gacha.pressed.connect(func() -> void: meta_ui.open_gacha())
+	bottom.add_child(gacha)
+	var open_btn := _button("开始营业", COL_NEON, Color("1a1208"), Color("ffe0b0"))
+	open_btn.custom_minimum_size = Vector2(0, 96)
+	open_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	open_btn.add_theme_font_size_override("font_size", 36)
+	open_btn.pressed.connect(_hide_home)
+	bottom.add_child(open_btn)
+	home_layer.add_child(bottom)
+	# 抽造型按钮一闪一闪，引人注意
+	var glow := create_tween().set_loops()
+	glow.tween_property(gacha, "modulate", Color(1.15, 1.05, 1.1), 0.8)
+	glow.tween_property(gacha, "modulate", Color.WHITE, 0.8)
 
 	home_empty = _label("还没有员工报到。\n在电脑设置页把你的 AI 连进来，\n他们就会推门进来。", 24, COL_TEXT, true)
 	home_empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -898,6 +924,11 @@ func _build_dialog_layer() -> void:
 func _hide_home() -> void:
 	home_layer.visible = false
 	_sfx("door")
+	# 进店后半秒内挡住点击：防止刚才那一下手指没抬起来，直接点到了“出价”“按要价收”
+	pause_label.text = ""
+	pause_layer.modulate.a = 0.0
+	pause_layer.visible = true
+	get_tree().create_timer(0.5).timeout.connect(func() -> void: pause_layer.visible = false)
 
 
 func _post_shell(type: String, fields: Dictionary) -> void:

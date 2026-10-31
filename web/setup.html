@@ -63,8 +63,17 @@
         <p class="muted">iPhone：用 Safari 打开后点「分享 → 添加到主屏幕」，以后像 App 一样从桌面打开。</p>
         <p class="muted" id="devices"></p>
         <div id="device-list" class="tool-buttons"></div>
+        <p class="muted">配对码：<b class="url" id="code">…</b>（扫不了码时，在手机上直接输入）</p>
         <button class="ghost" id="new-code">换一个二维码</button>
-        <p class="muted">手机打不开？多半是第一次运行时 Windows 防火墙没点「允许」：到「设置 → 隐私和安全性 → Windows 安全中心 → 防火墙 → 允许应用通过防火墙」里勾上「待机回收站」。</p>
+        <div id="ip-pick" class="muted" style="display:none">这台电脑有好几个网络地址，二维码打不开就换一个试试：
+          <div id="ip-list" class="tool-buttons"></div></div>
+        <details class="muted"><summary>手机扫码后打不开？按顺序检查这 4 件事</summary>
+          <ol>
+            <li><b>同一个 Wi-Fi</b>：手机不能用流量，也不能连另一个 Wi-Fi。</li>
+            <li><b>防火墙</b>：第一次运行时 Windows 会问是否允许访问网络，要点「允许」。错过了的话：到「设置 → 隐私和安全性 → Windows 安全中心 → 防火墙 → 允许应用通过防火墙」里勾上「待机回收站」。</li>
+            <li><b>公司 / 学校 / 酒店的 Wi-Fi</b> 往往禁止设备互相访问，换家里的 Wi-Fi 或手机热点（电脑连手机热点也可以）。</li>
+            <li><b>VPN 或虚拟网卡</b>：上面如果出现好几个地址，换一个试试；或者先关掉 VPN。</li>
+          </ol></details>
       </div>
     </div>
   </section>
@@ -107,6 +116,17 @@ async function load(fresh) {
   const info = await (await fetch("/api/setup-info" + (fresh ? "?new=1" : ""))).json();
   $("qr").innerHTML = info.qr ? `<img alt="配对二维码" src="data:image/svg+xml;base64,${info.qr}">` : "<p style='color:#000'>二维码组件缺失</p>";
   $("url").textContent = info.url.split("/?")[0];
+  $("code").textContent = info.code;
+  const ips = info.ips || [];
+  $("ip-pick").style.display = ips.length > 1 ? "" : "none";
+  $("ip-list").innerHTML = "";
+  for (const ip of ips) {
+    const b = document.createElement("button");
+    b.className = ip === info.ip ? "" : "ghost";
+    b.textContent = ip + (ip === info.ip ? "（正在用）" : "");
+    b.onclick = async () => { await fetch("/api/setup-info?ip=" + encodeURIComponent(ip)); load(false); };
+    $("ip-list").appendChild(b);
+  }
   $("prompt").textContent = info.prompt;
   $("devices").innerHTML = info.devices.length
     ? `<span class="ok">✓ 已配对 ${info.devices.length} 台手机</span>（二维码 ${Math.round(info.expiresIn / 60)} 分钟内有效，只能用一次）`

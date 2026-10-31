@@ -36,6 +36,7 @@ var _bg: TextureRect
 var _actors := {}                   ## id -> {node, sprite, tag, idle_tag, alert, e, target, wait, t}
 var _hint: Label
 var _queue_lbl: Label                ## “门外还有 N 人排队”
+var _last_order: Array = []          ## 上一次的前后顺序（没变就不重排）
 var _rng := RandomNumberGenerator.new()
 
 
@@ -56,7 +57,7 @@ func _ready() -> void:
 		_bg.texture = art_loader.call("shop_bg")
 	add_child(_bg)
 	_hint = Label.new()
-	_hint.text = "点吧台开店"
+	_hint.text = ""
 	_hint.add_theme_font_size_override("font_size", 24)
 	_hint.add_theme_color_override("font_color", Color("ffb347"))
 	_hint.add_theme_constant_override("outline_size", 8)
@@ -373,6 +374,11 @@ func _sort_by_depth() -> void:
 	var list := _actors.values()
 	# 同一排的人 y 一样，再按站位排，保证前后顺序固定、不来回闪
 	list.sort_custom(func(a, b): return a.get("y", 0.0) < b.get("y", 0.0) - 0.5 		or (absf(a.get("y", 0.0) - b.get("y", 0.0)) <= 0.5 and a.get("slot", 99) > b.get("slot", 99)))
+	# 顺序没变就不动节点：每帧重排会让整棵界面树重新布局，手机上点按钮会卡
+	var order := list.map(func(a): return a.node.get_instance_id())
+	if order == _last_order:
+		return
+	_last_order = order
 	var base := _hint.get_index()
 	for i in list.size():
 		move_child(list[i].node, base + i)
@@ -384,7 +390,6 @@ func _on_actor_input(event: InputEvent, id: String) -> void:
 		staff_tapped.emit(_actors[id].e)
 
 
-func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if to_norm(event.position).y >= BAR_TOP:
-			open_shop.emit()
+## 以前点吧台就开店，滑动时很容易误触；现在只能点主页底部的“开始营业”按钮
+func _gui_input(_event: InputEvent) -> void:
+	pass
