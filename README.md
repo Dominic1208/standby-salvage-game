@@ -30,7 +30,7 @@ AI 要你拍板的时候，员工推门进来找你；活干完了，员工回�
 
 ## 怎么玩（3 步）
 
-1. 到 [Releases](../../releases/latest) 下载 `待机回收站-Windows.zip`，解压，双击 `待机回收站.exe`
+1. 到 [Releases](../../releases/latest) 下载 `StandbySalvage-Windows-v1.0.zip`，解压，双击 `待机回收站.exe`
    - 弹出蓝色的“Windows 已保护你的电脑”：点“更多信息” → “仍要运行”（程序没有付费签名）
    - 弹出防火墙提示：点“允许”，不然手机连不上
 2. 手机和电脑连同一个 Wi-Fi，用手机相机扫电脑上设置页的二维码，就能开始玩
