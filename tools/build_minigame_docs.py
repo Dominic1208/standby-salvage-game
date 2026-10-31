@@ -172,7 +172,7 @@ def build_icon():
     for y in range(size):   # 暖色渐变底
         t = y / size
         d.line([(0, y), (size, y)], fill=(int(70 + 40 * (1 - t)), int(38 + 20 * (1 - t)), int(24 + 6 * (1 - t))))
-    chest = Image.open(ART / "gift_big.png").convert("RGBA")
+    chest = Image.open(ROOT / "src" / "assets" / "art" / "gift_big.png").convert("RGBA")   # 用原图，压缩过的太糊
     k = 400 / max(chest.size)
     chest = chest.resize((round(chest.width * k), round(chest.height * k)), Image.LANCZOS)
     im.paste(chest, ((size - chest.width) // 2, (size - chest.height) // 2 + 10), chest)
