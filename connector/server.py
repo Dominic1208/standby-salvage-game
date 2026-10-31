@@ -152,7 +152,7 @@ class State:
             if now() - e.get("last_seen", e["created"]) > EMPLOYEE_FORGET:
                 continue  # 好几天没动静的对话，员工就不来店里了
             status = "waiting" if e["id"] in waiting else e.get("status", "working")
-            if status == "working" and now() - e.get("last_seen", 0) > 3600:
+            if status == "working" and now() - e.get("last_seen", 0) > RUNNING_WINDOW:
                 status = "resting"
             out.append({k: e.get(k) for k in ("id", "agent", "label", "project", "name", "look", "index")}
                        | {"status": status, "reported": bool(e.get("reported"))})
@@ -175,7 +175,7 @@ class State:
         self.seq += 1
         msg["seq"] = self.seq
         dead = []
-        for ws in self.sockets:
+        for ws in list(self.sockets):  # 发送途中可能有手机连上/断开
             try:
                 await ws.send_json(msg)
             except Exception:
@@ -227,7 +227,7 @@ async def create_approval(agent: str, session_id: str, cwd: str, tool_name: str,
     emp = STATE.employee_for(agent, label, "D:/演示项目" if simulated else cwd,
                              "" if simulated else session_id, title)
     # 同一会话出现新请求，说明旧请求已在电脑上处理过：标记失效
-    for old in STATE.approvals.values():
+    for old in list(STATE.approvals.values()):
         if old["status"] == "pending" and old["sessionId"] == session_id and not simulated:
             await resolve(old["id"], "stale", "电脑端")
 
@@ -736,12 +736,101 @@ async def save_put(request: web.Request) -> web.Response:
     return web.json_response({"ok": True})
 
 
+RUNNING_WINDOW = 15 * 60   # 对话记录最近 15 分钟有变动，就算“正在跑的任务”
+_last_scan = 0.0
+_last_found = 0
+
+
+def _tail(path: Path, size: int = 200_000) -> str:
+    with open(path, "rb") as f:
+        f.seek(0, 2)
+        f.seek(max(0, f.tell() - size))
+        return f.read().decode("utf-8", "ignore")
+
+
+def _claude_running(cutoff: float) -> list[tuple]:
+    """Claude Code 的对话记录在 ~/.claude/projects/<文件夹>/<对话id>.jsonl。"""
+    import hook
+    out = []
+    for p in (Path.home() / ".claude" / "projects").glob("*/*.jsonl"):
+        try:
+            if p.stat().st_mtime < cutoff:
+                continue
+            tail = _tail(p)
+        except OSError:
+            continue
+        cwd, agent, label = "", "claude", "Claude Code"
+        for line in reversed(tail.splitlines()):
+            if not cwd and '"cwd"' in line:
+                try:
+                    cwd = json.loads(line).get("cwd", "")
+                except ValueError:
+                    pass
+            if '"model"' in line and agent == "claude":
+                low = line.lower()
+                for key, who, name in hook.PROVIDERS:
+                    if f'"model":"{key}' in low.replace(" ", ""):
+                        agent, label = who, name
+            if cwd:
+                break
+        out.append((agent, label, cwd, p.stem, hook.chat_title(str(p))))
+    return out
+
+
+def _codex_running(cutoff: float) -> list[tuple]:
+    """Codex（命令行和桌面版）的对话记录在 ~/.codex/sessions/年/月/日/rollout-…-<对话id>.jsonl。"""
+    root = Path.home() / ".codex"
+    names = {}
+    try:
+        for line in (root / "session_index.jsonl").read_text("utf-8", "ignore").splitlines()[-300:]:
+            d = json.loads(line)
+            names[d.get("id")] = d.get("thread_name", "")
+    except (OSError, ValueError):
+        pass
+    out = []
+    for p in (root / "sessions").glob("*/*/*/rollout-*.jsonl"):
+        try:
+            if p.stat().st_mtime < cutoff:
+                continue
+            with open(p, encoding="utf-8", errors="ignore") as f:
+                meta = json.loads(f.readline()).get("payload", {})
+        except (OSError, ValueError):
+            continue
+        sid = meta.get("id") or "-".join(p.stem.split("-")[-5:])
+        out.append(("codex", "Codex", meta.get("cwd", ""), sid, str(names.get(sid, ""))[:24]))
+    return out
+
+
+def scan_running(force: bool = False) -> int:
+    """打开游戏时，把电脑上已经在跑的对话登记成“工作中”的员工（不用等它下一次汇报）。
+    只看已经一键连接过的工具。返回这次找到的正在跑的任务数。"""
+    global _last_scan, _last_found
+    if not force and now() - _last_scan < 30:
+        return _last_found
+    _last_scan = now()
+    cutoff = now() - RUNNING_WINDOW
+    found = []
+    for agent, fn in (("claude", _claude_running), ("codex", _codex_running)):
+        try:
+            if tool_status(agent)["connected"]:
+                found += fn(cutoff)
+        except Exception as exc:  # 读别人的记录文件，出什么错都不能影响主程序
+            print(f"[扫描] {agent} 失败：{exc}")
+    for agent, label, cwd, sid, title in found:
+        emp = STATE.employee_for(agent, label, cwd, sid, title)
+        if emp.get("status") != "waiting":
+            emp["status"] = "working"
+    _last_found = len(found)
+    return _last_found
+
+
 async def ws_handler(request: web.Request) -> web.WebSocketResponse:
     require_device(request)
     ws = web.WebSocketResponse(heartbeat=20)
     await ws.prepare(request)
     STATE.sockets.add(ws)
-    await ws.send_json(STATE.snapshot())
+    running = scan_running()
+    await ws.send_json(STATE.snapshot() | {"running": running})
     try:
         async for _ in ws:
             pass  # 手机端操作都走 HTTP，WebSocket 只负责下行
@@ -755,6 +844,21 @@ async def index(request: web.Request) -> web.FileResponse:
 
 
 @web.middleware
+async def log_errors(request: web.Request, handler):
+    """出错时把详细原因记到数据目录的 error.log，方便排查（不记请求内容）。"""
+    try:
+        return await handler(request)
+    except web.HTTPException:
+        raise
+    except Exception:
+        import traceback
+        with open(DATA_DIR / "error.log", "a", encoding="utf-8") as f:
+            f.write(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] {request.method} {request.path}\n"
+                    f"{traceback.format_exc()}")
+        raise
+
+
+@web.middleware
 async def no_cache(request: web.Request, handler):
     resp = await handler(request)
     if request.path.endswith((".html", ".js", ".webmanifest")) or request.path == "/":
@@ -763,7 +867,7 @@ async def no_cache(request: web.Request, handler):
 
 
 def make_app() -> web.Application:
-    app = web.Application(middlewares=[no_cache])
+    app = web.Application(middlewares=[log_errors, no_cache])
     app.router.add_post("/hook/permission", hook_permission)
     app.router.add_post("/hook/abandon", hook_abandon)
     app.router.add_post("/hook/event", hook_event)

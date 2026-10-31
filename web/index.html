@@ -83,10 +83,13 @@
   </div>
   <div class="console-tools">
     <button id="btn-push" class="btn small">开启锁屏通知</button>
+    <button id="btn-repair" class="btn small ghost">重新配对</button>
     <button id="btn-sim" class="btn small ghost">模拟一条请求</button>
     <button id="btn-sim-done" class="btn small ghost">模拟完成汇报</button>
   </div>
   <p id="push-hint" class="hint"></p>
+  <h3 id="staff-title">员工</h3>
+  <ul id="list-staff" class="list"></ul>
   <h3>待处理</h3>
   <ul id="list-pending" class="list"></ul>
   <h3>最近</h3>
@@ -97,13 +100,15 @@
 <section id="pair" class="hidden">
   <div class="pair-inner">
     <h1>连接你的电脑</h1>
-    <p>在电脑上运行连接程序，输入窗口里显示的 6 位配对码。</p>
+    <p>看电脑上待机回收站的网页（双击程序会自动打开），把那里的 6 位配对码输进来，输满 6 位自动连接。</p>
     <input id="pair-code" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
     <button id="pair-go" class="btn">配对</button>
     <p id="pair-err" class="err"></p>
     <button id="pair-skip" class="btn ghost small">先只玩游戏</button>
   </div>
 </section>
+
+<div id="toast" class="toast hidden" role="status"></div>
 
 <script src="/app.js"></script>
 </body>

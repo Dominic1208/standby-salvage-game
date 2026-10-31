@@ -156,6 +156,29 @@ $("pair-go").onclick = async () => {
   }
 };
 $("pair-skip").onclick = () => $("pair").classList.add("hidden");
+$("pair-code").oninput = () => {
+  const v = $("pair-code").value.replace(/\D/g, "").slice(0, 6);
+  $("pair-code").value = v;
+  if (v.length === 6) $("pair-go").onclick();
+};
+// 断开太久要重新配对时，一个按钮直接回到输码界面
+$("btn-repair").onclick = () => {
+  state.token = null; store.del("deviceToken");
+  if (state.ws) state.ws.close();
+  $("console").classList.add("hidden");
+  $("pair-code").value = "";
+  setConn(false, "未配对");
+  showPair();
+};
+
+let toastTimer = 0;
+function toast(text, ms = 4500) {
+  $("toast").textContent = text;
+  $("toast").classList.remove("hidden");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $("toast").classList.add("hidden"), ms);
+}
+$("toast").onclick = () => { $("toast").classList.add("hidden"); openConsole(); };
 
 // ---------------- 连接 ----------------
 function setConn(on, text) {
@@ -197,6 +220,11 @@ function handle(msg) {
     state.events = msg.events || [];
     state.employees = msg.employees || [];
     tellGame({ type: "employees", list: state.employees });
+    if (typeof msg.running === "number") {
+      toast(msg.running
+        ? `已连接电脑 · ${msg.running} 名员工正在工作，点这里看名单。他们需要你批准或干完活时会走进店里。`
+        : "已连接电脑 · 现在没有正在跑的 AI 任务。你在电脑上开始任务后，员工会来汇报。");
+    }
     for (const a of msg.approvals) if (a.status === "pending") queueDoor({ kind: "approval", id: a.id });
     openFromUrl();
   } else if (msg.type === "approval") {
@@ -229,7 +257,7 @@ function renderStatus() {
   $("pending-badge").classList.toggle("hidden", p.length === 0);
   $("agent-text").textContent = p.length
     ? `${AGENTS[p[0].agent]?.name || p[0].agent}：等你批准`
-    : "员工：出勤中";
+    : `员工：${state.employees.filter((e) => e.status === "working").length} 人工作中`;
 }
 $("statusbar").onclick = () => openConsole();
 
@@ -470,7 +498,31 @@ $("console-close").onclick = () => { $("console").classList.add("hidden"); resum
 function timeText(t) { return new Date(t * 1000).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }); }
 const STATUS_TEXT = { pending: "等你批准", allow: "已批准", deny: "已拒绝", stale: "已失效" };
 
+const STAFF_STATUS = { working: "工作中", waiting: "等你批准", resting: "休息中" };
+function renderStaff() {
+  const sl = $("list-staff"); sl.innerHTML = "";
+  const order = { waiting: 0, working: 1, resting: 2 };
+  const staff = [...state.employees].sort((a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3));
+  for (const e of staff) {
+    const li = document.createElement("li");
+    const chip = document.createElement("span"); chip.className = "chip";
+    chip.style.background = AGENT_COLORS[e.agent] || "#999";
+    const tag = document.createElement("span");
+    tag.className = "tag" + (e.status === "waiting" ? " waiting" : "");
+    tag.textContent = e.reported && e.status !== "waiting" ? "带着汇报回来了" : (STAFF_STATUS[e.status] || e.status);
+    li.append(chip, document.createTextNode(e.name), tag);
+    const m = document.createElement("div"); m.className = "meta";
+    m.textContent = `${e.label || AGENTS[e.agent]?.name || e.agent} · ${e.project || ""}`;
+    li.appendChild(m);
+    sl.appendChild(li);
+  }
+  const working = staff.filter((e) => e.status === "working").length;
+  $("staff-title").textContent = `员工（${staff.length} 名，${working} 名工作中）`;
+  if (!sl.children.length) sl.innerHTML = "<li>还没有员工。在电脑上开始一个 AI 任务，员工就会出现。</li>";
+}
+
 function renderConsole() {
+  renderStaff();
   const pl = $("list-pending"); pl.innerHTML = "";
   for (const a of pending()) {
     const li = document.createElement("li");

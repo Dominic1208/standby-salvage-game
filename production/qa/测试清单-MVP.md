@@ -27,7 +27,9 @@
 | B5 | Claude Code + DeepSeek 接口 → 员工算 DeepSeek（蓝色） | Claude（模拟环境变量） | ✅ 2026-10-31 |
 | B6 | Codex / Gemini / Qwen / Copilot / Cursor 输出格式 | Claude（模拟输入） | ✅ 2026-10-31（真实会话未测） |
 | B7 | 真实 Claude Code + DeepSeek：请求到手机→批准→文件建好→带汇报回来 | Claude（tools/test_real_agents.py） | ✅ 2026-10-31 |
-| B8 | 真实 Codex：钩子能跑 | Claude | ⏳ 修好了命令格式（Windows 下路径不能带引号），等用户在 Codex 里 /hooks 重新信任 |
+| B8 | 真实 Codex：完成汇报到手机 ✅；批准请求到手机 ❌ | Claude | ⚠️ 2026-10-31 钩子已信任、汇报能到；但这个版本的 Codex（0.164 alpha）弹确认框时没有调用批准钩子，只能在电脑上批 |
+| B10 | 打开游戏时，电脑上已经在跑的 Claude/Codex 对话直接算员工，提示“N 名员工正在工作” | Claude（浏览器手机尺寸） | ✅ 2026-10-31 截图 devlog/screens/连上电脑提示几名员工在工作.jpg |
+| B11 | 通讯台员工名单、重新配对按钮、配对码输满 6 位自动连接 | Claude | ✅ 2026-10-31 |
 | B9 | 真实 Gemini CLI | Claude | ⛔ Google 已停止个人免费账号使用 Gemini CLI，需要 API 密钥才能测 |
 
 ## C. 手机端体验（必须你在 iPhone 上）
