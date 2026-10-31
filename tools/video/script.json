@@ -1,15 +1,15 @@
 {
- "_doc": "讲解视频（短版）：第一人称，说清楚是什么、怎么玩、怎么做的，不讲细节。每段 scene 的 lines 是逐句解说（一句一条字幕、一段配音）；frames 和 lines 一一对应。{name} 换成作者的名字。图片先在 build_tmp/video/shots/ 找，再到 devlog/screens/ 找。",
+ "_doc": "讲解视频（介绍版）：第一人称，只讲它是什么、功能、玩法、用了哪些 AI，不讲制作细节和翻车。每段 scene 的 lines 是逐句解说；frames 和 lines 一一对应。{name} 换成作者的名字。图片先在 build_tmp/video/shots/ 找，再到 devlog/screens/ 找。",
  "name": "竹子",
  "voice": "zh-CN-YunxiNeural",
  "rate": "+6%",
  "scenes": [
   {
-   "id": "s_intro",
+   "id": "p_intro",
    "chapter": "开场",
    "lines": [
     "大家好，我是{name}。",
-    "我用 AI 做了个小游戏，叫《待机回收站》。"
+    "给大家介绍一个我用 AI 做的小游戏，叫《待机回收站》。"
    ],
    "frames": [
     {
@@ -31,46 +31,12 @@
    ]
   },
   {
-   "id": "s_origin",
-   "chapter": "起因",
+   "id": "p_what",
+   "chapter": "它是什么",
    "lines": [
-    "我平时让 AI 写代码，它时不时就停下来问我：这个命令能不能跑？",
-    "我不在电脑前，它就一直卡着。",
-    "所以我做了这个：AI 要我批准，手机游戏里就进来一个员工，我滑一下就行。"
-   ],
-   "frames": [
-    {
-     "layout": "card",
-     "head": "它还时不时停下来问你",
-     "code": "Allow this command?\n\n  npm run build && npm test\n\n  [ Yes ]   [ No ]"
-    },
-    {
-     "layout": "card",
-     "head": "人不在电脑前？",
-     "big": "它就卡在那儿二三十分钟"
-    },
-    {
-     "layout": "phones",
-     "phones": [
-      "home",
-      "approve_final"
-     ],
-     "head": "我的想法",
-     "points": [
-      "等 AI 的时候玩手机游戏",
-      "它要批准 → 员工推门进来",
-      "点一下就处理掉"
-     ]
-    }
-   ]
-  },
-  {
-   "id": "s_what",
-   "chapter": "怎么玩",
-   "lines": [
-    "电脑上开个小程序，手机扫码就能玩，不用装 App。",
-    "每个 AI 对话就是一个员工，围巾颜色代表是哪家的 AI。",
-    "有事要我拍板，或者活干完了，他们才会进店。"
+    "它是一个手机上的回收站经营游戏，同时也是你电脑上 AI 的遥控器。",
+    "你在电脑上让 AI 写代码，它要你批准的时候，手机上会有个员工推门进来，你滑一下就批了，不用守在电脑前。",
+    "现在支持 Claude Code、Codex，还有接了 DeepSeek 的 Claude Code。"
    ],
    "frames": [
     {
@@ -89,6 +55,35 @@
     {
      "layout": "phones",
      "phones": [
+      "home",
+      "approve_final"
+     ],
+     "head": "我的想法",
+     "points": [
+      "等 AI 的时候玩手机游戏",
+      "它要批准 → 员工推门进来",
+      "点一下就处理掉"
+     ]
+    },
+    {
+     "layout": "card",
+     "head": "支持的 AI",
+     "code": "Claude Code\nCodex\nClaude Code + DeepSeek"
+    }
+   ]
+  },
+  {
+   "id": "p_feat",
+   "chapter": "功能",
+   "lines": [
+    "每个 AI 对话就是一个员工，围巾颜色代表是哪家的 AI。",
+    "AI 干完活，员工会回来汇报，你可以听、跳过，或者看全文。",
+    "批准卡片和游戏是分开的，防止误点；你不理它，它也不会自己放行。"
+   ],
+   "frames": [
+    {
+     "layout": "phones",
+     "phones": [
       "console",
       "queue"
      ],
@@ -99,56 +94,6 @@
       "Codex：白色"
      ]
     },
-    {
-     "layout": "phones",
-     "phones": [
-      "home",
-      "queue"
-     ],
-     "head": "只有两种情况会进门",
-     "points": [
-      "要我拍板",
-      "活干完了回来汇报"
-     ]
-    }
-   ]
-  },
-  {
-   "id": "s_approve",
-   "chapter": "怎么玩",
-   "lines": [
-    "批准卡片和游戏是分开的，防止误点。",
-    "我不理它，它也不会自己放行。"
-   ],
-   "frames": [
-    {
-     "layout": "phones",
-     "phones": [
-      "approve_card",
-      "approved"
-     ],
-     "head": "滑一下，AI 接着干",
-     "points": [
-      "向右滑动批准",
-      "只有第一次决定有效"
-     ]
-    },
-    {
-     "layout": "card",
-     "head": "底线",
-     "big": "绝不自动放行",
-     "code": "手机一直没处理  →  退回电脑\nAI 照常在电脑上问你\n连接程序没开    →  一样退回电脑"
-    }
-   ]
-  },
-  {
-   "id": "s_report",
-   "chapter": "怎么玩",
-   "lines": [
-    "活干完了，员工回来汇报，可以听、可以跳过、也可以看全文。",
-    "听完还会留个包裹给我。"
-   ],
-   "frames": [
     {
      "layout": "phones",
      "phones": [
@@ -165,24 +110,24 @@
     {
      "layout": "phones",
      "phones": [
-      "gift_weird",
-      "gift_weird_open"
+      "approve_card",
+      "approved"
      ],
-     "head": "留下一个包裹",
+     "head": "滑一下，AI 接着干",
      "points": [
-      "点一下才拆开",
-      "零钱 · 情报 · 收藏品"
+      "向右滑动批准",
+      "只有第一次决定有效"
      ]
     }
    ]
   },
   {
-   "id": "s_game",
-   "chapter": "怎么玩",
+   "id": "p_game",
+   "chapter": "玩法",
    "lines": [
-    "平时它就是个回收站经营游戏：检查货，听顾客编故事，揭穿骗子，砍价。",
-    "每天打烊收货，还得按时还贷款。",
-    "赚的钱可以升级店铺、抽员工皮肤，还有一千多件收藏品和一堆成就。"
+    "不用管 AI 的时候，就在店里做生意：顾客来卖东西，你检查、砍价，揭穿说谎的骗子。",
+    "每天打烊结算，还要按时还贷款。",
+    "赚的钱可以升级店铺、抽员工皮肤；员工还会带回包裹，能开出一千多件收藏品。"
    ],
    "frames": [
     {
@@ -228,73 +173,26 @@
    ]
   },
   {
-   "id": "s_how",
-   "chapter": "怎么做的",
+   "id": "p_made",
+   "chapter": "用到的 AI",
    "lines": [
-    "整个游戏是我和 AI 一起做的：代码 Claude 写，画 Codex 画，音乐也是 AI 生成的。",
-    "我没让它直接写，而是先让它反过来问我，把想法问清楚再动手。",
-    "我就负责出主意和挑毛病。"
+    "整个游戏也是用 AI 做的：代码是 Claude 写的，美术是 Codex 画的，音乐是 ACE-Step 生成的。"
    ],
    "frames": [
     {
      "layout": "card",
-     "head": "分工",
-     "code": "想法、挑毛病   →  我\n写代码         →  Claude\n画画           →  Codex\n音乐           →  ACE-Step（本地）"
-    },
-    {
-     "layout": "card",
-     "head": "先让 AI “拷问”我",
-     "code": "平台用什么？        → 手机网页\n先接哪个 AI？      → Claude Code\n玩法参考什么？      → 《深空当铺》\n……一轮一轮问，直到理解一致"
-    },
-    {
-     "layout": "compare",
-     "left": "01-第一版界面-色块占位.jpg",
-     "right": "shop",
-     "left_label": "第一版",
-     "right_label": "现在",
-     "head": "“能不能好看一点？”"
+     "head": "整个游戏也是 AI 做的",
+     "code": "代码     →  Claude\n美术     →  Codex\n音乐     →  ACE-Step"
     }
    ]
   },
   {
-   "id": "s_fails",
-   "chapter": "翻车",
-   "lines": [
-    "中间也翻了不少车。第一次上 iPhone，直接白屏。",
-    "它说我连了十一台手机，其实全是它自己测试时连的。",
-    "还有揭穿了骗子还亏钱，最后它跑了两万次模拟，才把数值调好。"
-   ],
-   "frames": [
-    {
-     "layout": "phones",
-     "phones": [
-      "07-iPhone报错-需要HTTPS.png"
-     ],
-     "head": "翻车 #1：第一次上 iPhone",
-     "points": [
-      "“需要安全连接”",
-      "游戏直接白屏"
-     ]
-    },
-    {
-     "layout": "card",
-     "head": "翻车 #2",
-     "big": "“你上哪连了十一台手机？”",
-     "code": "已配对：11 台手机\n\n其实：1 台 iPhone\n     + 10 台测试时自己连的"
-    },
-    {
-     "layout": "card",
-     "head": "改完之后：模拟 2 万笔交易",
-     "code": "乱出价（直接 9 成）   每位顾客  -¥123\n不看线索（5→7 成）    每位顾客   +¥6\n认真玩（揭穿骗子）    每位顾客  +¥40"
-    }
-   ]
-  },
-  {
-   "id": "s_install",
+   "id": "p_get",
    "chapter": "怎么玩上",
    "lines": [
-    "想玩的话：GitHub 下载，解压，双击，手机扫码，再点一下连接你的 AI。",
-    "代码全部开源。"
+    "下载之后解压、双击，手机扫码，再一键连接你的 AI，就能玩了。",
+    "代码全部开源。",
+    "我是{name}，下期见。"
    ],
    "frames": [
     {
@@ -309,16 +207,7 @@
      "phones": [
       "deal"
      ]
-    }
-   ]
-  },
-  {
-   "id": "s_end",
-   "chapter": "",
-   "lines": [
-    "我是{name}，下期见。"
-   ],
-   "frames": [
+    },
     {
      "layout": "title",
      "title": "待机回收站",
