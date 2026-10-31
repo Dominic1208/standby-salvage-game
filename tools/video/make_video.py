@@ -14,6 +14,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
+from tts import voice_name
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 VOICE = ROOT / "build_tmp" / "video" / "voice"
@@ -266,8 +268,9 @@ def main():
         for i, line in enumerate(sc["lines"]):
             fr = sc["frames"][i]
             fr = last if fr == "same" else fr
-            voice = VOICE / f"{sc['id']}_{i:02d}.mp3"
+            voice = VOICE / voice_name(sc["id"], i, line.replace("{name}", script["name"]), script["voice"])
             dur = durations[voice.name] + GAP + (SCENE_PAD if i == len(sc["lines"]) - 1 else 0)
+            line = line.replace("{name}", script["name"])
             segs.append({"start": t, "end": t + dur, "frame": fr, "chapter": sc.get("chapter", ""), "text": line,
                          "voice": voice, "new": fr is not last})
             last = fr

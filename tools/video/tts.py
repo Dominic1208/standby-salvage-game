@@ -18,6 +18,12 @@ ROOT = HERE.parent.parent
 OUT = ROOT / "build_tmp" / "video" / "voice"
 
 
+def voice_name(scene_id: str, i: int, line: str, voice: str) -> str:
+    """文件名带上这句话的指纹：稿子改了就会重新配音，不会用到旧的。"""
+    import hashlib
+    return f"{scene_id}_{i:02d}_{hashlib.md5((voice + line).encode()).hexdigest()[:8]}.mp3"
+
+
 def duration(path: Path) -> float:
     r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
                        capture_output=True, text=True)
@@ -29,9 +35,12 @@ async def main() -> None:
     script = json.loads((HERE / "script.json").read_text("utf-8"))
     OUT.mkdir(parents=True, exist_ok=True)
     durations = {}
+    if "{" in script["name"]:
+        raise SystemExit("先在 script.json 里把 name 填成你的名字")
     for scene in script["scenes"]:
         for i, line in enumerate(scene["lines"]):
-            path = OUT / f"{scene['id']}_{i:02d}.mp3"
+            line = line.replace("{name}", script["name"])
+            path = OUT / voice_name(scene["id"], i, line, script["voice"])
             for attempt in range(6):   # 服务偶尔回 429（请求太多），等一会儿再试
                 if path.exists() and path.stat().st_size > 0:
                     break
