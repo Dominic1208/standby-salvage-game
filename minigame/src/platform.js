@@ -10,8 +10,13 @@ export const W = 720;
 function sysInfo() {
   if (api) {
     const s = (api.getWindowInfo ? api.getWindowInfo() : api.getSystemInfoSync());
-    return { w: s.windowWidth, h: s.windowHeight, dpr: s.pixelRatio || 2,
-      safeTop: (s.safeArea && s.safeArea.top) || s.statusBarHeight || 0 };
+    let safeTop = (s.safeArea && s.safeArea.top) || s.statusBarHeight || 0;
+    // 右上角是平台的胶囊菜单（…和关闭），我们的按钮不能和它重叠：顶部从胶囊下面开始
+    try {
+      const m = api.getMenuButtonBoundingClientRect && api.getMenuButtonBoundingClientRect();
+      if (m && m.bottom) safeTop = Math.max(safeTop, m.bottom + 6);
+    } catch {}
+    return { w: s.windowWidth, h: s.windowHeight, dpr: s.pixelRatio || 2, safeTop };
   }
   return { w: window.innerWidth, h: window.innerHeight, dpr: window.devicePixelRatio || 1, safeTop: 0 };
 }

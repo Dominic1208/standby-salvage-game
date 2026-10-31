@@ -19,7 +19,7 @@ MINI = ROOT / "minigame" / "data"
 OUT = ROOT / "minigame" / "build" / "data"
 
 SUPERSTITION = re.compile(r"算命|风水|护身符|退散符|画符|符咒|开光|鬼|冥婚|作法|驱邪|招魂|占卜|塔罗|转运|辟邪|神婆|半仙|灵异|"
-                          r"诅咒|求签|算卦|水逆|锦鲤|木鱼|玄学|八字|上香|财神|道士|僵尸")
+                          r"诅咒|求签|算卦|水逆|锦鲤|木鱼|玄学|八字|上香|财神|道士|僵尸|开过光|特别灵|灵验|保佑")
 # 按顺序替换；长的放前面
 REPLACE = [
     ("开光款", "限定款"),
@@ -58,13 +58,16 @@ def fix_text(s: str) -> str:
 
 
 def clean(o):
-    """递归：替换文字；列表里含迷信内容的字符串直接去掉。"""
+    """递归：替换文字；列表里含迷信内容的条目直接去掉。"""
     if isinstance(o, dict):
         return {k: (v if k in CODE_KEYS else clean(v)) for k, v in o.items()}
     if isinstance(o, list):
         out = []
         for v in o:
             if isinstance(v, str) and SUPERSTITION.search(v):
+                continue
+            # 列表里的一条（比如一个谎话 {story, part, text}）只要有一句不合规，整条去掉
+            if isinstance(v, dict) and any(SUPERSTITION.search(t) for t in visible_strings(v)):
                 continue
             out.append(clean(v))
         return out

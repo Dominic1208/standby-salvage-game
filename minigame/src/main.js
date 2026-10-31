@@ -46,7 +46,6 @@ function boot() {
   if (!had) { newPlayer(); save(); }
   if (G.runState !== "playing" && G.runState !== "day_end") G.runState = "day_end";
   setupShare();
-  whenArtReady(() => audio.bgm("shop"));   // 背景音乐在分包里
   loadArtPackage();
   if (!had) overlayData = { intro: true };
 }
@@ -67,6 +66,7 @@ onPointer("up", (x, y) => {
 
 function enterGame() {
   scene = "home";
+  whenArtReady(() => audio.bgm("shop"));   // 点了“开始”才放音乐（平台规范：不能自动播放）；音乐在分包里
   if (overlayData && overlayData.intro) nav.open("intro", { page: 0 });
 }
 
@@ -95,8 +95,10 @@ function drawSplash() {
   image("gift_big", W / 2 - 110, H * 0.2, 220, 220);
   text("待机回收站", W / 2, H * 0.2 + 280, 72, C.pink, "center", true);
   text("什么都收的回收站 · 员工出门探险", W / 2, H * 0.2 + 350, 26, C.text, "center");
-  const tips = "健康游戏忠告\n抵制不良游戏，拒绝盗版游戏。注意自我保护，谨防受骗上当。\n适度游戏益脑，沉迷游戏伤身。合理安排时间，享受健康生活。";
-  para(tips, 60, H - 330, W - 120, 22, C.muted, "center");
+  // 文字必须和平台规定的完全一致
+  const tips = ["《健康游戏忠告》", "抵制不良游戏，拒绝盗版游戏。", "注意自我保护，谨防受骗上当。",
+    "适度游戏益脑，沉迷游戏伤身。", "合理安排时间，享受健康生活。"];
+  tips.forEach((l, i) => text(l, W / 2, H - 300 + i * 38, i ? 23 : 25, C.muted, "center", i === 0));
   if (now() - splashAt > 1200) {
     ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now() / 400);
     text("点击屏幕开始", W / 2, H * 0.2 + 440, 32, C.neon, "center", true);
@@ -163,13 +165,21 @@ function drawOverlay() {
   }
 }
 
-/** 通用面板：纸色大卡片 + 标题 + 关闭。返回内容区 {x,y,w,h}。 */
+/** 面板左上角“返回”：图鉴里先回到系列列表，其余直接关掉。 */
+function panelBack() {
+  if (overlay === "book" && overlayData && overlayData.series) { overlayData = null; scroller.y = 0; return; }
+  if (overlay === "send" || overlay === "skinPick") { nav.open("staff"); return; }
+  nav.close();
+}
+
+/** 通用面板：纸色大卡片 + 返回 + 标题。返回内容区 {x,y,w,h}。 */
 function panel(title, sub = "") {
   dim(0.7);
-  const x = 20, y = SAFE_TOP + 30, w = W - 40, h = H - y - 30;
+  const x = 20, y = SAFE_TOP + 16, w = W - 40, h = H - y - 30;
   rrect(x, y, w, h, 24, C.paper, C.paperDark, 3);
-  text(title, x + 30, y + 46, 34, C.ink, "left", true);
-  button("关闭", x + w - 120, y + 20, 100, 52, () => nav.close(), { fill: C.paperDark, color: C.ink, size: 24 });
+  // 返回放左上角（平台规范：除结果页外左上角要有返回；右上角留给平台的胶囊菜单）
+  button("‹ 返回", x + 20, y + 20, 120, 52, () => panelBack(), { fill: C.paperDark, color: C.ink, size: 24 });
+  textFit(title, x + 160, y + 46, w - 180, 32, C.ink, "left", true);
   let top = y + 90;
   if (sub) { const sh = para(sub, x + 30, top, w - 60, 21, C.inkSoft); top += sh + 10; }
   return { x: x + 20, y: top, w: w - 40, h: y + h - top - 20 };
@@ -439,7 +449,6 @@ function drawBook() {
   }
   const list = all.filter((c) => c.series === series);
   const r = panel(series, `${list.filter((c) => G.collection[c.id]).length} / ${list.length}`);
-  button("‹ 返回", r.x + r.w - 280, SAFE_TOP + 50, 140, 52, () => { overlayData = null; scroller.y = 0; }, { fill: C.paperDark, color: C.ink, size: 22 });
   let y = scroller.begin(r.x, r.y, r.w, r.h);
   for (const c of list) {
     const own = G.collection[c.id];
@@ -532,8 +541,8 @@ function drawAchToasts() {
   G.achToasts = G.achToasts.filter((x) => t - x.t0 < 3200);
   G.achToasts.slice(0, 2).forEach((x, i) => {
     const k = Math.min(1, (t - x.t0) / 300), out = Math.max(0, (t - x.t0 - 2800) / 400);
-    // 放在屏幕下方中间，不挡右上角的“关闭”
-    const y = H - 150 - i * 100 + (1 - k) * 60;
+    // 放在顶部中间（胶囊菜单下面），不挡对话框底部的按钮
+    const y = SAFE_TOP + 90 + i * 100 - (1 - k) * 60;
     const bx = W / 2 - 200;
     ctx.globalAlpha = 1 - out;
     rrect(bx, y, 400, 84, 16, "rgba(20,14,10,0.95)", C.neon, 2);

@@ -49,7 +49,7 @@ for (const t of targets) {
     bundle: true, minify: true, format: "iife", target: "es2017",
     outfile: path.join(out, "game.js"),
     loader: { ".json": "json" },
-    legalComments: "none",
+    legalComments: "none", charset: "utf8",
   });
   copyDir(ASSETS, out);
   if (t === "web") {

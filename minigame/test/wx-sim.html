@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>微信小游戏模拟</title>
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none}
+canvas{display:block}
+/* 模拟微信右上角的胶囊菜单（… 和 ○），看我们的按钮会不会被它挡住 */
+#capsule{position:fixed;border:1px solid rgba(255,255,255,.5);border-radius:16px;background:rgba(0,0,0,.35);
+  color:#fff;font:14px sans-serif;display:flex;align-items:center;justify-content:space-around;pointer-events:none;z-index:9}
+</style></head><body>
+<div id="capsule"><span>···</span><span>|</span><span>◎</span></div>
+<script>
+// 一个极简的 wx 模拟：只实现游戏用到的接口，行为尽量和真机一致。
+// 用 dist/wechat 里的真实打包结果（game.js + game.json 的分包）跑，检查微信那条代码路径。
+(function () {
+  const W = innerWidth, H = innerHeight, STATUS = 44;
+  const menu = { width: 87, height: 32, top: STATUS + 4, right: W - 7, left: W - 7 - 87, bottom: STATUS + 4 + 32 };
+  const cap = document.getElementById("capsule");
+  Object.assign(cap.style, { left: menu.left + "px", top: menu.top + "px", width: menu.width + "px", height: menu.height + "px" });
+  let first = true;
+  const touch = { start: [], move: [], end: [], cancel: [] };
+  const ev = (e) => ({ changedTouches: [{ clientX: e.clientX, clientY: e.clientY }], touches: [] });
+  let down = false;
+  addEventListener("pointerdown", (e) => { down = true; touch.start.forEach((f) => f(ev(e))); });
+  addEventListener("pointermove", (e) => { if (down) touch.move.forEach((f) => f(ev(e))); });
+  addEventListener("pointerup", (e) => { if (down) { down = false; touch.end.forEach((f) => f(ev(e))); } });
+  const showFns = [];
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) showFns.forEach((f) => f({})); });
+  window.__wxLog = [];
+  window.wx = {
+    getWindowInfo: () => ({ windowWidth: W, windowHeight: H, pixelRatio: devicePixelRatio || 2, statusBarHeight: STATUS,
+      safeArea: { top: STATUS, bottom: H, left: 0, right: W, width: W, height: H - STATUS } }),
+    getSystemInfoSync() { return this.getWindowInfo(); },
+    getMenuButtonBoundingClientRect: () => ({ ...menu }),
+    createCanvas() {
+      const c = document.createElement("canvas");
+      if (first) { first = false; c.style.width = W + "px"; c.style.height = H + "px"; document.body.appendChild(c); }
+      return c;
+    },
+    createImage: () => new Image(),
+    getStorageSync: (k) => localStorage.getItem("wx:" + k) || "",
+    setStorageSync: (k, v) => localStorage.setItem("wx:" + k, v),
+    onTouchStart: (f) => touch.start.push(f), onTouchMove: (f) => touch.move.push(f),
+    onTouchEnd: (f) => touch.end.push(f), onTouchCancel: (f) => touch.cancel.push(f),
+    loadSubpackage({ name, success, fail }) {
+      __wxLog.push("loadSubpackage " + name);
+      // 真机上分包要下载一会儿：模拟 400ms
+      setTimeout(() => fetch(name + "/game.js").then((r) => (r.ok ? success && success() : fail && fail())).catch(() => fail && fail()), 400);
+      return { onProgressUpdate() {} };
+    },
+    createInnerAudioContext() {
+      const a = new Audio();
+      const ctx = {
+        set src(v) { a.src = v; }, get src() { return a.src; },
+        set loop(v) { a.loop = v; }, set volume(v) { a.volume = v; }, get paused() { return a.paused; },
+        play() { a.play().catch(() => {}); }, pause() { a.pause(); }, stop() { a.pause(); a.currentTime = 0; },
+        destroy() { a.pause(); a.src = ""; }, onEnded(f) { a.onended = f; }, onError(f) { a.onerror = f; },
+      };
+      return ctx;
+    },
+    onShow: (f) => showFns.push(f),
+    vibrateShort: () => __wxLog.push("vibrate"),
+    showShareMenu: (o) => __wxLog.push("showShareMenu " + JSON.stringify(o.menus)),
+    onShareAppMessage: (f) => __wxLog.push("share: " + f().title),
+  };
+})();
+</script>
+<script>
+// 后台标签页里 requestAnimationFrame 会停，用定时器代替，方便自动测试
+window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
+/** 调试：把画面（连同模拟的胶囊）存成 build/shots/<name>.png */
+window.simShot = async (name) => {
+  const c = document.querySelector("canvas"), k = c.width / innerWidth;
+  const o = document.createElement("canvas"); o.width = c.width; o.height = c.height;
+  const g = o.getContext("2d"); g.drawImage(c, 0, 0);
+  const m = wx.getMenuButtonBoundingClientRect();
+  g.strokeStyle = "#fff"; g.lineWidth = 2 * k; g.fillStyle = "rgba(0,0,0,.4)";
+  g.beginPath(); g.roundRect(m.left * k, m.top * k, m.width * k, m.height * k, 16 * k); g.fill(); g.stroke();
+  await fetch("/__shot?name=" + encodeURIComponent(name), { method: "POST", body: o.toDataURL("image/png") });
+  return name;
+};
+/** 调试：按逻辑坐标（宽 720）点一下 */
+window.simTap = (lx, ly) => {
+  const s = innerWidth / 720, e = { clientX: lx * s, clientY: ly * s, bubbles: true };
+  dispatchEvent(new PointerEvent("pointerdown", e)); dispatchEvent(new PointerEvent("pointerup", e));
+};
+</script>
+<script src="game.js"></script>
+</body></html>

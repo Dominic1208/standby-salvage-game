@@ -433,7 +433,9 @@ function addStaff() {
   const used = new Set(G.staff.map((s) => s.name));
   const name = pick(staffData.names.filter((n) => !used.has(n))) || `员工${G.staff.length + 1}`;
   const owned = Object.keys(G.skins);
-  G.staff.push({ id: `s${Date.now().toString(36)}${staffSeq++}`, name, look: pick(owned) || "adv_01", status: "idle" });
+  const usedLooks = new Set(G.staff.map((s) => s.look));
+  const look = pick(owned.filter((l) => !usedLooks.has(l))) || pick(owned) || "adv_01";   // 先用没人穿的造型
+  G.staff.push({ id: `s${Date.now().toString(36)}${staffSeq++}`, name, look, status: "idle" });
   setStat("staff", G.staff.length);
 }
 export const nextHireCost = () => G.staff.length < staffData.max_staff ? staffData.hire_cost[G.staff.length] : null;
