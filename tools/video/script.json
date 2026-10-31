@@ -1,15 +1,46 @@
 {
- "_doc": "讲解视频（介绍版）：第一人称，只讲它是什么、功能、玩法、用了哪些 AI，不讲制作细节和翻车。每段 scene 的 lines 是逐句解说；frames 和 lines 一一对应。{name} 换成作者的名字。图片先在 build_tmp/video/shots/ 找，再到 devlog/screens/ 找。",
+ "_doc": "讲解视频（介绍版）：先放钩子（AI 做的、没写一行代码），再打招呼；口语、轻松，只讲为什么做、功能、玩法、怎么玩上。每段 scene 的 lines 是逐句解说；frames 和 lines 一一对应。{name} 换成作者的名字。",
  "name": "竹子",
  "voice": "zh-CN-YunxiNeural",
  "rate": "+6%",
  "scenes": [
   {
-   "id": "p_intro",
+   "id": "h_hook",
+   "chapter": "",
+   "lines": [
+    "这是一个用 AI 做的游戏。",
+    "我差不多就花了一天，全程一行代码都没写。",
+    "代码是 Claude 写的，美术是 Codex 画的，连背景音乐都是 AI 生成的。"
+   ],
+   "frames": [
+    {
+     "layout": "phones",
+     "phones": [
+      "shop",
+      "exposed",
+      "gacha_result"
+     ],
+     "head": "一个用 AI 做的游戏",
+     "points": []
+    },
+    {
+     "layout": "card",
+     "head": "差不多一天",
+     "big": "一行代码都没写"
+    },
+    {
+     "layout": "card",
+     "head": "全是 AI 做的",
+     "code": "代码     →  Claude\n美术     →  Codex\n音乐     →  ACE-Step"
+    }
+   ]
+  },
+  {
+   "id": "h_hello",
    "chapter": "开场",
    "lines": [
     "大家好，我是{name}。",
-    "给大家介绍一个我用 AI 做的小游戏，叫《待机回收站》。"
+    "今天给大家看看这个小东西，它叫《待机回收站》。"
    ],
    "frames": [
     {
@@ -31,26 +62,24 @@
    ]
   },
   {
-   "id": "p_what",
-   "chapter": "它是什么",
+   "id": "h_why",
+   "chapter": "为什么做它",
    "lines": [
-    "它是一个手机上的回收站经营游戏，同时也是你电脑上 AI 的遥控器。",
-    "你在电脑上让 AI 写代码，它要你批准的时候，手机上会有个员工推门进来，你滑一下就批了，不用守在电脑前。",
-    "现在支持 Claude Code、Codex，还有接了 DeepSeek 的 Claude Code。"
+    "用 AI 写代码的朋友应该都有这个体会：它干活，你干等。",
+    "等就算了，它还隔三岔五问你一句：这命令能跑吗？你不点，它就一直卡那儿。",
+    "所以我干脆做了个游戏：它要我点头的时候，店里就进来一个员工找我，我在手机上滑一下，搞定。",
+    "Claude Code、Codex 都能接，接了 DeepSeek 的 Claude Code 也行。"
    ],
    "frames": [
     {
-     "layout": "diagram",
-     "head": "它分成两半",
-     "boxes": [
-      "电脑上的 AI\nClaude · Codex · DeepSeek",
-      "连接程序\n双击就能跑",
-      "手机网页游戏\n扫码就能玩"
-     ],
-     "arrows": [
-      "请求 →\n← 批准",
-      "请求 →\n← 批准"
-     ]
+     "layout": "card",
+     "head": "它干活，你干等",
+     "big": "……"
+    },
+    {
+     "layout": "card",
+     "head": "它还时不时问你",
+     "code": "Allow this command?\n\n  npm run build && npm test\n\n  [ Yes ]   [ No ]"
     },
     {
      "layout": "phones",
@@ -73,12 +102,12 @@
    ]
   },
   {
-   "id": "p_feat",
+   "id": "h_feat",
    "chapter": "功能",
    "lines": [
-    "每个 AI 对话就是一个员工，围巾颜色代表是哪家的 AI。",
-    "AI 干完活，员工会回来汇报，你可以听、跳过，或者看全文。",
-    "批准卡片和游戏是分开的，防止误点；你不理它，它也不会自己放行。"
+    "每开一个 AI 对话，店里就多一个员工，看围巾颜色就知道是哪家的 AI。",
+    "活干完了，他们会回来跟你汇报，想听就听，不想听直接跳过。",
+    "放心，批准卡片跟游戏是分开的，不会手滑点错；你不理它，它也绝不会自己放行。"
    ],
    "frames": [
     {
@@ -122,14 +151,25 @@
    ]
   },
   {
-   "id": "p_game",
+   "id": "h_game",
    "chapter": "玩法",
    "lines": [
-    "不用管 AI 的时候，就在店里做生意：顾客来卖东西，你检查、砍价，揭穿说谎的骗子。",
-    "每天打烊结算，还要按时还贷款。",
-    "赚的钱可以升级店铺、抽员工皮肤；员工还会带回包裹，能开出一千多件收藏品。"
+    "不等 AI 的时候，这就是个回收站经营游戏。",
+    "顾客来卖东西，你得验货、砍价，还得防着有人编故事骗你。",
+    "每天打烊结算，还有贷款要还，一不小心就破产。",
+    "赚了钱可以升级店铺、抽员工皮肤；员工出门还会给你带包裹，里面有一千多件收藏品等你集。"
    ],
    "frames": [
+    {
+     "layout": "phones",
+     "phones": [
+      "shop"
+     ],
+     "head": "什么都收的回收站",
+     "points": [
+      "1800 多种货"
+     ]
+    },
     {
      "layout": "phones",
      "phones": [
@@ -173,26 +213,12 @@
    ]
   },
   {
-   "id": "p_made",
-   "chapter": "用到的 AI",
-   "lines": [
-    "整个游戏也是用 AI 做的：代码是 Claude 写的，美术是 Codex 画的，音乐是 ACE-Step 生成的。"
-   ],
-   "frames": [
-    {
-     "layout": "card",
-     "head": "整个游戏也是 AI 做的",
-     "code": "代码     →  Claude\n美术     →  Codex\n音乐     →  ACE-Step"
-    }
-   ]
-  },
-  {
-   "id": "p_get",
+   "id": "h_get",
    "chapter": "怎么玩上",
    "lines": [
-    "下载之后解压、双击，手机扫码，再一键连接你的 AI，就能玩了。",
-    "代码全部开源。",
-    "我是{name}，下期见。"
+    "想玩的话，GitHub 下载，双击，手机扫个码，连上你的 AI 就行。",
+    "代码全部开源，你可以让你自己的 AI 随便改。",
+    "好啦，我是{name}，咱们下期见！"
    ],
    "frames": [
     {
