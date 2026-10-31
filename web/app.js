@@ -67,8 +67,12 @@ const sound = {
       this.sfxGain.connect(this.gain);
       this.setVolume(this.music, this.sfxVol);
     }
-    if (this.ctx.state === "suspended") this.ctx.resume();
-    if (this.wantBgm && this.bgmName !== this.wantBgm) this.bgm(this.wantBgm);
+    // iOS 切到别的应用再回来，状态是 "interrupted"（不只是 "suspended"），都要恢复；恢复后把背景音乐重新接上
+    if (this.ctx.state !== "running") {
+      this.ctx.resume().then(() => { if (this.wantBgm) this.bgm(this.wantBgm); }).catch(() => {});
+      return;
+    }
+    if (this.wantBgm && (this.bgmName !== this.wantBgm || !this.bgmNode)) this.bgm(this.wantBgm);
   },
   async load(name) {
     if (this.buffers.has(name)) return this.buffers.get(name);
@@ -100,9 +104,10 @@ const sound = {
       const vol = this.ctx.createGain();
       vol.gain.value = 0.35;
       src.buffer = buf;
-      src.loop = name === "shop";
+      src.loop = true;  // 主页音乐原来只播一遍，播完就没声了
       src.connect(vol).connect(this.musicGain);
       src.start();
+      src.onended = () => { if (this.bgmNode === src) this.bgmNode = null; };
       this.bgmNode = src;
     } catch {}
   },
@@ -116,6 +121,11 @@ const sound = {
 $("sound-btn").textContent = sound.muted ? "🔇" : "🔊";
 $("sound-btn").onclick = (e) => { e.stopPropagation(); sound.unlock(); sound.toggle(); };
 document.addEventListener("pointerdown", () => sound.unlock(), { capture: true });
+// 点游戏画面（里面那一层网页）也要能恢复声音：外层收不到里层的点击，所以在里层也挂一个
+$("game").addEventListener("load", () => {
+  try { $("game").contentWindow.document.addEventListener("pointerdown", () => sound.unlock(), { capture: true }); } catch {}
+});
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") sound.unlock(); });
 
 // ---------------- 游戏通讯 ----------------
 const game = $("game");

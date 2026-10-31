@@ -99,6 +99,8 @@ var gift_opened := false
 var book_layer: ColorRect
 var book_grid: GridContainer
 var book_count: Label
+var book_close: Button
+var book_series := ""                ## 图鉴正在看的系列；空 = 系列列表
 const SAVE_PATH := "user://save.json"
 ## 每个 AI 工具一种代表色：同一个工具的员工共用颜色，长相不同
 const AGENT_COLORS := {"claude": Color("e8875f"), "codex": Color("f4f4f4"), "deepseek": Color("4d6bfe"),
@@ -303,6 +305,8 @@ func _on_challenge() -> void:
 	_log(r.text, COL_OK if r.mood in ["caught", "confess"] else COL_BAD)
 	if r.mood in ["caught", "confess"]:
 		_pulse(ask_stamp)
+		tag_label.text = "【%s】揭穿了：它其实只值 ¥%d 左右" % [deal.item.get("tag", ""), deal.ask]
+		tag_label.add_theme_color_override("font_color", COL_OK)
 		_change_rep(1, "揭穿了骗子")
 		_sfx("caught")
 	else:
@@ -987,10 +991,10 @@ func _on_gift_action() -> void:
 			var c := _roll_collectible(tier)
 			var fresh := not collection.has(c.id)
 			collection[c.id] = int(collection.get(c.id, 0)) + 1
-			gift_art.texture = _art("col_" + str(c.id))
+			gift_art.texture = _art(str(c.get("art", "col_" + str(c.id))))
 			text = "%s收藏品：%s %s\n\n%s" % ["新" if fresh else "重复的", c.name, "★".repeat(int(c.rarity)), c.desc]
 			if not fresh:
-				var refund := 30 * int(c.rarity)
+				var refund := 5 * int(c.rarity)
 				cash += refund
 				text += "\n\n（重复的卖给了收藏贩子 +¥%d）" % refund
 		"intel":
@@ -1052,27 +1056,91 @@ func _pick_text(o: Dictionary) -> String:
 # ---------------- 图鉴 ----------------
 
 func _open_book() -> void:
+	_show_book_series()
+	book_layer.visible = true
+	_sfx("tap")
+
+
+## 收藏品按系列分组（保持 gifts.json 里的顺序）
+func _book_groups() -> Array:
+	var order: Array = []
+	var groups := {}
+	for c in gifts_data.collectibles:
+		var s := str(c.get("series", "其他"))
+		if not groups.has(s):
+			groups[s] = []
+			order.append(s)
+		groups[s].append(c)
+	return order.map(func(s): return {"name": s, "items": groups[s]})
+
+
+## 第一层：系列列表，每个系列显示集了几件。一千多件一次全排出来手机会卡，所以分两层
+func _show_book_series() -> void:
+	book_series = ""
 	for c in book_grid.get_children():
 		c.queue_free()
+	book_grid.columns = 2
+	for g in _book_groups():
+		var got := 0
+		for c in g.items:
+			if collection.has(c.id):
+				got += 1
+		var first: Dictionary = g.items[0]
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(0, 150)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.icon = _art(str(first.get("art", "col_" + str(first.id))))
+		btn.expand_icon = true
+		btn.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		btn.text = "%s
+%d / %d" % [g.name, got, g.items.size()]
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		btn.add_theme_font_size_override("font_size", 20)
+		var bg := _box(Color(str(first.get("tint", "#d9c7a8"))).lerp(COL_PAPER, 0.55), 14)
+		btn.add_theme_stylebox_override("normal", bg)
+		btn.add_theme_stylebox_override("hover", bg)
+		btn.add_theme_stylebox_override("pressed", bg)
+		btn.add_theme_color_override("font_color", COL_INK)
+		btn.add_theme_color_override("font_hover_color", COL_INK)
+		if got == 0:
+			btn.modulate = Color(1, 1, 1, 0.6)
+		var series_name: String = g.name
+		btn.pressed.connect(func() -> void: _show_book_items(series_name))
+		book_grid.add_child(btn)
+	book_count.text = "已收集 %d / %d　（收藏品跨局保留，点系列看详情）" % [collection.size(), gifts_data.collectibles.size()]
+	book_close.text = "关闭"
+
+
+## 第二层：一个系列里的每一件，没拿到的显示剪影和“？？？”
+func _show_book_items(series: String) -> void:
+	book_series = series
+	for c in book_grid.get_children():
+		c.queue_free()
+	book_grid.columns = 4
+	var got := 0
 	for c in gifts_data.collectibles:
+		if str(c.get("series", "其他")) != series:
+			continue
 		var have := collection.has(c.id)
+		got += int(have)
 		var cell := VBoxContainer.new()
 		cell.custom_minimum_size = Vector2(140, 0)
 		var icon := TextureRect.new()
 		icon.custom_minimum_size = Vector2(120, 120)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.texture = _art("col_" + str(c.id))
+		icon.texture = _art(str(c.get("art", "col_" + str(c.id))))
 		if not have:
 			icon.modulate = Color(0, 0, 0, 0.55)
 		cell.add_child(icon)
-		var cname := _label(str(c.name) if have else "？？？", 18, COL_INK if have else COL_INK_SOFT)
+		var cname := _label((str(c.name) + "
+" + "★".repeat(int(c.rarity))) if have else "？？？", 16,
+			COL_INK if have else COL_INK_SOFT, true)
 		cname.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cell.add_child(cname)
 		book_grid.add_child(cell)
-	book_count.text = "已收集 %d / %d　（收藏品跨局保留）" % [collection.size(), gifts_data.collectibles.size()]
-	book_layer.visible = true
-	_sfx("tap")
+	book_count.text = "%s　已收集 %d 件" % [series, got]
+	book_close.text = "返回系列"
 
 
 # ---------------- 存档 ----------------
@@ -1296,6 +1364,9 @@ func _build_hud() -> Control:
 	sign_label.add_theme_color_override("font_outline_color", Color(1, 0.42, 0.55, 0.25))
 	sign_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sign_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# 窄屏放不下就省略标题，不能把整排撑宽（否则整页右边被切掉）
+	sign_label.clip_text = true
+	sign_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	row.add_child(sign_label)
 
 	book_btn = _button("图鉴", Color(0, 0, 0, 0), COL_NEON, COL_NEON)
@@ -1322,6 +1393,8 @@ func _build_hud() -> Control:
 	var info_row := HBoxContainer.new()
 	order_label = _label("", 20, COL_NEON)
 	order_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	order_label.clip_text = true
+	order_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	info_row.add_child(order_label)
 	hud_rep = _label("", 20, COL_OK)
 	info_row.add_child(hud_rep)
@@ -1796,9 +1869,13 @@ func _build_book_layer() -> void:
 	book_grid.add_theme_constant_override("v_separation", 14)
 	scroll.add_child(book_grid)
 	col.add_child(scroll)
-	var close := _button("关闭", COL_NEON, Color("1a1208"))
-	close.pressed.connect(func() -> void: book_layer.visible = false)
-	col.add_child(close)
+	book_close = _button("关闭", COL_NEON, Color("1a1208"))
+	book_close.pressed.connect(func() -> void:
+		if book_series != "":
+			_show_book_series()
+		else:
+			book_layer.visible = false)
+	col.add_child(book_close)
 	card.add_child(col)
 	margin.add_child(card)
 	book_layer.add_child(margin)

@@ -1,182 +1,9215 @@
 {
-  "_doc": "员工带回的包裹。处理一条 AI 请求（批准或拒绝都算，奖励一样）给 small；AI 完成任务、你确认汇报给 big。daily_cap 是每天最多拆几个，防止刷。outcomes 按 weight 抽：kind = cash / collectible / intel / rep / nothing。 员工每次回来都会带包裹，大部分是钱。",
-  "daily_cap": 8,
-  "tiers": {
-    "small": {
-      "art": "gift_small",
-      "title": "一个小纸包",
-      "bonus": 1.0
-    },
-    "big": {
-      "art": "gift_big",
-      "title": "一只结实的木箱",
-      "bonus": 2.0
-    },
-    "weird": {
-      "art": "gift_weird",
-      "title": "一个在发抖的布包",
-      "bonus": 1.5
-    }
+ "_doc": "员工带回的包裹。处理一条 AI 请求（批准或拒绝都算，奖励一样）给 small；AI 完成任务、你确认汇报给 big。daily_cap 是每天最多拆几个，防止刷。outcomes 按 weight 抽：kind = cash / collectible / intel / rep / nothing。 员工每次回来都会带包裹，大部分是钱。",
+ "daily_cap": 8,
+ "tiers": {
+  "small": {
+   "art": "gift_small",
+   "title": "一个小纸包",
+   "bonus": 1.0
   },
-  "weird_chance": 0.12,
-  "outcomes": [
-    {
-      "kind": "cash",
-      "min": 80,
-      "max": 260,
-      "weight": 44,
-      "text": [
-        "员工：“路上捡到的，交公！”",
-        "员工：“客户给的小费，分你一半。”",
-        "员工：“帮人修了个 bug，人家硬塞的。”"
-      ]
-    },
-    {
-      "kind": "cash",
-      "min": 300,
-      "max": 700,
-      "weight": 12,
-      "text": [
-        "员工：“老板，我好像发现了一个宝藏……”",
-        "员工：“顺手卖掉了我在外面捡的破烂，嘿嘿。”"
-      ]
-    },
-    {
-      "kind": "cash",
-      "min": -150,
-      "max": -30,
-      "weight": 5,
-      "text": [
-        "员工：“这是我的奶茶报销单。”",
-        "员工：“对不起，我把别人的东西碰坏了，赔了点钱……”",
-        "员工：“停车罚单，算公司的吧？”"
-      ]
-    },
-    {
-      "kind": "collectible",
-      "weight": 20
-    },
-    {
-      "kind": "intel",
-      "count": 2,
-      "weight": 9,
-      "text": [
-        "员工：“我打听到了些门道，下两件货我帮你看一眼。”"
-      ]
-    },
-    {
-      "kind": "rep",
-      "amount": 1,
-      "weight": 6,
-      "text": [
-        "员工：“我在外面替你说了好话，街坊都说你实在。”"
-      ]
-    },
-    {
-      "kind": "nothing",
-      "weight": 2,
-      "text": [
-        "包裹里只有一张便条：“下次一定。”",
-        "包裹里是空的。员工：“……我明明装了东西的。”"
-      ]
-    }
-  ],
-  "collectibles": [
-    {
-      "id": "woodfish",
-      "name": "电子木鱼",
-      "rarity": 1,
-      "desc": "敲一下，功德 +1。敲一百下，邻居 -1。"
-    },
-    {
-      "id": "amulet",
-      "name": "退退退护身符",
-      "rarity": 1,
-      "desc": "专退霉运、前任和周一。"
-    },
-    {
-      "id": "duck",
-      "name": "情绪稳定的鸭子",
-      "rarity": 1,
-      "desc": "无论发生什么，它都是这个表情。"
-    },
-    {
-      "id": "squish",
-      "name": "压力怪捏捏",
-      "rarity": 1,
-      "desc": "替你承受了它不该承受的。"
-    },
-    {
-      "id": "badge",
-      "name": "打工人工牌",
-      "rarity": 1,
-      "desc": "挂绳上的磨损，是岁月，也是班味。"
-    },
-    {
-      "id": "calendar",
-      "name": "摸鱼台历",
-      "rarity": 2,
-      "desc": "每一页都写着：今天也适合摸鱼。"
-    },
-    {
-      "id": "alarm",
-      "name": "摔裂的早八闹钟",
-      "rarity": 2,
-      "desc": "它尽力了，是你没有。"
-    },
-    {
-      "id": "milktea",
-      "name": "续命奶茶",
-      "rarity": 1,
-      "desc": "全糖去冰加珍珠，今天的快乐来源。"
-    },
-    {
-      "id": "pie",
-      "name": "老板画的大饼",
-      "rarity": 2,
-      "desc": "又大又圆，看得见，吃不着。"
-    },
-    {
-      "id": "egg",
-      "name": "电子宠物蛋",
-      "rarity": 2,
-      "desc": "里面的小东西饿了三年，还在等你。"
-    },
-    {
-      "id": "koi",
-      "name": "锦鲤贴纸",
-      "rarity": 3,
-      "desc": "转发了吗？没转发的话运气减半。"
-    },
-    {
-      "id": "cat",
-      "name": "纸箱里的橘猫",
-      "rarity": 3,
-      "desc": "不是你选择了它，是它选择了你的纸箱。"
-    },
-    {
-      "id": "selfie",
-      "name": "员工的自拍",
-      "rarity": 3,
-      "desc": "AI 员工在外面拍的，比了个耶。"
-    },
-    {
-      "id": "ticket",
-      "name": "过期彩票",
-      "rarity": 2,
-      "desc": "差一位数就中了，每张都差一位数。"
-    },
-    {
-      "id": "alien",
-      "name": "小绿人摆件",
-      "rarity": 3,
-      "desc": "员工坚持说它是自己走进包裹的。"
-    },
-    {
-      "id": "trophy",
-      "name": "一键三连奖杯",
-      "rarity": 3,
-      "desc": "点赞、投币、收藏，样样不落。"
-    }
-  ]
+  "big": {
+   "art": "gift_big",
+   "title": "一只结实的木箱",
+   "bonus": 2.0
+  },
+  "weird": {
+   "art": "gift_weird",
+   "title": "一个在发抖的布包",
+   "bonus": 1.5
+  }
+ },
+ "weird_chance": 0.12,
+ "outcomes": [
+  {
+   "kind": "cash",
+   "min": 10,
+   "max": 20,
+   "weight": 44,
+   "text": [
+    "员工：“路上捡到的钱，按规矩上交。”",
+    "员工：“客户给的小费，按规矩上交一半。”",
+    "员工：“帮人修了个 bug，人家给的辛苦费，交一半给店里。”",
+    "员工：“跑腿费，按规矩上交。”"
+   ]
+  },
+  {
+   "kind": "cash",
+   "min": 30,
+   "max": 60,
+   "weight": 12,
+   "text": [
+    "员工：“顺手卖掉了外面捡的破烂，按规矩上交一半。”",
+    "员工：“接了个私活，按规矩上交店里一半。”"
+   ]
+  },
+  {
+   "kind": "cash",
+   "min": -30,
+   "max": -10,
+   "weight": 5,
+   "text": [
+    "员工：“这是我的奶茶报销单。”",
+    "员工：“对不起，我把别人的东西碰坏了，赔了点钱……”",
+    "员工：“停车罚单，算公司的吧？”"
+   ]
+  },
+  {
+   "kind": "collectible",
+   "weight": 20
+  },
+  {
+   "kind": "intel",
+   "count": 2,
+   "weight": 9,
+   "text": [
+    "员工：“我打听到了些门道，下两件货我帮你看一眼。”"
+   ]
+  },
+  {
+   "kind": "rep",
+   "amount": 1,
+   "weight": 6,
+   "text": [
+    "员工：“我在外面替你说了好话，街坊都说你实在。”"
+   ]
+  },
+  {
+   "kind": "nothing",
+   "weight": 2,
+   "text": [
+    "包裹里只有一张便条：“下次一定。”",
+    "包裹里是空的。员工：“……我明明装了东西的。”"
+   ]
+  }
+ ],
+ "collectibles": [
+  {
+   "id": "woodfish",
+   "name": "电子木鱼",
+   "rarity": 1,
+   "desc": "敲一下，功德 +1。敲一百下，邻居 -1。",
+   "series": "开店纪念",
+   "art": "col_woodfish"
+  },
+  {
+   "id": "amulet",
+   "name": "退退退护身符",
+   "rarity": 1,
+   "desc": "专退霉运、前任和周一。",
+   "series": "开店纪念",
+   "art": "col_amulet"
+  },
+  {
+   "id": "duck",
+   "name": "情绪稳定的鸭子",
+   "rarity": 1,
+   "desc": "无论发生什么，它都是这个表情。",
+   "series": "开店纪念",
+   "art": "col_duck"
+  },
+  {
+   "id": "squish",
+   "name": "压力怪捏捏",
+   "rarity": 1,
+   "desc": "替你承受了它不该承受的。",
+   "series": "开店纪念",
+   "art": "col_squish"
+  },
+  {
+   "id": "badge",
+   "name": "打工人工牌",
+   "rarity": 1,
+   "desc": "挂绳上的磨损，是岁月，也是班味。",
+   "series": "开店纪念",
+   "art": "col_badge"
+  },
+  {
+   "id": "calendar",
+   "name": "摸鱼台历",
+   "rarity": 2,
+   "desc": "每一页都写着：今天也适合摸鱼。",
+   "series": "开店纪念",
+   "art": "col_calendar"
+  },
+  {
+   "id": "alarm",
+   "name": "摔裂的早八闹钟",
+   "rarity": 2,
+   "desc": "它尽力了，是你没有。",
+   "series": "开店纪念",
+   "art": "col_alarm"
+  },
+  {
+   "id": "milktea",
+   "name": "续命奶茶",
+   "rarity": 1,
+   "desc": "全糖去冰加珍珠，今天的快乐来源。",
+   "series": "开店纪念",
+   "art": "col_milktea"
+  },
+  {
+   "id": "pie",
+   "name": "老板画的大饼",
+   "rarity": 2,
+   "desc": "又大又圆，看得见，吃不着。",
+   "series": "开店纪念",
+   "art": "col_pie"
+  },
+  {
+   "id": "egg",
+   "name": "电子宠物蛋",
+   "rarity": 2,
+   "desc": "里面的小东西饿了三年，还在等你。",
+   "series": "开店纪念",
+   "art": "col_egg"
+  },
+  {
+   "id": "koi",
+   "name": "锦鲤贴纸",
+   "rarity": 3,
+   "desc": "转发了吗？没转发的话运气减半。",
+   "series": "开店纪念",
+   "art": "col_koi"
+  },
+  {
+   "id": "cat",
+   "name": "纸箱里的橘猫",
+   "rarity": 3,
+   "desc": "不是你选择了它，是它选择了你的纸箱。",
+   "series": "开店纪念",
+   "art": "col_cat"
+  },
+  {
+   "id": "selfie",
+   "name": "员工的自拍",
+   "rarity": 3,
+   "desc": "AI 员工在外面拍的，比了个耶。",
+   "series": "开店纪念",
+   "art": "col_selfie"
+  },
+  {
+   "id": "ticket",
+   "name": "过期彩票",
+   "rarity": 2,
+   "desc": "差一位数就中了，每张都差一位数。",
+   "series": "开店纪念",
+   "art": "col_ticket"
+  },
+  {
+   "id": "alien",
+   "name": "小绿人摆件",
+   "rarity": 3,
+   "desc": "员工坚持说它是自己走进包裹的。",
+   "series": "开店纪念",
+   "art": "col_alien"
+  },
+  {
+   "id": "trophy",
+   "name": "一键三连奖杯",
+   "rarity": 3,
+   "desc": "点赞、投币、收藏，样样不落。",
+   "series": "开店纪念",
+   "art": "col_trophy"
+  },
+  {
+   "id": "s00_00",
+   "name": "工牌·普通款",
+   "rarity": 1,
+   "desc": "挂在脖子上的灵魂编号。满大街都是，但它是你的。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_01",
+   "name": "工牌·加班限定",
+   "rarity": 2,
+   "desc": "挂在脖子上的灵魂编号。只在晚上十点以后出现。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_02",
+   "name": "工牌·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "挂在脖子上的灵魂编号。抽了四十个才出的那个。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_03",
+   "name": "工牌·出错版",
+   "rarity": 4,
+   "desc": "挂在脖子上的灵魂编号。工厂印错了，反而成了宝贝。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_04",
+   "name": "工牌·全球仅一件",
+   "rarity": 5,
+   "desc": "挂在脖子上的灵魂编号。另一件在你梦里。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_10",
+   "name": "保温杯·普通款",
+   "rarity": 1,
+   "desc": "枸杞泡到第三遍才有味道。满大街都是，但它是你的。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_11",
+   "name": "保温杯·加班限定",
+   "rarity": 2,
+   "desc": "枸杞泡到第三遍才有味道。只在晚上十点以后出现。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_12",
+   "name": "保温杯·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "枸杞泡到第三遍才有味道。抽了四十个才出的那个。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_13",
+   "name": "保温杯·出错版",
+   "rarity": 4,
+   "desc": "枸杞泡到第三遍才有味道。工厂印错了，反而成了宝贝。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_14",
+   "name": "保温杯·全球仅一件",
+   "rarity": 5,
+   "desc": "枸杞泡到第三遍才有味道。另一件在你梦里。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_20",
+   "name": "U 型颈枕·普通款",
+   "rarity": 1,
+   "desc": "工位午睡的唯一尊严。满大街都是，但它是你的。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_21",
+   "name": "U 型颈枕·加班限定",
+   "rarity": 2,
+   "desc": "工位午睡的唯一尊严。只在晚上十点以后出现。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_22",
+   "name": "U 型颈枕·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "工位午睡的唯一尊严。抽了四十个才出的那个。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_23",
+   "name": "U 型颈枕·出错版",
+   "rarity": 4,
+   "desc": "工位午睡的唯一尊严。工厂印错了，反而成了宝贝。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_24",
+   "name": "U 型颈枕·全球仅一件",
+   "rarity": 5,
+   "desc": "工位午睡的唯一尊严。另一件在你梦里。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_30",
+   "name": "降噪耳机·普通款",
+   "rarity": 1,
+   "desc": "隔绝一切，除了老板的声音。满大街都是，但它是你的。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_31",
+   "name": "降噪耳机·加班限定",
+   "rarity": 2,
+   "desc": "隔绝一切，除了老板的声音。只在晚上十点以后出现。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_32",
+   "name": "降噪耳机·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "隔绝一切，除了老板的声音。抽了四十个才出的那个。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_33",
+   "name": "降噪耳机·出错版",
+   "rarity": 4,
+   "desc": "隔绝一切，除了老板的声音。工厂印错了，反而成了宝贝。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_34",
+   "name": "降噪耳机·全球仅一件",
+   "rarity": 5,
+   "desc": "隔绝一切，除了老板的声音。另一件在你梦里。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_40",
+   "name": "续命咖啡·普通款",
+   "rarity": 1,
+   "desc": "喝完就能再撑两小时。满大街都是，但它是你的。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_41",
+   "name": "续命咖啡·加班限定",
+   "rarity": 2,
+   "desc": "喝完就能再撑两小时。只在晚上十点以后出现。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_42",
+   "name": "续命咖啡·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "喝完就能再撑两小时。抽了四十个才出的那个。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_43",
+   "name": "续命咖啡·出错版",
+   "rarity": 4,
+   "desc": "喝完就能再撑两小时。工厂印错了，反而成了宝贝。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s00_44",
+   "name": "续命咖啡·全球仅一件",
+   "rarity": 5,
+   "desc": "喝完就能再撑两小时。另一件在你梦里。",
+   "series": "打工人周边",
+   "art": "cat_bags",
+   "tint": "#c98b5b"
+  },
+  {
+   "id": "s01_00",
+   "name": "假装在开会的鼠标·二手款",
+   "rarity": 1,
+   "desc": "每五分钟自己动一下。上一任主人留下了一点体温和一点划痕。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_01",
+   "name": "假装在开会的鼠标·周一限定",
+   "rarity": 2,
+   "desc": "每五分钟自己动一下。拿在手里会莫名有点累。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_02",
+   "name": "假装在开会的鼠标·年终奖特别版",
+   "rarity": 3,
+   "desc": "每五分钟自己动一下。比年终奖本身还稀有。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_03",
+   "name": "假装在开会的鼠标·内测版",
+   "rarity": 4,
+   "desc": "每五分钟自己动一下。还没上线就被你拿到了。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_04",
+   "name": "假装在开会的鼠标·传说级",
+   "rarity": 5,
+   "desc": "每五分钟自己动一下。论坛里只有一张模糊的照片。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_10",
+   "name": "双屏伪装壁纸·二手款",
+   "rarity": 1,
+   "desc": "表格的样子，游戏的心。上一任主人留下了一点体温和一点划痕。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_11",
+   "name": "双屏伪装壁纸·周一限定",
+   "rarity": 2,
+   "desc": "表格的样子，游戏的心。拿在手里会莫名有点累。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_12",
+   "name": "双屏伪装壁纸·年终奖特别版",
+   "rarity": 3,
+   "desc": "表格的样子，游戏的心。比年终奖本身还稀有。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_13",
+   "name": "双屏伪装壁纸·内测版",
+   "rarity": 4,
+   "desc": "表格的样子，游戏的心。还没上线就被你拿到了。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_14",
+   "name": "双屏伪装壁纸·传说级",
+   "rarity": 5,
+   "desc": "表格的样子，游戏的心。论坛里只有一张模糊的照片。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_20",
+   "name": "厕所计时器·二手款",
+   "rarity": 1,
+   "desc": "带薪如厕，精确到秒。上一任主人留下了一点体温和一点划痕。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_21",
+   "name": "厕所计时器·周一限定",
+   "rarity": 2,
+   "desc": "带薪如厕，精确到秒。拿在手里会莫名有点累。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_22",
+   "name": "厕所计时器·年终奖特别版",
+   "rarity": 3,
+   "desc": "带薪如厕，精确到秒。比年终奖本身还稀有。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_23",
+   "name": "厕所计时器·内测版",
+   "rarity": 4,
+   "desc": "带薪如厕，精确到秒。还没上线就被你拿到了。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_24",
+   "name": "厕所计时器·传说级",
+   "rarity": 5,
+   "desc": "带薪如厕，精确到秒。论坛里只有一张模糊的照片。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_30",
+   "name": "老板来了警报器·二手款",
+   "rarity": 1,
+   "desc": "检测到皮鞋声就响。上一任主人留下了一点体温和一点划痕。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_31",
+   "name": "老板来了警报器·周一限定",
+   "rarity": 2,
+   "desc": "检测到皮鞋声就响。拿在手里会莫名有点累。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_32",
+   "name": "老板来了警报器·年终奖特别版",
+   "rarity": 3,
+   "desc": "检测到皮鞋声就响。比年终奖本身还稀有。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_33",
+   "name": "老板来了警报器·内测版",
+   "rarity": 4,
+   "desc": "检测到皮鞋声就响。还没上线就被你拿到了。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_34",
+   "name": "老板来了警报器·传说级",
+   "rarity": 5,
+   "desc": "检测到皮鞋声就响。论坛里只有一张模糊的照片。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_40",
+   "name": "摸鱼日历·二手款",
+   "rarity": 1,
+   "desc": "每一天都写着“宜摸鱼”。上一任主人留下了一点体温和一点划痕。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_41",
+   "name": "摸鱼日历·周一限定",
+   "rarity": 2,
+   "desc": "每一天都写着“宜摸鱼”。拿在手里会莫名有点累。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_42",
+   "name": "摸鱼日历·年终奖特别版",
+   "rarity": 3,
+   "desc": "每一天都写着“宜摸鱼”。比年终奖本身还稀有。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_43",
+   "name": "摸鱼日历·内测版",
+   "rarity": 4,
+   "desc": "每一天都写着“宜摸鱼”。还没上线就被你拿到了。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s01_44",
+   "name": "摸鱼日历·传说级",
+   "rarity": 5,
+   "desc": "每一天都写着“宜摸鱼”。论坛里只有一张模糊的照片。",
+   "series": "摸鱼神器",
+   "art": "cat_toys",
+   "tint": "#7fb3d5"
+  },
+  {
+   "id": "s02_00",
+   "name": "电子木鱼二代·打折款",
+   "rarity": 1,
+   "desc": "支持连击，功德翻倍。买的时候省了钱，用的时候省了心。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_01",
+   "name": "电子木鱼二代·开光款",
+   "rarity": 2,
+   "desc": "支持连击，功德翻倍。据说转发能带来好运。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_02",
+   "name": "电子木鱼二代·联名款",
+   "rarity": 3,
+   "desc": "支持连击，功德翻倍。联名对象不详，价格翻倍。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_03",
+   "name": "电子木鱼二代·传家宝",
+   "rarity": 4,
+   "desc": "支持连击，功德翻倍。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_04",
+   "name": "电子木鱼二代·出土文物款",
+   "rarity": 5,
+   "desc": "支持连击，功德翻倍。考古学家都不知道怎么分类。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_10",
+   "name": "水逆退散符·打折款",
+   "rarity": 1,
+   "desc": "专治各种不顺。买的时候省了钱，用的时候省了心。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_11",
+   "name": "水逆退散符·开光款",
+   "rarity": 2,
+   "desc": "专治各种不顺。据说转发能带来好运。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_12",
+   "name": "水逆退散符·联名款",
+   "rarity": 3,
+   "desc": "专治各种不顺。联名对象不详，价格翻倍。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_13",
+   "name": "水逆退散符·传家宝",
+   "rarity": 4,
+   "desc": "专治各种不顺。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_14",
+   "name": "水逆退散符·出土文物款",
+   "rarity": 5,
+   "desc": "专治各种不顺。考古学家都不知道怎么分类。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_20",
+   "name": "转运锦鲤挂件·打折款",
+   "rarity": 1,
+   "desc": "转发过一万次的那条。买的时候省了钱，用的时候省了心。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_21",
+   "name": "转运锦鲤挂件·开光款",
+   "rarity": 2,
+   "desc": "转发过一万次的那条。据说转发能带来好运。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_22",
+   "name": "转运锦鲤挂件·联名款",
+   "rarity": 3,
+   "desc": "转发过一万次的那条。联名对象不详，价格翻倍。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_23",
+   "name": "转运锦鲤挂件·传家宝",
+   "rarity": 4,
+   "desc": "转发过一万次的那条。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_24",
+   "name": "转运锦鲤挂件·出土文物款",
+   "rarity": 5,
+   "desc": "转发过一万次的那条。考古学家都不知道怎么分类。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_30",
+   "name": "塔罗牌盲盒·打折款",
+   "rarity": 1,
+   "desc": "抽到什么都说“好兆头”。买的时候省了钱，用的时候省了心。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_31",
+   "name": "塔罗牌盲盒·开光款",
+   "rarity": 2,
+   "desc": "抽到什么都说“好兆头”。据说转发能带来好运。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_32",
+   "name": "塔罗牌盲盒·联名款",
+   "rarity": 3,
+   "desc": "抽到什么都说“好兆头”。联名对象不详，价格翻倍。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_33",
+   "name": "塔罗牌盲盒·传家宝",
+   "rarity": 4,
+   "desc": "抽到什么都说“好兆头”。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_34",
+   "name": "塔罗牌盲盒·出土文物款",
+   "rarity": 5,
+   "desc": "抽到什么都说“好兆头”。考古学家都不知道怎么分类。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_40",
+   "name": "八字合盘计算器·打折款",
+   "rarity": 1,
+   "desc": "算出来你和周一八字不合。买的时候省了钱，用的时候省了心。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_41",
+   "name": "八字合盘计算器·开光款",
+   "rarity": 2,
+   "desc": "算出来你和周一八字不合。据说转发能带来好运。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_42",
+   "name": "八字合盘计算器·联名款",
+   "rarity": 3,
+   "desc": "算出来你和周一八字不合。联名对象不详，价格翻倍。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_43",
+   "name": "八字合盘计算器·传家宝",
+   "rarity": 4,
+   "desc": "算出来你和周一八字不合。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s02_44",
+   "name": "八字合盘计算器·出土文物款",
+   "rarity": 5,
+   "desc": "算出来你和周一八字不合。考古学家都不知道怎么分类。",
+   "series": "赛博玄学",
+   "art": "cat_mystery",
+   "tint": "#9b6bd6"
+  },
+  {
+   "id": "s03_00",
+   "name": "插卡游戏机·夜市款",
+   "rarity": 1,
+   "desc": "吹一口气再插就能开机。摊主说是正品，你选择相信。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_01",
+   "name": "插卡游戏机·复刻款",
+   "rarity": 2,
+   "desc": "吹一口气再插就能开机。比原版还像原版。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_02",
+   "name": "插卡游戏机·老板签名版",
+   "rarity": 3,
+   "desc": "吹一口气再插就能开机。签名写的是“下次一定”。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_03",
+   "name": "插卡游戏机·博物馆退役款",
+   "rarity": 4,
+   "desc": "吹一口气再插就能开机。展柜里待了十年，终于出来透透气。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_04",
+   "name": "插卡游戏机·全球仅一件",
+   "rarity": 5,
+   "desc": "吹一口气再插就能开机。另一件在你梦里。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_10",
+   "name": "掌上俄罗斯方块·夜市款",
+   "rarity": 1,
+   "desc": "长条永远不来。摊主说是正品，你选择相信。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_11",
+   "name": "掌上俄罗斯方块·复刻款",
+   "rarity": 2,
+   "desc": "长条永远不来。比原版还像原版。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_12",
+   "name": "掌上俄罗斯方块·老板签名版",
+   "rarity": 3,
+   "desc": "长条永远不来。签名写的是“下次一定”。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_13",
+   "name": "掌上俄罗斯方块·博物馆退役款",
+   "rarity": 4,
+   "desc": "长条永远不来。展柜里待了十年，终于出来透透气。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_14",
+   "name": "掌上俄罗斯方块·全球仅一件",
+   "rarity": 5,
+   "desc": "长条永远不来。另一件在你梦里。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_20",
+   "name": "红白机手柄·夜市款",
+   "rarity": 1,
+   "desc": "按键磨得发亮。摊主说是正品，你选择相信。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_21",
+   "name": "红白机手柄·复刻款",
+   "rarity": 2,
+   "desc": "按键磨得发亮。比原版还像原版。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_22",
+   "name": "红白机手柄·老板签名版",
+   "rarity": 3,
+   "desc": "按键磨得发亮。签名写的是“下次一定”。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_23",
+   "name": "红白机手柄·博物馆退役款",
+   "rarity": 4,
+   "desc": "按键磨得发亮。展柜里待了十年，终于出来透透气。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_24",
+   "name": "红白机手柄·全球仅一件",
+   "rarity": 5,
+   "desc": "按键磨得发亮。另一件在你梦里。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_30",
+   "name": "游戏厅代币·夜市款",
+   "rarity": 1,
+   "desc": "一枚能换一下午的快乐。摊主说是正品，你选择相信。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_31",
+   "name": "游戏厅代币·复刻款",
+   "rarity": 2,
+   "desc": "一枚能换一下午的快乐。比原版还像原版。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_32",
+   "name": "游戏厅代币·老板签名版",
+   "rarity": 3,
+   "desc": "一枚能换一下午的快乐。签名写的是“下次一定”。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_33",
+   "name": "游戏厅代币·博物馆退役款",
+   "rarity": 4,
+   "desc": "一枚能换一下午的快乐。展柜里待了十年，终于出来透透气。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_34",
+   "name": "游戏厅代币·全球仅一件",
+   "rarity": 5,
+   "desc": "一枚能换一下午的快乐。另一件在你梦里。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_40",
+   "name": "攻略杂志·夜市款",
+   "rarity": 1,
+   "desc": "第 37 页被翻烂了。摊主说是正品，你选择相信。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_41",
+   "name": "攻略杂志·复刻款",
+   "rarity": 2,
+   "desc": "第 37 页被翻烂了。比原版还像原版。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_42",
+   "name": "攻略杂志·老板签名版",
+   "rarity": 3,
+   "desc": "第 37 页被翻烂了。签名写的是“下次一定”。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_43",
+   "name": "攻略杂志·博物馆退役款",
+   "rarity": 4,
+   "desc": "第 37 页被翻烂了。展柜里待了十年，终于出来透透气。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s03_44",
+   "name": "攻略杂志·全球仅一件",
+   "rarity": 5,
+   "desc": "第 37 页被翻烂了。另一件在你梦里。",
+   "series": "复古游戏机",
+   "art": "item_console",
+   "tint": "#4caf7a"
+  },
+  {
+   "id": "s04_00",
+   "name": "一次性相机·普通款",
+   "rarity": 1,
+   "desc": "最后一张总是拍到手指。满大街都是，但它是你的。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_01",
+   "name": "一次性相机·加班限定",
+   "rarity": 2,
+   "desc": "最后一张总是拍到手指。只在晚上十点以后出现。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_02",
+   "name": "一次性相机·会员专享",
+   "rarity": 3,
+   "desc": "最后一张总是拍到手指。开了会员才看得见。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_03",
+   "name": "一次性相机·出错版",
+   "rarity": 4,
+   "desc": "最后一张总是拍到手指。工厂印错了，反而成了宝贝。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_04",
+   "name": "一次性相机·传说级",
+   "rarity": 5,
+   "desc": "最后一张总是拍到手指。论坛里只有一张模糊的照片。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_10",
+   "name": "过期胶卷·普通款",
+   "rarity": 1,
+   "desc": "洗出来的颜色像梦。满大街都是，但它是你的。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_11",
+   "name": "过期胶卷·加班限定",
+   "rarity": 2,
+   "desc": "洗出来的颜色像梦。只在晚上十点以后出现。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_12",
+   "name": "过期胶卷·会员专享",
+   "rarity": 3,
+   "desc": "洗出来的颜色像梦。开了会员才看得见。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_13",
+   "name": "过期胶卷·出错版",
+   "rarity": 4,
+   "desc": "洗出来的颜色像梦。工厂印错了，反而成了宝贝。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_14",
+   "name": "过期胶卷·传说级",
+   "rarity": 5,
+   "desc": "洗出来的颜色像梦。论坛里只有一张模糊的照片。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_20",
+   "name": "拍立得相纸·普通款",
+   "rarity": 1,
+   "desc": "等它显影的那一分钟最好看。满大街都是，但它是你的。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_21",
+   "name": "拍立得相纸·加班限定",
+   "rarity": 2,
+   "desc": "等它显影的那一分钟最好看。只在晚上十点以后出现。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_22",
+   "name": "拍立得相纸·会员专享",
+   "rarity": 3,
+   "desc": "等它显影的那一分钟最好看。开了会员才看得见。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_23",
+   "name": "拍立得相纸·出错版",
+   "rarity": 4,
+   "desc": "等它显影的那一分钟最好看。工厂印错了，反而成了宝贝。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_24",
+   "name": "拍立得相纸·传说级",
+   "rarity": 5,
+   "desc": "等它显影的那一分钟最好看。论坛里只有一张模糊的照片。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_30",
+   "name": "老式闪光灯·普通款",
+   "rarity": 1,
+   "desc": "一闪，大家都闭眼。满大街都是，但它是你的。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_31",
+   "name": "老式闪光灯·加班限定",
+   "rarity": 2,
+   "desc": "一闪，大家都闭眼。只在晚上十点以后出现。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_32",
+   "name": "老式闪光灯·会员专享",
+   "rarity": 3,
+   "desc": "一闪，大家都闭眼。开了会员才看得见。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_33",
+   "name": "老式闪光灯·出错版",
+   "rarity": 4,
+   "desc": "一闪，大家都闭眼。工厂印错了，反而成了宝贝。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_34",
+   "name": "老式闪光灯·传说级",
+   "rarity": 5,
+   "desc": "一闪，大家都闭眼。论坛里只有一张模糊的照片。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_40",
+   "name": "相机背带·普通款",
+   "rarity": 1,
+   "desc": "上面挂着一个旅行纪念章。满大街都是，但它是你的。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_41",
+   "name": "相机背带·加班限定",
+   "rarity": 2,
+   "desc": "上面挂着一个旅行纪念章。只在晚上十点以后出现。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_42",
+   "name": "相机背带·会员专享",
+   "rarity": 3,
+   "desc": "上面挂着一个旅行纪念章。开了会员才看得见。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_43",
+   "name": "相机背带·出错版",
+   "rarity": 4,
+   "desc": "上面挂着一个旅行纪念章。工厂印错了，反而成了宝贝。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s04_44",
+   "name": "相机背带·传说级",
+   "rarity": 5,
+   "desc": "上面挂着一个旅行纪念章。论坛里只有一张模糊的照片。",
+   "series": "相机与胶卷",
+   "art": "item_camera",
+   "tint": "#d9a441"
+  },
+  {
+   "id": "s05_00",
+   "name": "机械怀表·二手款",
+   "rarity": 1,
+   "desc": "每天慢三分钟，很有个性。上一任主人留下了一点体温和一点划痕。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_01",
+   "name": "机械怀表·周一限定",
+   "rarity": 2,
+   "desc": "每天慢三分钟，很有个性。拿在手里会莫名有点累。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_02",
+   "name": "机械怀表·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "每天慢三分钟，很有个性。抽了四十个才出的那个。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_03",
+   "name": "机械怀表·内测版",
+   "rarity": 4,
+   "desc": "每天慢三分钟，很有个性。还没上线就被你拿到了。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_04",
+   "name": "机械怀表·出土文物款",
+   "rarity": 5,
+   "desc": "每天慢三分钟，很有个性。考古学家都不知道怎么分类。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_10",
+   "name": "搪瓷缸·二手款",
+   "rarity": 1,
+   "desc": "印着“劳动最光荣”。上一任主人留下了一点体温和一点划痕。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_11",
+   "name": "搪瓷缸·周一限定",
+   "rarity": 2,
+   "desc": "印着“劳动最光荣”。拿在手里会莫名有点累。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_12",
+   "name": "搪瓷缸·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "印着“劳动最光荣”。抽了四十个才出的那个。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_13",
+   "name": "搪瓷缸·内测版",
+   "rarity": 4,
+   "desc": "印着“劳动最光荣”。还没上线就被你拿到了。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_14",
+   "name": "搪瓷缸·出土文物款",
+   "rarity": 5,
+   "desc": "印着“劳动最光荣”。考古学家都不知道怎么分类。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_20",
+   "name": "铁皮青蛙·二手款",
+   "rarity": 1,
+   "desc": "上弦后跳得比你勤快。上一任主人留下了一点体温和一点划痕。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_21",
+   "name": "铁皮青蛙·周一限定",
+   "rarity": 2,
+   "desc": "上弦后跳得比你勤快。拿在手里会莫名有点累。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_22",
+   "name": "铁皮青蛙·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "上弦后跳得比你勤快。抽了四十个才出的那个。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_23",
+   "name": "铁皮青蛙·内测版",
+   "rarity": 4,
+   "desc": "上弦后跳得比你勤快。还没上线就被你拿到了。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_24",
+   "name": "铁皮青蛙·出土文物款",
+   "rarity": 5,
+   "desc": "上弦后跳得比你勤快。考古学家都不知道怎么分类。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_30",
+   "name": "老式收音机·二手款",
+   "rarity": 1,
+   "desc": "调到某个频率会听见过去。上一任主人留下了一点体温和一点划痕。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_31",
+   "name": "老式收音机·周一限定",
+   "rarity": 2,
+   "desc": "调到某个频率会听见过去。拿在手里会莫名有点累。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_32",
+   "name": "老式收音机·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "调到某个频率会听见过去。抽了四十个才出的那个。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_33",
+   "name": "老式收音机·内测版",
+   "rarity": 4,
+   "desc": "调到某个频率会听见过去。还没上线就被你拿到了。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_34",
+   "name": "老式收音机·出土文物款",
+   "rarity": 5,
+   "desc": "调到某个频率会听见过去。考古学家都不知道怎么分类。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_40",
+   "name": "粮票·二手款",
+   "rarity": 1,
+   "desc": "不能用了，但很好看。上一任主人留下了一点体温和一点划痕。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_41",
+   "name": "粮票·周一限定",
+   "rarity": 2,
+   "desc": "不能用了，但很好看。拿在手里会莫名有点累。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_42",
+   "name": "粮票·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "不能用了，但很好看。抽了四十个才出的那个。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_43",
+   "name": "粮票·内测版",
+   "rarity": 4,
+   "desc": "不能用了，但很好看。还没上线就被你拿到了。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s05_44",
+   "name": "粮票·出土文物款",
+   "rarity": 5,
+   "desc": "不能用了，但很好看。考古学家都不知道怎么分类。",
+   "series": "老物件",
+   "art": "item_watch",
+   "tint": "#b08968"
+  },
+  {
+   "id": "s06_00",
+   "name": "塑料钻戒·打折款",
+   "rarity": 1,
+   "desc": "闪得像真的一样。买的时候省了钱，用的时候省了心。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_01",
+   "name": "塑料钻戒·开光款",
+   "rarity": 2,
+   "desc": "闪得像真的一样。据说转发能带来好运。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_02",
+   "name": "塑料钻戒·年终奖特别版",
+   "rarity": 3,
+   "desc": "闪得像真的一样。比年终奖本身还稀有。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_03",
+   "name": "塑料钻戒·传家宝",
+   "rarity": 4,
+   "desc": "闪得像真的一样。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_04",
+   "name": "塑料钻戒·全球仅一件",
+   "rarity": 5,
+   "desc": "闪得像真的一样。另一件在你梦里。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_10",
+   "name": "情侣手链·打折款",
+   "rarity": 1,
+   "desc": "只剩一半了。买的时候省了钱，用的时候省了心。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_11",
+   "name": "情侣手链·开光款",
+   "rarity": 2,
+   "desc": "只剩一半了。据说转发能带来好运。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_12",
+   "name": "情侣手链·年终奖特别版",
+   "rarity": 3,
+   "desc": "只剩一半了。比年终奖本身还稀有。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_13",
+   "name": "情侣手链·传家宝",
+   "rarity": 4,
+   "desc": "只剩一半了。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_14",
+   "name": "情侣手链·全球仅一件",
+   "rarity": 5,
+   "desc": "只剩一半了。另一件在你梦里。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_20",
+   "name": "幸运耳钉·打折款",
+   "rarity": 1,
+   "desc": "戴上它考试都过了。买的时候省了钱，用的时候省了心。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_21",
+   "name": "幸运耳钉·开光款",
+   "rarity": 2,
+   "desc": "戴上它考试都过了。据说转发能带来好运。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_22",
+   "name": "幸运耳钉·年终奖特别版",
+   "rarity": 3,
+   "desc": "戴上它考试都过了。比年终奖本身还稀有。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_23",
+   "name": "幸运耳钉·传家宝",
+   "rarity": 4,
+   "desc": "戴上它考试都过了。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_24",
+   "name": "幸运耳钉·全球仅一件",
+   "rarity": 5,
+   "desc": "戴上它考试都过了。另一件在你梦里。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_30",
+   "name": "锁骨链·打折款",
+   "rarity": 1,
+   "desc": "适合在锁骨上发呆。买的时候省了钱，用的时候省了心。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_31",
+   "name": "锁骨链·开光款",
+   "rarity": 2,
+   "desc": "适合在锁骨上发呆。据说转发能带来好运。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_32",
+   "name": "锁骨链·年终奖特别版",
+   "rarity": 3,
+   "desc": "适合在锁骨上发呆。比年终奖本身还稀有。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_33",
+   "name": "锁骨链·传家宝",
+   "rarity": 4,
+   "desc": "适合在锁骨上发呆。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_34",
+   "name": "锁骨链·全球仅一件",
+   "rarity": 5,
+   "desc": "适合在锁骨上发呆。另一件在你梦里。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_40",
+   "name": "胸针·打折款",
+   "rarity": 1,
+   "desc": "别在哪里都显得很有故事。买的时候省了钱，用的时候省了心。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_41",
+   "name": "胸针·开光款",
+   "rarity": 2,
+   "desc": "别在哪里都显得很有故事。据说转发能带来好运。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_42",
+   "name": "胸针·年终奖特别版",
+   "rarity": 3,
+   "desc": "别在哪里都显得很有故事。比年终奖本身还稀有。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_43",
+   "name": "胸针·传家宝",
+   "rarity": 4,
+   "desc": "别在哪里都显得很有故事。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s06_44",
+   "name": "胸针·全球仅一件",
+   "rarity": 5,
+   "desc": "别在哪里都显得很有故事。另一件在你梦里。",
+   "series": "闪亮首饰",
+   "art": "item_necklace",
+   "tint": "#e6b8d0"
+  },
+  {
+   "id": "s07_00",
+   "name": "拨片·夜市款",
+   "rarity": 1,
+   "desc": "弹断过三根弦。摊主说是正品，你选择相信。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_01",
+   "name": "拨片·复刻款",
+   "rarity": 2,
+   "desc": "弹断过三根弦。比原版还像原版。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_02",
+   "name": "拨片·联名款",
+   "rarity": 3,
+   "desc": "弹断过三根弦。联名对象不详，价格翻倍。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_03",
+   "name": "拨片·博物馆退役款",
+   "rarity": 4,
+   "desc": "弹断过三根弦。展柜里待了十年，终于出来透透气。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_04",
+   "name": "拨片·传说级",
+   "rarity": 5,
+   "desc": "弹断过三根弦。论坛里只有一张模糊的照片。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_10",
+   "name": "签名鼓棒·夜市款",
+   "rarity": 1,
+   "desc": "签名的人后来去卖保险了。摊主说是正品，你选择相信。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_11",
+   "name": "签名鼓棒·复刻款",
+   "rarity": 2,
+   "desc": "签名的人后来去卖保险了。比原版还像原版。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_12",
+   "name": "签名鼓棒·联名款",
+   "rarity": 3,
+   "desc": "签名的人后来去卖保险了。联名对象不详，价格翻倍。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_13",
+   "name": "签名鼓棒·博物馆退役款",
+   "rarity": 4,
+   "desc": "签名的人后来去卖保险了。展柜里待了十年，终于出来透透气。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_14",
+   "name": "签名鼓棒·传说级",
+   "rarity": 5,
+   "desc": "签名的人后来去卖保险了。论坛里只有一张模糊的照片。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_20",
+   "name": "演出门票根·夜市款",
+   "rarity": 1,
+   "desc": "那晚下着雨。摊主说是正品，你选择相信。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_21",
+   "name": "演出门票根·复刻款",
+   "rarity": 2,
+   "desc": "那晚下着雨。比原版还像原版。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_22",
+   "name": "演出门票根·联名款",
+   "rarity": 3,
+   "desc": "那晚下着雨。联名对象不详，价格翻倍。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_23",
+   "name": "演出门票根·博物馆退役款",
+   "rarity": 4,
+   "desc": "那晚下着雨。展柜里待了十年，终于出来透透气。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_24",
+   "name": "演出门票根·传说级",
+   "rarity": 5,
+   "desc": "那晚下着雨。论坛里只有一张模糊的照片。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_30",
+   "name": "口琴·夜市款",
+   "rarity": 1,
+   "desc": "只会吹《生日快乐》。摊主说是正品，你选择相信。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_31",
+   "name": "口琴·复刻款",
+   "rarity": 2,
+   "desc": "只会吹《生日快乐》。比原版还像原版。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_32",
+   "name": "口琴·联名款",
+   "rarity": 3,
+   "desc": "只会吹《生日快乐》。联名对象不详，价格翻倍。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_33",
+   "name": "口琴·博物馆退役款",
+   "rarity": 4,
+   "desc": "只会吹《生日快乐》。展柜里待了十年，终于出来透透气。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_34",
+   "name": "口琴·传说级",
+   "rarity": 5,
+   "desc": "只会吹《生日快乐》。论坛里只有一张模糊的照片。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_40",
+   "name": "排练室钥匙·夜市款",
+   "rarity": 1,
+   "desc": "门早就换锁了。摊主说是正品，你选择相信。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_41",
+   "name": "排练室钥匙·复刻款",
+   "rarity": 2,
+   "desc": "门早就换锁了。比原版还像原版。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_42",
+   "name": "排练室钥匙·联名款",
+   "rarity": 3,
+   "desc": "门早就换锁了。联名对象不详，价格翻倍。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_43",
+   "name": "排练室钥匙·博物馆退役款",
+   "rarity": 4,
+   "desc": "门早就换锁了。展柜里待了十年，终于出来透透气。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s07_44",
+   "name": "排练室钥匙·传说级",
+   "rarity": 5,
+   "desc": "门早就换锁了。论坛里只有一张模糊的照片。",
+   "series": "乐队纪念",
+   "art": "item_guitar",
+   "tint": "#e06c5b"
+  },
+  {
+   "id": "s08_00",
+   "name": "会响的椅子·普通款",
+   "rarity": 1,
+   "desc": "一坐就“嘎吱”打招呼。满大街都是，但它是你的。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_01",
+   "name": "会响的椅子·加班限定",
+   "rarity": 2,
+   "desc": "一坐就“嘎吱”打招呼。只在晚上十点以后出现。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_02",
+   "name": "会响的椅子·老板签名版",
+   "rarity": 3,
+   "desc": "一坐就“嘎吱”打招呼。签名写的是“下次一定”。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_03",
+   "name": "会响的椅子·出错版",
+   "rarity": 4,
+   "desc": "一坐就“嘎吱”打招呼。工厂印错了，反而成了宝贝。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_04",
+   "name": "会响的椅子·出土文物款",
+   "rarity": 5,
+   "desc": "一坐就“嘎吱”打招呼。考古学家都不知道怎么分类。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_10",
+   "name": "折叠桌·普通款",
+   "rarity": 1,
+   "desc": "吃饭、办公、打麻将三用。满大街都是，但它是你的。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_11",
+   "name": "折叠桌·加班限定",
+   "rarity": 2,
+   "desc": "吃饭、办公、打麻将三用。只在晚上十点以后出现。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_12",
+   "name": "折叠桌·老板签名版",
+   "rarity": 3,
+   "desc": "吃饭、办公、打麻将三用。签名写的是“下次一定”。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_13",
+   "name": "折叠桌·出错版",
+   "rarity": 4,
+   "desc": "吃饭、办公、打麻将三用。工厂印错了，反而成了宝贝。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_14",
+   "name": "折叠桌·出土文物款",
+   "rarity": 5,
+   "desc": "吃饭、办公、打麻将三用。考古学家都不知道怎么分类。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_20",
+   "name": "懒人沙发·普通款",
+   "rarity": 1,
+   "desc": "坐进去就起不来。满大街都是，但它是你的。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_21",
+   "name": "懒人沙发·加班限定",
+   "rarity": 2,
+   "desc": "坐进去就起不来。只在晚上十点以后出现。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_22",
+   "name": "懒人沙发·老板签名版",
+   "rarity": 3,
+   "desc": "坐进去就起不来。签名写的是“下次一定”。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_23",
+   "name": "懒人沙发·出错版",
+   "rarity": 4,
+   "desc": "坐进去就起不来。工厂印错了，反而成了宝贝。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_24",
+   "name": "懒人沙发·出土文物款",
+   "rarity": 5,
+   "desc": "坐进去就起不来。考古学家都不知道怎么分类。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_30",
+   "name": "床头小台灯·普通款",
+   "rarity": 1,
+   "desc": "陪你熬过每一个 deadline。满大街都是，但它是你的。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_31",
+   "name": "床头小台灯·加班限定",
+   "rarity": 2,
+   "desc": "陪你熬过每一个 deadline。只在晚上十点以后出现。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_32",
+   "name": "床头小台灯·老板签名版",
+   "rarity": 3,
+   "desc": "陪你熬过每一个 deadline。签名写的是“下次一定”。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_33",
+   "name": "床头小台灯·出错版",
+   "rarity": 4,
+   "desc": "陪你熬过每一个 deadline。工厂印错了，反而成了宝贝。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_34",
+   "name": "床头小台灯·出土文物款",
+   "rarity": 5,
+   "desc": "陪你熬过每一个 deadline。考古学家都不知道怎么分类。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_40",
+   "name": "塑料收纳箱·普通款",
+   "rarity": 1,
+   "desc": "装着搬家时没拆的东西。满大街都是，但它是你的。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_41",
+   "name": "塑料收纳箱·加班限定",
+   "rarity": 2,
+   "desc": "装着搬家时没拆的东西。只在晚上十点以后出现。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_42",
+   "name": "塑料收纳箱·老板签名版",
+   "rarity": 3,
+   "desc": "装着搬家时没拆的东西。签名写的是“下次一定”。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_43",
+   "name": "塑料收纳箱·出错版",
+   "rarity": 4,
+   "desc": "装着搬家时没拆的东西。工厂印错了，反而成了宝贝。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s08_44",
+   "name": "塑料收纳箱·出土文物款",
+   "rarity": 5,
+   "desc": "装着搬家时没拆的东西。考古学家都不知道怎么分类。",
+   "series": "出租屋家具",
+   "art": "item_chair",
+   "tint": "#a3896b"
+  },
+  {
+   "id": "s09_00",
+   "name": "没看完的书·二手款",
+   "rarity": 1,
+   "desc": "书签停在第 23 页。上一任主人留下了一点体温和一点划痕。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_01",
+   "name": "没看完的书·周一限定",
+   "rarity": 2,
+   "desc": "书签停在第 23 页。拿在手里会莫名有点累。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_02",
+   "name": "没看完的书·会员专享",
+   "rarity": 3,
+   "desc": "书签停在第 23 页。开了会员才看得见。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_03",
+   "name": "没看完的书·内测版",
+   "rarity": 4,
+   "desc": "书签停在第 23 页。还没上线就被你拿到了。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_04",
+   "name": "没看完的书·全球仅一件",
+   "rarity": 5,
+   "desc": "书签停在第 23 页。另一件在你梦里。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_10",
+   "name": "考研真题集·二手款",
+   "rarity": 1,
+   "desc": "第一页做得特别认真。上一任主人留下了一点体温和一点划痕。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_11",
+   "name": "考研真题集·周一限定",
+   "rarity": 2,
+   "desc": "第一页做得特别认真。拿在手里会莫名有点累。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_12",
+   "name": "考研真题集·会员专享",
+   "rarity": 3,
+   "desc": "第一页做得特别认真。开了会员才看得见。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_13",
+   "name": "考研真题集·内测版",
+   "rarity": 4,
+   "desc": "第一页做得特别认真。还没上线就被你拿到了。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_14",
+   "name": "考研真题集·全球仅一件",
+   "rarity": 5,
+   "desc": "第一页做得特别认真。另一件在你梦里。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_20",
+   "name": "绝版漫画·二手款",
+   "rarity": 1,
+   "desc": "缺了第七卷。上一任主人留下了一点体温和一点划痕。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_21",
+   "name": "绝版漫画·周一限定",
+   "rarity": 2,
+   "desc": "缺了第七卷。拿在手里会莫名有点累。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_22",
+   "name": "绝版漫画·会员专享",
+   "rarity": 3,
+   "desc": "缺了第七卷。开了会员才看得见。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_23",
+   "name": "绝版漫画·内测版",
+   "rarity": 4,
+   "desc": "缺了第七卷。还没上线就被你拿到了。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_24",
+   "name": "绝版漫画·全球仅一件",
+   "rarity": 5,
+   "desc": "缺了第七卷。另一件在你梦里。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_30",
+   "name": "借了没还的书·二手款",
+   "rarity": 1,
+   "desc": "图书馆还在找它。上一任主人留下了一点体温和一点划痕。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_31",
+   "name": "借了没还的书·周一限定",
+   "rarity": 2,
+   "desc": "图书馆还在找它。拿在手里会莫名有点累。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_32",
+   "name": "借了没还的书·会员专享",
+   "rarity": 3,
+   "desc": "图书馆还在找它。开了会员才看得见。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_33",
+   "name": "借了没还的书·内测版",
+   "rarity": 4,
+   "desc": "图书馆还在找它。还没上线就被你拿到了。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_34",
+   "name": "借了没还的书·全球仅一件",
+   "rarity": 5,
+   "desc": "图书馆还在找它。另一件在你梦里。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_40",
+   "name": "手写日记本·二手款",
+   "rarity": 1,
+   "desc": "密码锁早就坏了。上一任主人留下了一点体温和一点划痕。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_41",
+   "name": "手写日记本·周一限定",
+   "rarity": 2,
+   "desc": "密码锁早就坏了。拿在手里会莫名有点累。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_42",
+   "name": "手写日记本·会员专享",
+   "rarity": 3,
+   "desc": "密码锁早就坏了。开了会员才看得见。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_43",
+   "name": "手写日记本·内测版",
+   "rarity": 4,
+   "desc": "密码锁早就坏了。还没上线就被你拿到了。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s09_44",
+   "name": "手写日记本·全球仅一件",
+   "rarity": 5,
+   "desc": "密码锁早就坏了。另一件在你梦里。",
+   "series": "书架角落",
+   "art": "item_books",
+   "tint": "#8d6e63"
+  },
+  {
+   "id": "s10_00",
+   "name": "共享单车铃铛·打折款",
+   "rarity": 1,
+   "desc": "叮叮叮，让一让。买的时候省了钱，用的时候省了心。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_01",
+   "name": "共享单车铃铛·开光款",
+   "rarity": 2,
+   "desc": "叮叮叮，让一让。据说转发能带来好运。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_02",
+   "name": "共享单车铃铛·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "叮叮叮，让一让。抽了四十个才出的那个。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_03",
+   "name": "共享单车铃铛·传家宝",
+   "rarity": 4,
+   "desc": "叮叮叮，让一让。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_04",
+   "name": "共享单车铃铛·传说级",
+   "rarity": 5,
+   "desc": "叮叮叮，让一让。论坛里只有一张模糊的照片。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_10",
+   "name": "地铁卡·打折款",
+   "rarity": 1,
+   "desc": "余额永远差两块。买的时候省了钱，用的时候省了心。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_11",
+   "name": "地铁卡·开光款",
+   "rarity": 2,
+   "desc": "余额永远差两块。据说转发能带来好运。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_12",
+   "name": "地铁卡·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "余额永远差两块。抽了四十个才出的那个。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_13",
+   "name": "地铁卡·传家宝",
+   "rarity": 4,
+   "desc": "余额永远差两块。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_14",
+   "name": "地铁卡·传说级",
+   "rarity": 5,
+   "desc": "余额永远差两块。论坛里只有一张模糊的照片。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_20",
+   "name": "电动车头盔·打折款",
+   "rarity": 1,
+   "desc": "防晒也防雨。买的时候省了钱，用的时候省了心。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_21",
+   "name": "电动车头盔·开光款",
+   "rarity": 2,
+   "desc": "防晒也防雨。据说转发能带来好运。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_22",
+   "name": "电动车头盔·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "防晒也防雨。抽了四十个才出的那个。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_23",
+   "name": "电动车头盔·传家宝",
+   "rarity": 4,
+   "desc": "防晒也防雨。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_24",
+   "name": "电动车头盔·传说级",
+   "rarity": 5,
+   "desc": "防晒也防雨。论坛里只有一张模糊的照片。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_30",
+   "name": "早高峰门票·打折款",
+   "rarity": 1,
+   "desc": "挤上车就算赢。买的时候省了钱，用的时候省了心。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_31",
+   "name": "早高峰门票·开光款",
+   "rarity": 2,
+   "desc": "挤上车就算赢。据说转发能带来好运。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_32",
+   "name": "早高峰门票·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "挤上车就算赢。抽了四十个才出的那个。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_33",
+   "name": "早高峰门票·传家宝",
+   "rarity": 4,
+   "desc": "挤上车就算赢。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_34",
+   "name": "早高峰门票·传说级",
+   "rarity": 5,
+   "desc": "挤上车就算赢。论坛里只有一张模糊的照片。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_40",
+   "name": "末班车纪念票·打折款",
+   "rarity": 1,
+   "desc": "那天差点没赶上。买的时候省了钱，用的时候省了心。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_41",
+   "name": "末班车纪念票·开光款",
+   "rarity": 2,
+   "desc": "那天差点没赶上。据说转发能带来好运。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_42",
+   "name": "末班车纪念票·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "那天差点没赶上。抽了四十个才出的那个。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_43",
+   "name": "末班车纪念票·传家宝",
+   "rarity": 4,
+   "desc": "那天差点没赶上。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s10_44",
+   "name": "末班车纪念票·传说级",
+   "rarity": 5,
+   "desc": "那天差点没赶上。论坛里只有一张模糊的照片。",
+   "series": "城市通勤",
+   "art": "item_scooter",
+   "tint": "#5aa9e6"
+  },
+  {
+   "id": "s11_00",
+   "name": "格子衬衫·夜市款",
+   "rarity": 1,
+   "desc": "程序员的战袍。摊主说是正品，你选择相信。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_01",
+   "name": "格子衬衫·复刻款",
+   "rarity": 2,
+   "desc": "程序员的战袍。比原版还像原版。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_02",
+   "name": "格子衬衫·年终奖特别版",
+   "rarity": 3,
+   "desc": "程序员的战袍。比年终奖本身还稀有。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_03",
+   "name": "格子衬衫·博物馆退役款",
+   "rarity": 4,
+   "desc": "程序员的战袍。展柜里待了十年，终于出来透透气。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_04",
+   "name": "格子衬衫·出土文物款",
+   "rarity": 5,
+   "desc": "程序员的战袍。考古学家都不知道怎么分类。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_10",
+   "name": "毕业文化衫·夜市款",
+   "rarity": 1,
+   "desc": "背后签满了名字。摊主说是正品，你选择相信。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_11",
+   "name": "毕业文化衫·复刻款",
+   "rarity": 2,
+   "desc": "背后签满了名字。比原版还像原版。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_12",
+   "name": "毕业文化衫·年终奖特别版",
+   "rarity": 3,
+   "desc": "背后签满了名字。比年终奖本身还稀有。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_13",
+   "name": "毕业文化衫·博物馆退役款",
+   "rarity": 4,
+   "desc": "背后签满了名字。展柜里待了十年，终于出来透透气。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_14",
+   "name": "毕业文化衫·出土文物款",
+   "rarity": 5,
+   "desc": "背后签满了名字。考古学家都不知道怎么分类。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_20",
+   "name": "单只袜子·夜市款",
+   "rarity": 1,
+   "desc": "另一只去了平行宇宙。摊主说是正品，你选择相信。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_21",
+   "name": "单只袜子·复刻款",
+   "rarity": 2,
+   "desc": "另一只去了平行宇宙。比原版还像原版。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_22",
+   "name": "单只袜子·年终奖特别版",
+   "rarity": 3,
+   "desc": "另一只去了平行宇宙。比年终奖本身还稀有。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_23",
+   "name": "单只袜子·博物馆退役款",
+   "rarity": 4,
+   "desc": "另一只去了平行宇宙。展柜里待了十年，终于出来透透气。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_24",
+   "name": "单只袜子·出土文物款",
+   "rarity": 5,
+   "desc": "另一只去了平行宇宙。考古学家都不知道怎么分类。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_30",
+   "name": "秋裤·夜市款",
+   "rarity": 1,
+   "desc": "妈妈说你冷。摊主说是正品，你选择相信。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_31",
+   "name": "秋裤·复刻款",
+   "rarity": 2,
+   "desc": "妈妈说你冷。比原版还像原版。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_32",
+   "name": "秋裤·年终奖特别版",
+   "rarity": 3,
+   "desc": "妈妈说你冷。比年终奖本身还稀有。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_33",
+   "name": "秋裤·博物馆退役款",
+   "rarity": 4,
+   "desc": "妈妈说你冷。展柜里待了十年，终于出来透透气。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_34",
+   "name": "秋裤·出土文物款",
+   "rarity": 5,
+   "desc": "妈妈说你冷。考古学家都不知道怎么分类。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_40",
+   "name": "拖鞋·夜市款",
+   "rarity": 1,
+   "desc": "一只左脚一只也是左脚。摊主说是正品，你选择相信。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_41",
+   "name": "拖鞋·复刻款",
+   "rarity": 2,
+   "desc": "一只左脚一只也是左脚。比原版还像原版。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_42",
+   "name": "拖鞋·年终奖特别版",
+   "rarity": 3,
+   "desc": "一只左脚一只也是左脚。比年终奖本身还稀有。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_43",
+   "name": "拖鞋·博物馆退役款",
+   "rarity": 4,
+   "desc": "一只左脚一只也是左脚。展柜里待了十年，终于出来透透气。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s11_44",
+   "name": "拖鞋·出土文物款",
+   "rarity": 5,
+   "desc": "一只左脚一只也是左脚。考古学家都不知道怎么分类。",
+   "series": "衣柜深处",
+   "art": "cat_clothes",
+   "tint": "#7986cb"
+  },
+  {
+   "id": "s12_00",
+   "name": "悠悠球·普通款",
+   "rarity": 1,
+   "desc": "睡眠技能还在。满大街都是，但它是你的。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_01",
+   "name": "悠悠球·加班限定",
+   "rarity": 2,
+   "desc": "睡眠技能还在。只在晚上十点以后出现。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_02",
+   "name": "悠悠球·联名款",
+   "rarity": 3,
+   "desc": "睡眠技能还在。联名对象不详，价格翻倍。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_03",
+   "name": "悠悠球·出错版",
+   "rarity": 4,
+   "desc": "睡眠技能还在。工厂印错了，反而成了宝贝。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_04",
+   "name": "悠悠球·全球仅一件",
+   "rarity": 5,
+   "desc": "睡眠技能还在。另一件在你梦里。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_10",
+   "name": "四驱车·普通款",
+   "rarity": 1,
+   "desc": "马达拆过三次。满大街都是，但它是你的。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_11",
+   "name": "四驱车·加班限定",
+   "rarity": 2,
+   "desc": "马达拆过三次。只在晚上十点以后出现。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_12",
+   "name": "四驱车·联名款",
+   "rarity": 3,
+   "desc": "马达拆过三次。联名对象不详，价格翻倍。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_13",
+   "name": "四驱车·出错版",
+   "rarity": 4,
+   "desc": "马达拆过三次。工厂印错了，反而成了宝贝。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_14",
+   "name": "四驱车·全球仅一件",
+   "rarity": 5,
+   "desc": "马达拆过三次。另一件在你梦里。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_20",
+   "name": "弹珠·普通款",
+   "rarity": 1,
+   "desc": "最漂亮的那颗舍不得打。满大街都是，但它是你的。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_21",
+   "name": "弹珠·加班限定",
+   "rarity": 2,
+   "desc": "最漂亮的那颗舍不得打。只在晚上十点以后出现。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_22",
+   "name": "弹珠·联名款",
+   "rarity": 3,
+   "desc": "最漂亮的那颗舍不得打。联名对象不详，价格翻倍。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_23",
+   "name": "弹珠·出错版",
+   "rarity": 4,
+   "desc": "最漂亮的那颗舍不得打。工厂印错了，反而成了宝贝。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_24",
+   "name": "弹珠·全球仅一件",
+   "rarity": 5,
+   "desc": "最漂亮的那颗舍不得打。另一件在你梦里。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_30",
+   "name": "小霸王学习卡·普通款",
+   "rarity": 1,
+   "desc": "学习是不可能学习的。满大街都是，但它是你的。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_31",
+   "name": "小霸王学习卡·加班限定",
+   "rarity": 2,
+   "desc": "学习是不可能学习的。只在晚上十点以后出现。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_32",
+   "name": "小霸王学习卡·联名款",
+   "rarity": 3,
+   "desc": "学习是不可能学习的。联名对象不详，价格翻倍。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_33",
+   "name": "小霸王学习卡·出错版",
+   "rarity": 4,
+   "desc": "学习是不可能学习的。工厂印错了，反而成了宝贝。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_34",
+   "name": "小霸王学习卡·全球仅一件",
+   "rarity": 5,
+   "desc": "学习是不可能学习的。另一件在你梦里。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_40",
+   "name": "干脆面卡片·普通款",
+   "rarity": 1,
+   "desc": "为了它吃了一百包面。满大街都是，但它是你的。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_41",
+   "name": "干脆面卡片·加班限定",
+   "rarity": 2,
+   "desc": "为了它吃了一百包面。只在晚上十点以后出现。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_42",
+   "name": "干脆面卡片·联名款",
+   "rarity": 3,
+   "desc": "为了它吃了一百包面。联名对象不详，价格翻倍。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_43",
+   "name": "干脆面卡片·出错版",
+   "rarity": 4,
+   "desc": "为了它吃了一百包面。工厂印错了，反而成了宝贝。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s12_44",
+   "name": "干脆面卡片·全球仅一件",
+   "rarity": 5,
+   "desc": "为了它吃了一百包面。另一件在你梦里。",
+   "series": "童年玩具",
+   "art": "cat_toys",
+   "tint": "#f2c14e"
+  },
+  {
+   "id": "s13_00",
+   "name": "不粘锅·二手款",
+   "rarity": 1,
+   "desc": "粘过一次就不想再粘了。上一任主人留下了一点体温和一点划痕。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_01",
+   "name": "不粘锅·周一限定",
+   "rarity": 2,
+   "desc": "粘过一次就不想再粘了。拿在手里会莫名有点累。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_02",
+   "name": "不粘锅·老板签名版",
+   "rarity": 3,
+   "desc": "粘过一次就不想再粘了。签名写的是“下次一定”。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_03",
+   "name": "不粘锅·内测版",
+   "rarity": 4,
+   "desc": "粘过一次就不想再粘了。还没上线就被你拿到了。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_04",
+   "name": "不粘锅·传说级",
+   "rarity": 5,
+   "desc": "粘过一次就不想再粘了。论坛里只有一张模糊的照片。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_10",
+   "name": "外卖筷子·二手款",
+   "rarity": 1,
+   "desc": "攒了一抽屉。上一任主人留下了一点体温和一点划痕。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_11",
+   "name": "外卖筷子·周一限定",
+   "rarity": 2,
+   "desc": "攒了一抽屉。拿在手里会莫名有点累。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_12",
+   "name": "外卖筷子·老板签名版",
+   "rarity": 3,
+   "desc": "攒了一抽屉。签名写的是“下次一定”。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_13",
+   "name": "外卖筷子·内测版",
+   "rarity": 4,
+   "desc": "攒了一抽屉。还没上线就被你拿到了。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_14",
+   "name": "外卖筷子·传说级",
+   "rarity": 5,
+   "desc": "攒了一抽屉。论坛里只有一张模糊的照片。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_20",
+   "name": "电饭煲内胆·二手款",
+   "rarity": 1,
+   "desc": "煮过泡面、火锅和梦想。上一任主人留下了一点体温和一点划痕。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_21",
+   "name": "电饭煲内胆·周一限定",
+   "rarity": 2,
+   "desc": "煮过泡面、火锅和梦想。拿在手里会莫名有点累。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_22",
+   "name": "电饭煲内胆·老板签名版",
+   "rarity": 3,
+   "desc": "煮过泡面、火锅和梦想。签名写的是“下次一定”。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_23",
+   "name": "电饭煲内胆·内测版",
+   "rarity": 4,
+   "desc": "煮过泡面、火锅和梦想。还没上线就被你拿到了。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_24",
+   "name": "电饭煲内胆·传说级",
+   "rarity": 5,
+   "desc": "煮过泡面、火锅和梦想。论坛里只有一张模糊的照片。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_30",
+   "name": "空气炸锅·二手款",
+   "rarity": 1,
+   "desc": "什么都想放进去试试。上一任主人留下了一点体温和一点划痕。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_31",
+   "name": "空气炸锅·周一限定",
+   "rarity": 2,
+   "desc": "什么都想放进去试试。拿在手里会莫名有点累。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_32",
+   "name": "空气炸锅·老板签名版",
+   "rarity": 3,
+   "desc": "什么都想放进去试试。签名写的是“下次一定”。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_33",
+   "name": "空气炸锅·内测版",
+   "rarity": 4,
+   "desc": "什么都想放进去试试。还没上线就被你拿到了。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_34",
+   "name": "空气炸锅·传说级",
+   "rarity": 5,
+   "desc": "什么都想放进去试试。论坛里只有一张模糊的照片。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_40",
+   "name": "调料瓶·二手款",
+   "rarity": 1,
+   "desc": "里面装的不是标签上的东西。上一任主人留下了一点体温和一点划痕。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_41",
+   "name": "调料瓶·周一限定",
+   "rarity": 2,
+   "desc": "里面装的不是标签上的东西。拿在手里会莫名有点累。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_42",
+   "name": "调料瓶·老板签名版",
+   "rarity": 3,
+   "desc": "里面装的不是标签上的东西。签名写的是“下次一定”。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_43",
+   "name": "调料瓶·内测版",
+   "rarity": 4,
+   "desc": "里面装的不是标签上的东西。还没上线就被你拿到了。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s13_44",
+   "name": "调料瓶·传说级",
+   "rarity": 5,
+   "desc": "里面装的不是标签上的东西。论坛里只有一张模糊的照片。",
+   "series": "厨房英雄",
+   "art": "cat_kitchen",
+   "tint": "#f08a5d"
+  },
+  {
+   "id": "s14_00",
+   "name": "健身卡·打折款",
+   "rarity": 1,
+   "desc": "办卡那天最积极。买的时候省了钱，用的时候省了心。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_01",
+   "name": "健身卡·开光款",
+   "rarity": 2,
+   "desc": "办卡那天最积极。据说转发能带来好运。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_02",
+   "name": "健身卡·会员专享",
+   "rarity": 3,
+   "desc": "办卡那天最积极。开了会员才看得见。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_03",
+   "name": "健身卡·传家宝",
+   "rarity": 4,
+   "desc": "办卡那天最积极。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_04",
+   "name": "健身卡·出土文物款",
+   "rarity": 5,
+   "desc": "办卡那天最积极。考古学家都不知道怎么分类。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_10",
+   "name": "瑜伽垫·打折款",
+   "rarity": 1,
+   "desc": "主要用来躺。买的时候省了钱，用的时候省了心。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_11",
+   "name": "瑜伽垫·开光款",
+   "rarity": 2,
+   "desc": "主要用来躺。据说转发能带来好运。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_12",
+   "name": "瑜伽垫·会员专享",
+   "rarity": 3,
+   "desc": "主要用来躺。开了会员才看得见。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_13",
+   "name": "瑜伽垫·传家宝",
+   "rarity": 4,
+   "desc": "主要用来躺。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_14",
+   "name": "瑜伽垫·出土文物款",
+   "rarity": 5,
+   "desc": "主要用来躺。考古学家都不知道怎么分类。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_20",
+   "name": "跳绳·打折款",
+   "rarity": 1,
+   "desc": "数到一百就累了。买的时候省了钱，用的时候省了心。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_21",
+   "name": "跳绳·开光款",
+   "rarity": 2,
+   "desc": "数到一百就累了。据说转发能带来好运。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_22",
+   "name": "跳绳·会员专享",
+   "rarity": 3,
+   "desc": "数到一百就累了。开了会员才看得见。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_23",
+   "name": "跳绳·传家宝",
+   "rarity": 4,
+   "desc": "数到一百就累了。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_24",
+   "name": "跳绳·出土文物款",
+   "rarity": 5,
+   "desc": "数到一百就累了。考古学家都不知道怎么分类。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_30",
+   "name": "羽毛球·打折款",
+   "rarity": 1,
+   "desc": "卡在树上的那一颗。买的时候省了钱，用的时候省了心。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_31",
+   "name": "羽毛球·开光款",
+   "rarity": 2,
+   "desc": "卡在树上的那一颗。据说转发能带来好运。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_32",
+   "name": "羽毛球·会员专享",
+   "rarity": 3,
+   "desc": "卡在树上的那一颗。开了会员才看得见。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_33",
+   "name": "羽毛球·传家宝",
+   "rarity": 4,
+   "desc": "卡在树上的那一颗。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_34",
+   "name": "羽毛球·出土文物款",
+   "rarity": 5,
+   "desc": "卡在树上的那一颗。考古学家都不知道怎么分类。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_40",
+   "name": "运动手环·打折款",
+   "rarity": 1,
+   "desc": "记录了你走到冰箱的每一步。买的时候省了钱，用的时候省了心。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_41",
+   "name": "运动手环·开光款",
+   "rarity": 2,
+   "desc": "记录了你走到冰箱的每一步。据说转发能带来好运。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_42",
+   "name": "运动手环·会员专享",
+   "rarity": 3,
+   "desc": "记录了你走到冰箱的每一步。开了会员才看得见。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_43",
+   "name": "运动手环·传家宝",
+   "rarity": 4,
+   "desc": "记录了你走到冰箱的每一步。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s14_44",
+   "name": "运动手环·出土文物款",
+   "rarity": 5,
+   "desc": "记录了你走到冰箱的每一步。考古学家都不知道怎么分类。",
+   "series": "运动打卡",
+   "art": "cat_sports",
+   "tint": "#66bb6a"
+  },
+  {
+   "id": "s15_00",
+   "name": "闪卡·夜市款",
+   "rarity": 1,
+   "desc": "对着光会变色。摊主说是正品，你选择相信。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_01",
+   "name": "闪卡·复刻款",
+   "rarity": 2,
+   "desc": "对着光会变色。比原版还像原版。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_02",
+   "name": "闪卡·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "对着光会变色。抽了四十个才出的那个。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_03",
+   "name": "闪卡·博物馆退役款",
+   "rarity": 4,
+   "desc": "对着光会变色。展柜里待了十年，终于出来透透气。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_04",
+   "name": "闪卡·全球仅一件",
+   "rarity": 5,
+   "desc": "对着光会变色。另一件在你梦里。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_10",
+   "name": "错版卡·夜市款",
+   "rarity": 1,
+   "desc": "印反了，所以值钱。摊主说是正品，你选择相信。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_11",
+   "name": "错版卡·复刻款",
+   "rarity": 2,
+   "desc": "印反了，所以值钱。比原版还像原版。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_12",
+   "name": "错版卡·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "印反了，所以值钱。抽了四十个才出的那个。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_13",
+   "name": "错版卡·博物馆退役款",
+   "rarity": 4,
+   "desc": "印反了，所以值钱。展柜里待了十年，终于出来透透气。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_14",
+   "name": "错版卡·全球仅一件",
+   "rarity": 5,
+   "desc": "印反了，所以值钱。另一件在你梦里。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_20",
+   "name": "签名卡·夜市款",
+   "rarity": 1,
+   "desc": "签名的人你也不认识。摊主说是正品，你选择相信。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_21",
+   "name": "签名卡·复刻款",
+   "rarity": 2,
+   "desc": "签名的人你也不认识。比原版还像原版。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_22",
+   "name": "签名卡·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "签名的人你也不认识。抽了四十个才出的那个。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_23",
+   "name": "签名卡·博物馆退役款",
+   "rarity": 4,
+   "desc": "签名的人你也不认识。展柜里待了十年，终于出来透透气。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_24",
+   "name": "签名卡·全球仅一件",
+   "rarity": 5,
+   "desc": "签名的人你也不认识。另一件在你梦里。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_30",
+   "name": "初版卡包·夜市款",
+   "rarity": 1,
+   "desc": "没拆封，永远不拆。摊主说是正品，你选择相信。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_31",
+   "name": "初版卡包·复刻款",
+   "rarity": 2,
+   "desc": "没拆封，永远不拆。比原版还像原版。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_32",
+   "name": "初版卡包·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "没拆封，永远不拆。抽了四十个才出的那个。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_33",
+   "name": "初版卡包·博物馆退役款",
+   "rarity": 4,
+   "desc": "没拆封，永远不拆。展柜里待了十年，终于出来透透气。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_34",
+   "name": "初版卡包·全球仅一件",
+   "rarity": 5,
+   "desc": "没拆封，永远不拆。另一件在你梦里。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_40",
+   "name": "卡套·夜市款",
+   "rarity": 1,
+   "desc": "比卡本身还贵。摊主说是正品，你选择相信。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_41",
+   "name": "卡套·复刻款",
+   "rarity": 2,
+   "desc": "比卡本身还贵。比原版还像原版。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_42",
+   "name": "卡套·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "比卡本身还贵。抽了四十个才出的那个。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_43",
+   "name": "卡套·博物馆退役款",
+   "rarity": 4,
+   "desc": "比卡本身还贵。展柜里待了十年，终于出来透透气。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s15_44",
+   "name": "卡套·全球仅一件",
+   "rarity": 5,
+   "desc": "比卡本身还贵。另一件在你梦里。",
+   "series": "卡牌收藏",
+   "art": "cat_cards",
+   "tint": "#ef5350"
+  },
+  {
+   "id": "s16_00",
+   "name": "万能螺丝刀·普通款",
+   "rarity": 1,
+   "desc": "什么都能拧，就是拧不开心结。满大街都是，但它是你的。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_01",
+   "name": "万能螺丝刀·加班限定",
+   "rarity": 2,
+   "desc": "什么都能拧，就是拧不开心结。只在晚上十点以后出现。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_02",
+   "name": "万能螺丝刀·年终奖特别版",
+   "rarity": 3,
+   "desc": "什么都能拧，就是拧不开心结。比年终奖本身还稀有。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_03",
+   "name": "万能螺丝刀·出错版",
+   "rarity": 4,
+   "desc": "什么都能拧，就是拧不开心结。工厂印错了，反而成了宝贝。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_04",
+   "name": "万能螺丝刀·传说级",
+   "rarity": 5,
+   "desc": "什么都能拧，就是拧不开心结。论坛里只有一张模糊的照片。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_10",
+   "name": "卷尺·普通款",
+   "rarity": 1,
+   "desc": "拉出来就收不回去。满大街都是，但它是你的。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_11",
+   "name": "卷尺·加班限定",
+   "rarity": 2,
+   "desc": "拉出来就收不回去。只在晚上十点以后出现。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_12",
+   "name": "卷尺·年终奖特别版",
+   "rarity": 3,
+   "desc": "拉出来就收不回去。比年终奖本身还稀有。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_13",
+   "name": "卷尺·出错版",
+   "rarity": 4,
+   "desc": "拉出来就收不回去。工厂印错了，反而成了宝贝。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_14",
+   "name": "卷尺·传说级",
+   "rarity": 5,
+   "desc": "拉出来就收不回去。论坛里只有一张模糊的照片。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_20",
+   "name": "电工胶带·普通款",
+   "rarity": 1,
+   "desc": "能修好大部分东西。满大街都是，但它是你的。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_21",
+   "name": "电工胶带·加班限定",
+   "rarity": 2,
+   "desc": "能修好大部分东西。只在晚上十点以后出现。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_22",
+   "name": "电工胶带·年终奖特别版",
+   "rarity": 3,
+   "desc": "能修好大部分东西。比年终奖本身还稀有。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_23",
+   "name": "电工胶带·出错版",
+   "rarity": 4,
+   "desc": "能修好大部分东西。工厂印错了，反而成了宝贝。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_24",
+   "name": "电工胶带·传说级",
+   "rarity": 5,
+   "desc": "能修好大部分东西。论坛里只有一张模糊的照片。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_30",
+   "name": "扳手·普通款",
+   "rarity": 1,
+   "desc": "拿在手里会变得很靠谱。满大街都是，但它是你的。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_31",
+   "name": "扳手·加班限定",
+   "rarity": 2,
+   "desc": "拿在手里会变得很靠谱。只在晚上十点以后出现。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_32",
+   "name": "扳手·年终奖特别版",
+   "rarity": 3,
+   "desc": "拿在手里会变得很靠谱。比年终奖本身还稀有。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_33",
+   "name": "扳手·出错版",
+   "rarity": 4,
+   "desc": "拿在手里会变得很靠谱。工厂印错了，反而成了宝贝。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_34",
+   "name": "扳手·传说级",
+   "rarity": 5,
+   "desc": "拿在手里会变得很靠谱。论坛里只有一张模糊的照片。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_40",
+   "name": "水平仪·普通款",
+   "rarity": 1,
+   "desc": "测出来桌子是歪的。满大街都是，但它是你的。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_41",
+   "name": "水平仪·加班限定",
+   "rarity": 2,
+   "desc": "测出来桌子是歪的。只在晚上十点以后出现。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_42",
+   "name": "水平仪·年终奖特别版",
+   "rarity": 3,
+   "desc": "测出来桌子是歪的。比年终奖本身还稀有。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_43",
+   "name": "水平仪·出错版",
+   "rarity": 4,
+   "desc": "测出来桌子是歪的。工厂印错了，反而成了宝贝。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s16_44",
+   "name": "水平仪·传说级",
+   "rarity": 5,
+   "desc": "测出来桌子是歪的。论坛里只有一张模糊的照片。",
+   "series": "工具箱",
+   "art": "cat_tools",
+   "tint": "#ffa726"
+  },
+  {
+   "id": "s17_00",
+   "name": "大头电视·二手款",
+   "rarity": 1,
+   "desc": "拍一拍就有信号。上一任主人留下了一点体温和一点划痕。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_01",
+   "name": "大头电视·周一限定",
+   "rarity": 2,
+   "desc": "拍一拍就有信号。拿在手里会莫名有点累。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_02",
+   "name": "大头电视·联名款",
+   "rarity": 3,
+   "desc": "拍一拍就有信号。联名对象不详，价格翻倍。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_03",
+   "name": "大头电视·内测版",
+   "rarity": 4,
+   "desc": "拍一拍就有信号。还没上线就被你拿到了。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_04",
+   "name": "大头电视·出土文物款",
+   "rarity": 5,
+   "desc": "拍一拍就有信号。考古学家都不知道怎么分类。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_10",
+   "name": "录音机·二手款",
+   "rarity": 1,
+   "desc": "倒带要用铅笔。上一任主人留下了一点体温和一点划痕。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_11",
+   "name": "录音机·周一限定",
+   "rarity": 2,
+   "desc": "倒带要用铅笔。拿在手里会莫名有点累。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_12",
+   "name": "录音机·联名款",
+   "rarity": 3,
+   "desc": "倒带要用铅笔。联名对象不详，价格翻倍。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_13",
+   "name": "录音机·内测版",
+   "rarity": 4,
+   "desc": "倒带要用铅笔。还没上线就被你拿到了。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_14",
+   "name": "录音机·出土文物款",
+   "rarity": 5,
+   "desc": "倒带要用铅笔。考古学家都不知道怎么分类。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_20",
+   "name": "电风扇·二手款",
+   "rarity": 1,
+   "desc": "摇头的样子像在否定你。上一任主人留下了一点体温和一点划痕。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_21",
+   "name": "电风扇·周一限定",
+   "rarity": 2,
+   "desc": "摇头的样子像在否定你。拿在手里会莫名有点累。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_22",
+   "name": "电风扇·联名款",
+   "rarity": 3,
+   "desc": "摇头的样子像在否定你。联名对象不详，价格翻倍。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_23",
+   "name": "电风扇·内测版",
+   "rarity": 4,
+   "desc": "摇头的样子像在否定你。还没上线就被你拿到了。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_24",
+   "name": "电风扇·出土文物款",
+   "rarity": 5,
+   "desc": "摇头的样子像在否定你。考古学家都不知道怎么分类。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_30",
+   "name": "饮水机·二手款",
+   "rarity": 1,
+   "desc": "只喝过一次热水。上一任主人留下了一点体温和一点划痕。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_31",
+   "name": "饮水机·周一限定",
+   "rarity": 2,
+   "desc": "只喝过一次热水。拿在手里会莫名有点累。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_32",
+   "name": "饮水机·联名款",
+   "rarity": 3,
+   "desc": "只喝过一次热水。联名对象不详，价格翻倍。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_33",
+   "name": "饮水机·内测版",
+   "rarity": 4,
+   "desc": "只喝过一次热水。还没上线就被你拿到了。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_34",
+   "name": "饮水机·出土文物款",
+   "rarity": 5,
+   "desc": "只喝过一次热水。考古学家都不知道怎么分类。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_40",
+   "name": "遥控器·二手款",
+   "rarity": 1,
+   "desc": "永远找不到的那个。上一任主人留下了一点体温和一点划痕。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_41",
+   "name": "遥控器·周一限定",
+   "rarity": 2,
+   "desc": "永远找不到的那个。拿在手里会莫名有点累。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_42",
+   "name": "遥控器·联名款",
+   "rarity": 3,
+   "desc": "永远找不到的那个。联名对象不详，价格翻倍。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_43",
+   "name": "遥控器·内测版",
+   "rarity": 4,
+   "desc": "永远找不到的那个。还没上线就被你拿到了。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s17_44",
+   "name": "遥控器·出土文物款",
+   "rarity": 5,
+   "desc": "永远找不到的那个。考古学家都不知道怎么分类。",
+   "series": "家电博物馆",
+   "art": "cat_appliance",
+   "tint": "#90a4ae"
+  },
+  {
+   "id": "s18_00",
+   "name": "帆布袋·打折款",
+   "rarity": 1,
+   "desc": "印着一句看不懂的英文。买的时候省了钱，用的时候省了心。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_01",
+   "name": "帆布袋·开光款",
+   "rarity": 2,
+   "desc": "印着一句看不懂的英文。据说转发能带来好运。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_02",
+   "name": "帆布袋·老板签名版",
+   "rarity": 3,
+   "desc": "印着一句看不懂的英文。签名写的是“下次一定”。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_03",
+   "name": "帆布袋·传家宝",
+   "rarity": 4,
+   "desc": "印着一句看不懂的英文。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_04",
+   "name": "帆布袋·全球仅一件",
+   "rarity": 5,
+   "desc": "印着一句看不懂的英文。另一件在你梦里。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_10",
+   "name": "登山包·打折款",
+   "rarity": 1,
+   "desc": "去过最远的地方是楼下超市。买的时候省了钱，用的时候省了心。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_11",
+   "name": "登山包·开光款",
+   "rarity": 2,
+   "desc": "去过最远的地方是楼下超市。据说转发能带来好运。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_12",
+   "name": "登山包·老板签名版",
+   "rarity": 3,
+   "desc": "去过最远的地方是楼下超市。签名写的是“下次一定”。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_13",
+   "name": "登山包·传家宝",
+   "rarity": 4,
+   "desc": "去过最远的地方是楼下超市。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_14",
+   "name": "登山包·全球仅一件",
+   "rarity": 5,
+   "desc": "去过最远的地方是楼下超市。另一件在你梦里。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_20",
+   "name": "腰包·打折款",
+   "rarity": 1,
+   "desc": "复古回来了。买的时候省了钱，用的时候省了心。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_21",
+   "name": "腰包·开光款",
+   "rarity": 2,
+   "desc": "复古回来了。据说转发能带来好运。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_22",
+   "name": "腰包·老板签名版",
+   "rarity": 3,
+   "desc": "复古回来了。签名写的是“下次一定”。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_23",
+   "name": "腰包·传家宝",
+   "rarity": 4,
+   "desc": "复古回来了。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_24",
+   "name": "腰包·全球仅一件",
+   "rarity": 5,
+   "desc": "复古回来了。另一件在你梦里。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_30",
+   "name": "零钱包·打折款",
+   "rarity": 1,
+   "desc": "里面只有一颗纽扣。买的时候省了钱，用的时候省了心。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_31",
+   "name": "零钱包·开光款",
+   "rarity": 2,
+   "desc": "里面只有一颗纽扣。据说转发能带来好运。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_32",
+   "name": "零钱包·老板签名版",
+   "rarity": 3,
+   "desc": "里面只有一颗纽扣。签名写的是“下次一定”。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_33",
+   "name": "零钱包·传家宝",
+   "rarity": 4,
+   "desc": "里面只有一颗纽扣。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_34",
+   "name": "零钱包·全球仅一件",
+   "rarity": 5,
+   "desc": "里面只有一颗纽扣。另一件在你梦里。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_40",
+   "name": "行李箱贴纸·打折款",
+   "rarity": 1,
+   "desc": "假装去过很多国家。买的时候省了钱，用的时候省了心。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_41",
+   "name": "行李箱贴纸·开光款",
+   "rarity": 2,
+   "desc": "假装去过很多国家。据说转发能带来好运。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_42",
+   "name": "行李箱贴纸·老板签名版",
+   "rarity": 3,
+   "desc": "假装去过很多国家。签名写的是“下次一定”。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_43",
+   "name": "行李箱贴纸·传家宝",
+   "rarity": 4,
+   "desc": "假装去过很多国家。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s18_44",
+   "name": "行李箱贴纸·全球仅一件",
+   "rarity": 5,
+   "desc": "假装去过很多国家。另一件在你梦里。",
+   "series": "包包宇宙",
+   "art": "cat_bags",
+   "tint": "#ba68c8"
+  },
+  {
+   "id": "s19_00",
+   "name": "招财猫·夜市款",
+   "rarity": 1,
+   "desc": "电池没电了，手不摇了。摊主说是正品，你选择相信。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_01",
+   "name": "招财猫·复刻款",
+   "rarity": 2,
+   "desc": "电池没电了，手不摇了。比原版还像原版。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_02",
+   "name": "招财猫·会员专享",
+   "rarity": 3,
+   "desc": "电池没电了，手不摇了。开了会员才看得见。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_03",
+   "name": "招财猫·博物馆退役款",
+   "rarity": 4,
+   "desc": "电池没电了，手不摇了。展柜里待了十年，终于出来透透气。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_04",
+   "name": "招财猫·传说级",
+   "rarity": 5,
+   "desc": "电池没电了，手不摇了。论坛里只有一张模糊的照片。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_10",
+   "name": "多肉盆栽·夜市款",
+   "rarity": 1,
+   "desc": "浇水太多的那一盆。摊主说是正品，你选择相信。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_11",
+   "name": "多肉盆栽·复刻款",
+   "rarity": 2,
+   "desc": "浇水太多的那一盆。比原版还像原版。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_12",
+   "name": "多肉盆栽·会员专享",
+   "rarity": 3,
+   "desc": "浇水太多的那一盆。开了会员才看得见。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_13",
+   "name": "多肉盆栽·博物馆退役款",
+   "rarity": 4,
+   "desc": "浇水太多的那一盆。展柜里待了十年，终于出来透透气。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_14",
+   "name": "多肉盆栽·传说级",
+   "rarity": 5,
+   "desc": "浇水太多的那一盆。论坛里只有一张模糊的照片。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_20",
+   "name": "桌面小风车·夜市款",
+   "rarity": 1,
+   "desc": "需要你对它吹气。摊主说是正品，你选择相信。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_21",
+   "name": "桌面小风车·复刻款",
+   "rarity": 2,
+   "desc": "需要你对它吹气。比原版还像原版。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_22",
+   "name": "桌面小风车·会员专享",
+   "rarity": 3,
+   "desc": "需要你对它吹气。开了会员才看得见。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_23",
+   "name": "桌面小风车·博物馆退役款",
+   "rarity": 4,
+   "desc": "需要你对它吹气。展柜里待了十年，终于出来透透气。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_24",
+   "name": "桌面小风车·传说级",
+   "rarity": 5,
+   "desc": "需要你对它吹气。论坛里只有一张模糊的照片。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_30",
+   "name": "沙漏·夜市款",
+   "rarity": 1,
+   "desc": "流完了才想起来在计时。摊主说是正品，你选择相信。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_31",
+   "name": "沙漏·复刻款",
+   "rarity": 2,
+   "desc": "流完了才想起来在计时。比原版还像原版。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_32",
+   "name": "沙漏·会员专享",
+   "rarity": 3,
+   "desc": "流完了才想起来在计时。开了会员才看得见。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_33",
+   "name": "沙漏·博物馆退役款",
+   "rarity": 4,
+   "desc": "流完了才想起来在计时。展柜里待了十年，终于出来透透气。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_34",
+   "name": "沙漏·传说级",
+   "rarity": 5,
+   "desc": "流完了才想起来在计时。论坛里只有一张模糊的照片。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_40",
+   "name": "迷你鱼缸·夜市款",
+   "rarity": 1,
+   "desc": "里面的鱼叫“周一”。摊主说是正品，你选择相信。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_41",
+   "name": "迷你鱼缸·复刻款",
+   "rarity": 2,
+   "desc": "里面的鱼叫“周一”。比原版还像原版。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_42",
+   "name": "迷你鱼缸·会员专享",
+   "rarity": 3,
+   "desc": "里面的鱼叫“周一”。开了会员才看得见。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_43",
+   "name": "迷你鱼缸·博物馆退役款",
+   "rarity": 4,
+   "desc": "里面的鱼叫“周一”。展柜里待了十年，终于出来透透气。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s19_44",
+   "name": "迷你鱼缸·传说级",
+   "rarity": 5,
+   "desc": "里面的鱼叫“周一”。论坛里只有一张模糊的照片。",
+   "series": "桌面摆件",
+   "art": "cat_decor",
+   "tint": "#4db6ac"
+  },
+  {
+   "id": "s20_00",
+   "name": "没有标签的钥匙·普通款",
+   "rarity": 1,
+   "desc": "能打开某扇门，但不是你家的。满大街都是，但它是你的。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_01",
+   "name": "没有标签的钥匙·加班限定",
+   "rarity": 2,
+   "desc": "能打开某扇门，但不是你家的。只在晚上十点以后出现。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_02",
+   "name": "没有标签的钥匙·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "能打开某扇门，但不是你家的。抽了四十个才出的那个。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_03",
+   "name": "没有标签的钥匙·出错版",
+   "rarity": 4,
+   "desc": "能打开某扇门，但不是你家的。工厂印错了，反而成了宝贝。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_04",
+   "name": "没有标签的钥匙·出土文物款",
+   "rarity": 5,
+   "desc": "能打开某扇门，但不是你家的。考古学家都不知道怎么分类。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_10",
+   "name": "会发热的石头·普通款",
+   "rarity": 1,
+   "desc": "冬天很好用。满大街都是，但它是你的。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_11",
+   "name": "会发热的石头·加班限定",
+   "rarity": 2,
+   "desc": "冬天很好用。只在晚上十点以后出现。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_12",
+   "name": "会发热的石头·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "冬天很好用。抽了四十个才出的那个。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_13",
+   "name": "会发热的石头·出错版",
+   "rarity": 4,
+   "desc": "冬天很好用。工厂印错了，反而成了宝贝。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_14",
+   "name": "会发热的石头·出土文物款",
+   "rarity": 5,
+   "desc": "冬天很好用。考古学家都不知道怎么分类。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_20",
+   "name": "一张藏宝图·普通款",
+   "rarity": 1,
+   "desc": "终点是你家楼下。满大街都是，但它是你的。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_21",
+   "name": "一张藏宝图·加班限定",
+   "rarity": 2,
+   "desc": "终点是你家楼下。只在晚上十点以后出现。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_22",
+   "name": "一张藏宝图·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "终点是你家楼下。抽了四十个才出的那个。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_23",
+   "name": "一张藏宝图·出错版",
+   "rarity": 4,
+   "desc": "终点是你家楼下。工厂印错了，反而成了宝贝。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_24",
+   "name": "一张藏宝图·出土文物款",
+   "rarity": 5,
+   "desc": "终点是你家楼下。考古学家都不知道怎么分类。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_30",
+   "name": "密封信封·普通款",
+   "rarity": 1,
+   "desc": "写着“十年后打开”。满大街都是，但它是你的。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_31",
+   "name": "密封信封·加班限定",
+   "rarity": 2,
+   "desc": "写着“十年后打开”。只在晚上十点以后出现。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_32",
+   "name": "密封信封·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "写着“十年后打开”。抽了四十个才出的那个。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_33",
+   "name": "密封信封·出错版",
+   "rarity": 4,
+   "desc": "写着“十年后打开”。工厂印错了，反而成了宝贝。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_34",
+   "name": "密封信封·出土文物款",
+   "rarity": 5,
+   "desc": "写着“十年后打开”。考古学家都不知道怎么分类。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_40",
+   "name": "发光的小盒子·普通款",
+   "rarity": 1,
+   "desc": "里面什么都没有，但一直在发光。满大街都是，但它是你的。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_41",
+   "name": "发光的小盒子·加班限定",
+   "rarity": 2,
+   "desc": "里面什么都没有，但一直在发光。只在晚上十点以后出现。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_42",
+   "name": "发光的小盒子·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "里面什么都没有，但一直在发光。抽了四十个才出的那个。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_43",
+   "name": "发光的小盒子·出错版",
+   "rarity": 4,
+   "desc": "里面什么都没有，但一直在发光。工厂印错了，反而成了宝贝。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s20_44",
+   "name": "发光的小盒子·出土文物款",
+   "rarity": 5,
+   "desc": "里面什么都没有，但一直在发光。考古学家都不知道怎么分类。",
+   "series": "神秘包裹",
+   "art": "cat_mystery",
+   "tint": "#7e57c2"
+  },
+  {
+   "id": "s21_00",
+   "name": "员工证·二手款",
+   "rarity": 1,
+   "desc": "上面的照片是 AI 画的。上一任主人留下了一点体温和一点划痕。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_01",
+   "name": "员工证·周一限定",
+   "rarity": 2,
+   "desc": "上面的照片是 AI 画的。拿在手里会莫名有点累。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_02",
+   "name": "员工证·年终奖特别版",
+   "rarity": 3,
+   "desc": "上面的照片是 AI 画的。比年终奖本身还稀有。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_03",
+   "name": "员工证·内测版",
+   "rarity": 4,
+   "desc": "上面的照片是 AI 画的。还没上线就被你拿到了。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_04",
+   "name": "员工证·全球仅一件",
+   "rarity": 5,
+   "desc": "上面的照片是 AI 画的。另一件在你梦里。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_10",
+   "name": "代码注释便签·二手款",
+   "rarity": 1,
+   "desc": "写着“别动这一行”。上一任主人留下了一点体温和一点划痕。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_11",
+   "name": "代码注释便签·周一限定",
+   "rarity": 2,
+   "desc": "写着“别动这一行”。拿在手里会莫名有点累。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_12",
+   "name": "代码注释便签·年终奖特别版",
+   "rarity": 3,
+   "desc": "写着“别动这一行”。比年终奖本身还稀有。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_13",
+   "name": "代码注释便签·内测版",
+   "rarity": 4,
+   "desc": "写着“别动这一行”。还没上线就被你拿到了。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_14",
+   "name": "代码注释便签·全球仅一件",
+   "rarity": 5,
+   "desc": "写着“别动这一行”。另一件在你梦里。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_20",
+   "name": "报错截图·二手款",
+   "rarity": 1,
+   "desc": "红色的那一屏。上一任主人留下了一点体温和一点划痕。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_21",
+   "name": "报错截图·周一限定",
+   "rarity": 2,
+   "desc": "红色的那一屏。拿在手里会莫名有点累。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_22",
+   "name": "报错截图·年终奖特别版",
+   "rarity": 3,
+   "desc": "红色的那一屏。比年终奖本身还稀有。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_23",
+   "name": "报错截图·内测版",
+   "rarity": 4,
+   "desc": "红色的那一屏。还没上线就被你拿到了。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_24",
+   "name": "报错截图·全球仅一件",
+   "rarity": 5,
+   "desc": "红色的那一屏。另一件在你梦里。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_30",
+   "name": "批准印章·二手款",
+   "rarity": 1,
+   "desc": "滑一下就盖上了。上一任主人留下了一点体温和一点划痕。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_31",
+   "name": "批准印章·周一限定",
+   "rarity": 2,
+   "desc": "滑一下就盖上了。拿在手里会莫名有点累。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_32",
+   "name": "批准印章·年终奖特别版",
+   "rarity": 3,
+   "desc": "滑一下就盖上了。比年终奖本身还稀有。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_33",
+   "name": "批准印章·内测版",
+   "rarity": 4,
+   "desc": "滑一下就盖上了。还没上线就被你拿到了。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_34",
+   "name": "批准印章·全球仅一件",
+   "rarity": 5,
+   "desc": "滑一下就盖上了。另一件在你梦里。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_40",
+   "name": "Token 储蓄罐·二手款",
+   "rarity": 1,
+   "desc": "存满了就能多想一会儿。上一任主人留下了一点体温和一点划痕。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_41",
+   "name": "Token 储蓄罐·周一限定",
+   "rarity": 2,
+   "desc": "存满了就能多想一会儿。拿在手里会莫名有点累。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_42",
+   "name": "Token 储蓄罐·年终奖特别版",
+   "rarity": 3,
+   "desc": "存满了就能多想一会儿。比年终奖本身还稀有。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_43",
+   "name": "Token 储蓄罐·内测版",
+   "rarity": 4,
+   "desc": "存满了就能多想一会儿。还没上线就被你拿到了。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s21_44",
+   "name": "Token 储蓄罐·全球仅一件",
+   "rarity": 5,
+   "desc": "存满了就能多想一会儿。另一件在你梦里。",
+   "series": "AI 员工纪念",
+   "art": "cat_mystery",
+   "tint": "#e8875f"
+  },
+  {
+   "id": "s22_00",
+   "name": "橡皮鸭·打折款",
+   "rarity": 1,
+   "desc": "讲给它听，bug 就好了。买的时候省了钱，用的时候省了心。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_01",
+   "name": "橡皮鸭·开光款",
+   "rarity": 2,
+   "desc": "讲给它听，bug 就好了。据说转发能带来好运。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_02",
+   "name": "橡皮鸭·联名款",
+   "rarity": 3,
+   "desc": "讲给它听，bug 就好了。联名对象不详，价格翻倍。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_03",
+   "name": "橡皮鸭·传家宝",
+   "rarity": 4,
+   "desc": "讲给它听，bug 就好了。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_04",
+   "name": "橡皮鸭·传说级",
+   "rarity": 5,
+   "desc": "讲给它听，bug 就好了。论坛里只有一张模糊的照片。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_10",
+   "name": "机械键盘键帽·打折款",
+   "rarity": 1,
+   "desc": "Esc 键磨得最亮。买的时候省了钱，用的时候省了心。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_11",
+   "name": "机械键盘键帽·开光款",
+   "rarity": 2,
+   "desc": "Esc 键磨得最亮。据说转发能带来好运。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_12",
+   "name": "机械键盘键帽·联名款",
+   "rarity": 3,
+   "desc": "Esc 键磨得最亮。联名对象不详，价格翻倍。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_13",
+   "name": "机械键盘键帽·传家宝",
+   "rarity": 4,
+   "desc": "Esc 键磨得最亮。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_14",
+   "name": "机械键盘键帽·传说级",
+   "rarity": 5,
+   "desc": "Esc 键磨得最亮。论坛里只有一张模糊的照片。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_20",
+   "name": "贴满贴纸的笔记本·打折款",
+   "rarity": 1,
+   "desc": "每张贴纸是一次升级。买的时候省了钱，用的时候省了心。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_21",
+   "name": "贴满贴纸的笔记本·开光款",
+   "rarity": 2,
+   "desc": "每张贴纸是一次升级。据说转发能带来好运。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_22",
+   "name": "贴满贴纸的笔记本·联名款",
+   "rarity": 3,
+   "desc": "每张贴纸是一次升级。联名对象不详，价格翻倍。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_23",
+   "name": "贴满贴纸的笔记本·传家宝",
+   "rarity": 4,
+   "desc": "每张贴纸是一次升级。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_24",
+   "name": "贴满贴纸的笔记本·传说级",
+   "rarity": 5,
+   "desc": "每张贴纸是一次升级。论坛里只有一张模糊的照片。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_30",
+   "name": "咖啡渍便签·打折款",
+   "rarity": 1,
+   "desc": "写着一个没人记得的密码。买的时候省了钱，用的时候省了心。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_31",
+   "name": "咖啡渍便签·开光款",
+   "rarity": 2,
+   "desc": "写着一个没人记得的密码。据说转发能带来好运。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_32",
+   "name": "咖啡渍便签·联名款",
+   "rarity": 3,
+   "desc": "写着一个没人记得的密码。联名对象不详，价格翻倍。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_33",
+   "name": "咖啡渍便签·传家宝",
+   "rarity": 4,
+   "desc": "写着一个没人记得的密码。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_34",
+   "name": "咖啡渍便签·传说级",
+   "rarity": 5,
+   "desc": "写着一个没人记得的密码。论坛里只有一张模糊的照片。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_40",
+   "name": "显示器支架·打折款",
+   "rarity": 1,
+   "desc": "把屏幕抬到了理想的高度。买的时候省了钱，用的时候省了心。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_41",
+   "name": "显示器支架·开光款",
+   "rarity": 2,
+   "desc": "把屏幕抬到了理想的高度。据说转发能带来好运。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_42",
+   "name": "显示器支架·联名款",
+   "rarity": 3,
+   "desc": "把屏幕抬到了理想的高度。联名对象不详，价格翻倍。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_43",
+   "name": "显示器支架·传家宝",
+   "rarity": 4,
+   "desc": "把屏幕抬到了理想的高度。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s22_44",
+   "name": "显示器支架·传说级",
+   "rarity": 5,
+   "desc": "把屏幕抬到了理想的高度。论坛里只有一张模糊的照片。",
+   "series": "程序员桌面",
+   "art": "item_console",
+   "tint": "#26a69a"
+  },
+  {
+   "id": "s23_00",
+   "name": "绝绝子奖章·夜市款",
+   "rarity": 1,
+   "desc": "颁给所有绝绝子。摊主说是正品，你选择相信。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_01",
+   "name": "绝绝子奖章·复刻款",
+   "rarity": 2,
+   "desc": "颁给所有绝绝子。比原版还像原版。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_02",
+   "name": "绝绝子奖章·老板签名版",
+   "rarity": 3,
+   "desc": "颁给所有绝绝子。签名写的是“下次一定”。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_03",
+   "name": "绝绝子奖章·博物馆退役款",
+   "rarity": 4,
+   "desc": "颁给所有绝绝子。展柜里待了十年，终于出来透透气。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_04",
+   "name": "绝绝子奖章·出土文物款",
+   "rarity": 5,
+   "desc": "颁给所有绝绝子。考古学家都不知道怎么分类。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_10",
+   "name": "尊嘟假嘟问号·夜市款",
+   "rarity": 1,
+   "desc": "尊嘟。摊主说是正品，你选择相信。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_11",
+   "name": "尊嘟假嘟问号·复刻款",
+   "rarity": 2,
+   "desc": "尊嘟。比原版还像原版。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_12",
+   "name": "尊嘟假嘟问号·老板签名版",
+   "rarity": 3,
+   "desc": "尊嘟。签名写的是“下次一定”。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_13",
+   "name": "尊嘟假嘟问号·博物馆退役款",
+   "rarity": 4,
+   "desc": "尊嘟。展柜里待了十年，终于出来透透气。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_14",
+   "name": "尊嘟假嘟问号·出土文物款",
+   "rarity": 5,
+   "desc": "尊嘟。考古学家都不知道怎么分类。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_20",
+   "name": "显眼包挂件·夜市款",
+   "rarity": 1,
+   "desc": "挂在哪里都很显眼。摊主说是正品，你选择相信。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_21",
+   "name": "显眼包挂件·复刻款",
+   "rarity": 2,
+   "desc": "挂在哪里都很显眼。比原版还像原版。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_22",
+   "name": "显眼包挂件·老板签名版",
+   "rarity": 3,
+   "desc": "挂在哪里都很显眼。签名写的是“下次一定”。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_23",
+   "name": "显眼包挂件·博物馆退役款",
+   "rarity": 4,
+   "desc": "挂在哪里都很显眼。展柜里待了十年，终于出来透透气。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_24",
+   "name": "显眼包挂件·出土文物款",
+   "rarity": 5,
+   "desc": "挂在哪里都很显眼。考古学家都不知道怎么分类。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_30",
+   "name": "大冤种证书·夜市款",
+   "rarity": 1,
+   "desc": "说的就是你。摊主说是正品，你选择相信。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_31",
+   "name": "大冤种证书·复刻款",
+   "rarity": 2,
+   "desc": "说的就是你。比原版还像原版。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_32",
+   "name": "大冤种证书·老板签名版",
+   "rarity": 3,
+   "desc": "说的就是你。签名写的是“下次一定”。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_33",
+   "name": "大冤种证书·博物馆退役款",
+   "rarity": 4,
+   "desc": "说的就是你。展柜里待了十年，终于出来透透气。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_34",
+   "name": "大冤种证书·出土文物款",
+   "rarity": 5,
+   "desc": "说的就是你。考古学家都不知道怎么分类。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_40",
+   "name": "情绪价值券·夜市款",
+   "rarity": 1,
+   "desc": "可兑换一次夸夸。摊主说是正品，你选择相信。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_41",
+   "name": "情绪价值券·复刻款",
+   "rarity": 2,
+   "desc": "可兑换一次夸夸。比原版还像原版。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_42",
+   "name": "情绪价值券·老板签名版",
+   "rarity": 3,
+   "desc": "可兑换一次夸夸。签名写的是“下次一定”。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_43",
+   "name": "情绪价值券·博物馆退役款",
+   "rarity": 4,
+   "desc": "可兑换一次夸夸。展柜里待了十年，终于出来透透气。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s23_44",
+   "name": "情绪价值券·出土文物款",
+   "rarity": 5,
+   "desc": "可兑换一次夸夸。考古学家都不知道怎么分类。",
+   "series": "网络热梗",
+   "art": "cat_decor",
+   "tint": "#ff7043"
+  },
+  {
+   "id": "s24_00",
+   "name": "春节红包·普通款",
+   "rarity": 1,
+   "desc": "里面是空的，但很喜庆。满大街都是，但它是你的。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_01",
+   "name": "春节红包·加班限定",
+   "rarity": 2,
+   "desc": "里面是空的，但很喜庆。只在晚上十点以后出现。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_02",
+   "name": "春节红包·会员专享",
+   "rarity": 3,
+   "desc": "里面是空的，但很喜庆。开了会员才看得见。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_03",
+   "name": "春节红包·出错版",
+   "rarity": 4,
+   "desc": "里面是空的，但很喜庆。工厂印错了，反而成了宝贝。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_04",
+   "name": "春节红包·全球仅一件",
+   "rarity": 5,
+   "desc": "里面是空的，但很喜庆。另一件在你梦里。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_10",
+   "name": "中秋月饼模具·普通款",
+   "rarity": 1,
+   "desc": "压出来的花纹很好看。满大街都是，但它是你的。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_11",
+   "name": "中秋月饼模具·加班限定",
+   "rarity": 2,
+   "desc": "压出来的花纹很好看。只在晚上十点以后出现。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_12",
+   "name": "中秋月饼模具·会员专享",
+   "rarity": 3,
+   "desc": "压出来的花纹很好看。开了会员才看得见。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_13",
+   "name": "中秋月饼模具·出错版",
+   "rarity": 4,
+   "desc": "压出来的花纹很好看。工厂印错了，反而成了宝贝。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_14",
+   "name": "中秋月饼模具·全球仅一件",
+   "rarity": 5,
+   "desc": "压出来的花纹很好看。另一件在你梦里。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_20",
+   "name": "圣诞袜·普通款",
+   "rarity": 1,
+   "desc": "装不下礼物，只能装袜子。满大街都是，但它是你的。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_21",
+   "name": "圣诞袜·加班限定",
+   "rarity": 2,
+   "desc": "装不下礼物，只能装袜子。只在晚上十点以后出现。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_22",
+   "name": "圣诞袜·会员专享",
+   "rarity": 3,
+   "desc": "装不下礼物，只能装袜子。开了会员才看得见。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_23",
+   "name": "圣诞袜·出错版",
+   "rarity": 4,
+   "desc": "装不下礼物，只能装袜子。工厂印错了，反而成了宝贝。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_24",
+   "name": "圣诞袜·全球仅一件",
+   "rarity": 5,
+   "desc": "装不下礼物，只能装袜子。另一件在你梦里。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_30",
+   "name": "元宵灯笼·普通款",
+   "rarity": 1,
+   "desc": "转起来会有影子。满大街都是，但它是你的。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_31",
+   "name": "元宵灯笼·加班限定",
+   "rarity": 2,
+   "desc": "转起来会有影子。只在晚上十点以后出现。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_32",
+   "name": "元宵灯笼·会员专享",
+   "rarity": 3,
+   "desc": "转起来会有影子。开了会员才看得见。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_33",
+   "name": "元宵灯笼·出错版",
+   "rarity": 4,
+   "desc": "转起来会有影子。工厂印错了，反而成了宝贝。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_34",
+   "name": "元宵灯笼·全球仅一件",
+   "rarity": 5,
+   "desc": "转起来会有影子。另一件在你梦里。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_40",
+   "name": "端午香囊·普通款",
+   "rarity": 1,
+   "desc": "闻起来像小时候。满大街都是，但它是你的。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_41",
+   "name": "端午香囊·加班限定",
+   "rarity": 2,
+   "desc": "闻起来像小时候。只在晚上十点以后出现。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_42",
+   "name": "端午香囊·会员专享",
+   "rarity": 3,
+   "desc": "闻起来像小时候。开了会员才看得见。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_43",
+   "name": "端午香囊·出错版",
+   "rarity": 4,
+   "desc": "闻起来像小时候。工厂印错了，反而成了宝贝。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s24_44",
+   "name": "端午香囊·全球仅一件",
+   "rarity": 5,
+   "desc": "闻起来像小时候。另一件在你梦里。",
+   "series": "节日限定",
+   "art": "cat_decor",
+   "tint": "#e57373"
+  },
+  {
+   "id": "s25_00",
+   "name": "景区门票·二手款",
+   "rarity": 1,
+   "desc": "人山人海的那天。上一任主人留下了一点体温和一点划痕。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_01",
+   "name": "景区门票·周一限定",
+   "rarity": 2,
+   "desc": "人山人海的那天。拿在手里会莫名有点累。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_02",
+   "name": "景区门票·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "人山人海的那天。抽了四十个才出的那个。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_03",
+   "name": "景区门票·内测版",
+   "rarity": 4,
+   "desc": "人山人海的那天。还没上线就被你拿到了。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_04",
+   "name": "景区门票·传说级",
+   "rarity": 5,
+   "desc": "人山人海的那天。论坛里只有一张模糊的照片。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_10",
+   "name": "冰箱贴·二手款",
+   "rarity": 1,
+   "desc": "每个城市一个。上一任主人留下了一点体温和一点划痕。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_11",
+   "name": "冰箱贴·周一限定",
+   "rarity": 2,
+   "desc": "每个城市一个。拿在手里会莫名有点累。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_12",
+   "name": "冰箱贴·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "每个城市一个。抽了四十个才出的那个。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_13",
+   "name": "冰箱贴·内测版",
+   "rarity": 4,
+   "desc": "每个城市一个。还没上线就被你拿到了。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_14",
+   "name": "冰箱贴·传说级",
+   "rarity": 5,
+   "desc": "每个城市一个。论坛里只有一张模糊的照片。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_20",
+   "name": "明信片·二手款",
+   "rarity": 1,
+   "desc": "寄给自己的，还没到。上一任主人留下了一点体温和一点划痕。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_21",
+   "name": "明信片·周一限定",
+   "rarity": 2,
+   "desc": "寄给自己的，还没到。拿在手里会莫名有点累。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_22",
+   "name": "明信片·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "寄给自己的，还没到。抽了四十个才出的那个。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_23",
+   "name": "明信片·内测版",
+   "rarity": 4,
+   "desc": "寄给自己的，还没到。还没上线就被你拿到了。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_24",
+   "name": "明信片·传说级",
+   "rarity": 5,
+   "desc": "寄给自己的，还没到。论坛里只有一张模糊的照片。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_30",
+   "name": "登机牌·二手款",
+   "rarity": 1,
+   "desc": "延误了五个小时。上一任主人留下了一点体温和一点划痕。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_31",
+   "name": "登机牌·周一限定",
+   "rarity": 2,
+   "desc": "延误了五个小时。拿在手里会莫名有点累。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_32",
+   "name": "登机牌·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "延误了五个小时。抽了四十个才出的那个。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_33",
+   "name": "登机牌·内测版",
+   "rarity": 4,
+   "desc": "延误了五个小时。还没上线就被你拿到了。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_34",
+   "name": "登机牌·传说级",
+   "rarity": 5,
+   "desc": "延误了五个小时。论坛里只有一张模糊的照片。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_40",
+   "name": "护照印章·二手款",
+   "rarity": 1,
+   "desc": "其实是纪念章。上一任主人留下了一点体温和一点划痕。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_41",
+   "name": "护照印章·周一限定",
+   "rarity": 2,
+   "desc": "其实是纪念章。拿在手里会莫名有点累。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_42",
+   "name": "护照印章·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "其实是纪念章。抽了四十个才出的那个。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_43",
+   "name": "护照印章·内测版",
+   "rarity": 4,
+   "desc": "其实是纪念章。还没上线就被你拿到了。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s25_44",
+   "name": "护照印章·传说级",
+   "rarity": 5,
+   "desc": "其实是纪念章。论坛里只有一张模糊的照片。",
+   "series": "旅行纪念",
+   "art": "item_scooter",
+   "tint": "#4fc3f7"
+  },
+  {
+   "id": "s26_00",
+   "name": "同学录·打折款",
+   "rarity": 1,
+   "desc": "写着“苟富贵勿相忘”。买的时候省了钱，用的时候省了心。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_01",
+   "name": "同学录·开光款",
+   "rarity": 2,
+   "desc": "写着“苟富贵勿相忘”。据说转发能带来好运。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_02",
+   "name": "同学录·年终奖特别版",
+   "rarity": 3,
+   "desc": "写着“苟富贵勿相忘”。比年终奖本身还稀有。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_03",
+   "name": "同学录·传家宝",
+   "rarity": 4,
+   "desc": "写着“苟富贵勿相忘”。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_04",
+   "name": "同学录·出土文物款",
+   "rarity": 5,
+   "desc": "写着“苟富贵勿相忘”。考古学家都不知道怎么分类。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_10",
+   "name": "校服·打折款",
+   "rarity": 1,
+   "desc": "背后被写了字。买的时候省了钱，用的时候省了心。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_11",
+   "name": "校服·开光款",
+   "rarity": 2,
+   "desc": "背后被写了字。据说转发能带来好运。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_12",
+   "name": "校服·年终奖特别版",
+   "rarity": 3,
+   "desc": "背后被写了字。比年终奖本身还稀有。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_13",
+   "name": "校服·传家宝",
+   "rarity": 4,
+   "desc": "背后被写了字。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_14",
+   "name": "校服·出土文物款",
+   "rarity": 5,
+   "desc": "背后被写了字。考古学家都不知道怎么分类。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_20",
+   "name": "课桌刻字·打折款",
+   "rarity": 1,
+   "desc": "某某到此一游。买的时候省了钱，用的时候省了心。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_21",
+   "name": "课桌刻字·开光款",
+   "rarity": 2,
+   "desc": "某某到此一游。据说转发能带来好运。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_22",
+   "name": "课桌刻字·年终奖特别版",
+   "rarity": 3,
+   "desc": "某某到此一游。比年终奖本身还稀有。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_23",
+   "name": "课桌刻字·传家宝",
+   "rarity": 4,
+   "desc": "某某到此一游。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_24",
+   "name": "课桌刻字·出土文物款",
+   "rarity": 5,
+   "desc": "某某到此一游。考古学家都不知道怎么分类。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_30",
+   "name": "修正带·打折款",
+   "rarity": 1,
+   "desc": "改过一万个错别字。买的时候省了钱，用的时候省了心。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_31",
+   "name": "修正带·开光款",
+   "rarity": 2,
+   "desc": "改过一万个错别字。据说转发能带来好运。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_32",
+   "name": "修正带·年终奖特别版",
+   "rarity": 3,
+   "desc": "改过一万个错别字。比年终奖本身还稀有。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_33",
+   "name": "修正带·传家宝",
+   "rarity": 4,
+   "desc": "改过一万个错别字。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_34",
+   "name": "修正带·出土文物款",
+   "rarity": 5,
+   "desc": "改过一万个错别字。考古学家都不知道怎么分类。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_40",
+   "name": "毕业照·打折款",
+   "rarity": 1,
+   "desc": "找自己找了半天。买的时候省了钱，用的时候省了心。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_41",
+   "name": "毕业照·开光款",
+   "rarity": 2,
+   "desc": "找自己找了半天。据说转发能带来好运。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_42",
+   "name": "毕业照·年终奖特别版",
+   "rarity": 3,
+   "desc": "找自己找了半天。比年终奖本身还稀有。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_43",
+   "name": "毕业照·传家宝",
+   "rarity": 4,
+   "desc": "找自己找了半天。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s26_44",
+   "name": "毕业照·出土文物款",
+   "rarity": 5,
+   "desc": "找自己找了半天。考古学家都不知道怎么分类。",
+   "series": "学生时代",
+   "art": "item_books",
+   "tint": "#9ccc65"
+  },
+  {
+   "id": "s27_00",
+   "name": "逗猫棒·夜市款",
+   "rarity": 1,
+   "desc": "猫已经不感兴趣了。摊主说是正品，你选择相信。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_01",
+   "name": "逗猫棒·复刻款",
+   "rarity": 2,
+   "desc": "猫已经不感兴趣了。比原版还像原版。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_02",
+   "name": "逗猫棒·联名款",
+   "rarity": 3,
+   "desc": "猫已经不感兴趣了。联名对象不详，价格翻倍。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_03",
+   "name": "逗猫棒·博物馆退役款",
+   "rarity": 4,
+   "desc": "猫已经不感兴趣了。展柜里待了十年，终于出来透透气。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_04",
+   "name": "逗猫棒·全球仅一件",
+   "rarity": 5,
+   "desc": "猫已经不感兴趣了。另一件在你梦里。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_10",
+   "name": "狗狗飞盘·夜市款",
+   "rarity": 1,
+   "desc": "被咬成了波浪形。摊主说是正品，你选择相信。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_11",
+   "name": "狗狗飞盘·复刻款",
+   "rarity": 2,
+   "desc": "被咬成了波浪形。比原版还像原版。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_12",
+   "name": "狗狗飞盘·联名款",
+   "rarity": 3,
+   "desc": "被咬成了波浪形。联名对象不详，价格翻倍。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_13",
+   "name": "狗狗飞盘·博物馆退役款",
+   "rarity": 4,
+   "desc": "被咬成了波浪形。展柜里待了十年，终于出来透透气。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_14",
+   "name": "狗狗飞盘·全球仅一件",
+   "rarity": 5,
+   "desc": "被咬成了波浪形。另一件在你梦里。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_20",
+   "name": "猫抓板·夜市款",
+   "rarity": 1,
+   "desc": "猫更喜欢沙发。摊主说是正品，你选择相信。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_21",
+   "name": "猫抓板·复刻款",
+   "rarity": 2,
+   "desc": "猫更喜欢沙发。比原版还像原版。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_22",
+   "name": "猫抓板·联名款",
+   "rarity": 3,
+   "desc": "猫更喜欢沙发。联名对象不详，价格翻倍。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_23",
+   "name": "猫抓板·博物馆退役款",
+   "rarity": 4,
+   "desc": "猫更喜欢沙发。展柜里待了十年，终于出来透透气。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_24",
+   "name": "猫抓板·全球仅一件",
+   "rarity": 5,
+   "desc": "猫更喜欢沙发。另一件在你梦里。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_30",
+   "name": "宠物铃铛·夜市款",
+   "rarity": 1,
+   "desc": "响一下就知道它在哪。摊主说是正品，你选择相信。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_31",
+   "name": "宠物铃铛·复刻款",
+   "rarity": 2,
+   "desc": "响一下就知道它在哪。比原版还像原版。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_32",
+   "name": "宠物铃铛·联名款",
+   "rarity": 3,
+   "desc": "响一下就知道它在哪。联名对象不详，价格翻倍。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_33",
+   "name": "宠物铃铛·博物馆退役款",
+   "rarity": 4,
+   "desc": "响一下就知道它在哪。展柜里待了十年，终于出来透透气。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_34",
+   "name": "宠物铃铛·全球仅一件",
+   "rarity": 5,
+   "desc": "响一下就知道它在哪。另一件在你梦里。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_40",
+   "name": "小鱼干罐子·夜市款",
+   "rarity": 1,
+   "desc": "是猫的命根子。摊主说是正品，你选择相信。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_41",
+   "name": "小鱼干罐子·复刻款",
+   "rarity": 2,
+   "desc": "是猫的命根子。比原版还像原版。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_42",
+   "name": "小鱼干罐子·联名款",
+   "rarity": 3,
+   "desc": "是猫的命根子。联名对象不详，价格翻倍。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_43",
+   "name": "小鱼干罐子·博物馆退役款",
+   "rarity": 4,
+   "desc": "是猫的命根子。展柜里待了十年，终于出来透透气。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s27_44",
+   "name": "小鱼干罐子·全球仅一件",
+   "rarity": 5,
+   "desc": "是猫的命根子。另一件在你梦里。",
+   "series": "宠物用品",
+   "art": "cat_toys",
+   "tint": "#ffb74d"
+  },
+  {
+   "id": "s28_00",
+   "name": "透明雨伞·普通款",
+   "rarity": 1,
+   "desc": "总是被别人拿走。满大街都是，但它是你的。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_01",
+   "name": "透明雨伞·加班限定",
+   "rarity": 2,
+   "desc": "总是被别人拿走。只在晚上十点以后出现。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_02",
+   "name": "透明雨伞·老板签名版",
+   "rarity": 3,
+   "desc": "总是被别人拿走。签名写的是“下次一定”。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_03",
+   "name": "透明雨伞·出错版",
+   "rarity": 4,
+   "desc": "总是被别人拿走。工厂印错了，反而成了宝贝。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_04",
+   "name": "透明雨伞·传说级",
+   "rarity": 5,
+   "desc": "总是被别人拿走。论坛里只有一张模糊的照片。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_10",
+   "name": "雨靴·普通款",
+   "rarity": 1,
+   "desc": "专门踩水坑用。满大街都是，但它是你的。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_11",
+   "name": "雨靴·加班限定",
+   "rarity": 2,
+   "desc": "专门踩水坑用。只在晚上十点以后出现。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_12",
+   "name": "雨靴·老板签名版",
+   "rarity": 3,
+   "desc": "专门踩水坑用。签名写的是“下次一定”。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_13",
+   "name": "雨靴·出错版",
+   "rarity": 4,
+   "desc": "专门踩水坑用。工厂印错了，反而成了宝贝。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_14",
+   "name": "雨靴·传说级",
+   "rarity": 5,
+   "desc": "专门踩水坑用。论坛里只有一张模糊的照片。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_20",
+   "name": "雨衣·普通款",
+   "rarity": 1,
+   "desc": "穿上像一颗饺子。满大街都是，但它是你的。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_21",
+   "name": "雨衣·加班限定",
+   "rarity": 2,
+   "desc": "穿上像一颗饺子。只在晚上十点以后出现。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_22",
+   "name": "雨衣·老板签名版",
+   "rarity": 3,
+   "desc": "穿上像一颗饺子。签名写的是“下次一定”。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_23",
+   "name": "雨衣·出错版",
+   "rarity": 4,
+   "desc": "穿上像一颗饺子。工厂印错了，反而成了宝贝。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_24",
+   "name": "雨衣·传说级",
+   "rarity": 5,
+   "desc": "穿上像一颗饺子。论坛里只有一张模糊的照片。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_30",
+   "name": "晴天娃娃·普通款",
+   "rarity": 1,
+   "desc": "挂上去第二天就晴了。满大街都是，但它是你的。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_31",
+   "name": "晴天娃娃·加班限定",
+   "rarity": 2,
+   "desc": "挂上去第二天就晴了。只在晚上十点以后出现。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_32",
+   "name": "晴天娃娃·老板签名版",
+   "rarity": 3,
+   "desc": "挂上去第二天就晴了。签名写的是“下次一定”。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_33",
+   "name": "晴天娃娃·出错版",
+   "rarity": 4,
+   "desc": "挂上去第二天就晴了。工厂印错了，反而成了宝贝。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_34",
+   "name": "晴天娃娃·传说级",
+   "rarity": 5,
+   "desc": "挂上去第二天就晴了。论坛里只有一张模糊的照片。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_40",
+   "name": "湿掉的车票·普通款",
+   "rarity": 1,
+   "desc": "字都花了。满大街都是，但它是你的。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_41",
+   "name": "湿掉的车票·加班限定",
+   "rarity": 2,
+   "desc": "字都花了。只在晚上十点以后出现。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_42",
+   "name": "湿掉的车票·老板签名版",
+   "rarity": 3,
+   "desc": "字都花了。签名写的是“下次一定”。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_43",
+   "name": "湿掉的车票·出错版",
+   "rarity": 4,
+   "desc": "字都花了。工厂印错了，反而成了宝贝。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s28_44",
+   "name": "湿掉的车票·传说级",
+   "rarity": 5,
+   "desc": "字都花了。论坛里只有一张模糊的照片。",
+   "series": "雨天物品",
+   "art": "cat_clothes",
+   "tint": "#64b5f6"
+  },
+  {
+   "id": "s29_00",
+   "name": "MP3·二手款",
+   "rarity": 1,
+   "desc": "里面只有 20 首歌。上一任主人留下了一点体温和一点划痕。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_01",
+   "name": "MP3·周一限定",
+   "rarity": 2,
+   "desc": "里面只有 20 首歌。拿在手里会莫名有点累。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_02",
+   "name": "MP3·会员专享",
+   "rarity": 3,
+   "desc": "里面只有 20 首歌。开了会员才看得见。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_03",
+   "name": "MP3·内测版",
+   "rarity": 4,
+   "desc": "里面只有 20 首歌。还没上线就被你拿到了。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_04",
+   "name": "MP3·出土文物款",
+   "rarity": 5,
+   "desc": "里面只有 20 首歌。考古学家都不知道怎么分类。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_10",
+   "name": "磁带·二手款",
+   "rarity": 1,
+   "desc": "要用铅笔倒带。上一任主人留下了一点体温和一点划痕。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_11",
+   "name": "磁带·周一限定",
+   "rarity": 2,
+   "desc": "要用铅笔倒带。拿在手里会莫名有点累。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_12",
+   "name": "磁带·会员专享",
+   "rarity": 3,
+   "desc": "要用铅笔倒带。开了会员才看得见。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_13",
+   "name": "磁带·内测版",
+   "rarity": 4,
+   "desc": "要用铅笔倒带。还没上线就被你拿到了。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_14",
+   "name": "磁带·出土文物款",
+   "rarity": 5,
+   "desc": "要用铅笔倒带。考古学家都不知道怎么分类。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_20",
+   "name": "CD·二手款",
+   "rarity": 1,
+   "desc": "放进去会转得很响。上一任主人留下了一点体温和一点划痕。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_21",
+   "name": "CD·周一限定",
+   "rarity": 2,
+   "desc": "放进去会转得很响。拿在手里会莫名有点累。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_22",
+   "name": "CD·会员专享",
+   "rarity": 3,
+   "desc": "放进去会转得很响。开了会员才看得见。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_23",
+   "name": "CD·内测版",
+   "rarity": 4,
+   "desc": "放进去会转得很响。还没上线就被你拿到了。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_24",
+   "name": "CD·出土文物款",
+   "rarity": 5,
+   "desc": "放进去会转得很响。考古学家都不知道怎么分类。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_30",
+   "name": "有线耳机·二手款",
+   "rarity": 1,
+   "desc": "永远缠在一起。上一任主人留下了一点体温和一点划痕。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_31",
+   "name": "有线耳机·周一限定",
+   "rarity": 2,
+   "desc": "永远缠在一起。拿在手里会莫名有点累。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_32",
+   "name": "有线耳机·会员专享",
+   "rarity": 3,
+   "desc": "永远缠在一起。开了会员才看得见。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_33",
+   "name": "有线耳机·内测版",
+   "rarity": 4,
+   "desc": "永远缠在一起。还没上线就被你拿到了。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_34",
+   "name": "有线耳机·出土文物款",
+   "rarity": 5,
+   "desc": "永远缠在一起。考古学家都不知道怎么分类。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_40",
+   "name": "歌词本·二手款",
+   "rarity": 1,
+   "desc": "抄满了喜欢的歌。上一任主人留下了一点体温和一点划痕。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_41",
+   "name": "歌词本·周一限定",
+   "rarity": 2,
+   "desc": "抄满了喜欢的歌。拿在手里会莫名有点累。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_42",
+   "name": "歌词本·会员专享",
+   "rarity": 3,
+   "desc": "抄满了喜欢的歌。开了会员才看得见。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_43",
+   "name": "歌词本·内测版",
+   "rarity": 4,
+   "desc": "抄满了喜欢的歌。还没上线就被你拿到了。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s29_44",
+   "name": "歌词本·出土文物款",
+   "rarity": 5,
+   "desc": "抄满了喜欢的歌。考古学家都不知道怎么分类。",
+   "series": "音乐播放器",
+   "art": "item_camera",
+   "tint": "#f06292"
+  },
+  {
+   "id": "s30_00",
+   "name": "订书机·打折款",
+   "rarity": 1,
+   "desc": "总在关键时刻卡针。买的时候省了钱，用的时候省了心。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_01",
+   "name": "订书机·开光款",
+   "rarity": 2,
+   "desc": "总在关键时刻卡针。据说转发能带来好运。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_02",
+   "name": "订书机·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "总在关键时刻卡针。抽了四十个才出的那个。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_03",
+   "name": "订书机·传家宝",
+   "rarity": 4,
+   "desc": "总在关键时刻卡针。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_04",
+   "name": "订书机·全球仅一件",
+   "rarity": 5,
+   "desc": "总在关键时刻卡针。另一件在你梦里。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_10",
+   "name": "回形针链·打折款",
+   "rarity": 1,
+   "desc": "开会时无聊串的。买的时候省了钱，用的时候省了心。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_11",
+   "name": "回形针链·开光款",
+   "rarity": 2,
+   "desc": "开会时无聊串的。据说转发能带来好运。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_12",
+   "name": "回形针链·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "开会时无聊串的。抽了四十个才出的那个。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_13",
+   "name": "回形针链·传家宝",
+   "rarity": 4,
+   "desc": "开会时无聊串的。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_14",
+   "name": "回形针链·全球仅一件",
+   "rarity": 5,
+   "desc": "开会时无聊串的。另一件在你梦里。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_20",
+   "name": "便利贴墙·打折款",
+   "rarity": 1,
+   "desc": "写满了待办。买的时候省了钱，用的时候省了心。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_21",
+   "name": "便利贴墙·开光款",
+   "rarity": 2,
+   "desc": "写满了待办。据说转发能带来好运。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_22",
+   "name": "便利贴墙·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "写满了待办。抽了四十个才出的那个。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_23",
+   "name": "便利贴墙·传家宝",
+   "rarity": 4,
+   "desc": "写满了待办。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_24",
+   "name": "便利贴墙·全球仅一件",
+   "rarity": 5,
+   "desc": "写满了待办。另一件在你梦里。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_30",
+   "name": "打印机墨盒·打折款",
+   "rarity": 1,
+   "desc": "比打印机还贵。买的时候省了钱，用的时候省了心。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_31",
+   "name": "打印机墨盒·开光款",
+   "rarity": 2,
+   "desc": "比打印机还贵。据说转发能带来好运。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_32",
+   "name": "打印机墨盒·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "比打印机还贵。抽了四十个才出的那个。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_33",
+   "name": "打印机墨盒·传家宝",
+   "rarity": 4,
+   "desc": "比打印机还贵。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_34",
+   "name": "打印机墨盒·全球仅一件",
+   "rarity": 5,
+   "desc": "比打印机还贵。另一件在你梦里。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_40",
+   "name": "会议记录本·打折款",
+   "rarity": 1,
+   "desc": "只记了日期。买的时候省了钱，用的时候省了心。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_41",
+   "name": "会议记录本·开光款",
+   "rarity": 2,
+   "desc": "只记了日期。据说转发能带来好运。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_42",
+   "name": "会议记录本·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "只记了日期。抽了四十个才出的那个。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_43",
+   "name": "会议记录本·传家宝",
+   "rarity": 4,
+   "desc": "只记了日期。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s30_44",
+   "name": "会议记录本·全球仅一件",
+   "rarity": 5,
+   "desc": "只记了日期。另一件在你梦里。",
+   "series": "办公用品",
+   "art": "cat_tools",
+   "tint": "#a1887f"
+  },
+  {
+   "id": "s31_00",
+   "name": "辣条·夜市款",
+   "rarity": 1,
+   "desc": "吃完手指要舔干净。摊主说是正品，你选择相信。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_01",
+   "name": "辣条·复刻款",
+   "rarity": 2,
+   "desc": "吃完手指要舔干净。比原版还像原版。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_02",
+   "name": "辣条·年终奖特别版",
+   "rarity": 3,
+   "desc": "吃完手指要舔干净。比年终奖本身还稀有。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_03",
+   "name": "辣条·博物馆退役款",
+   "rarity": 4,
+   "desc": "吃完手指要舔干净。展柜里待了十年，终于出来透透气。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_04",
+   "name": "辣条·传说级",
+   "rarity": 5,
+   "desc": "吃完手指要舔干净。论坛里只有一张模糊的照片。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_10",
+   "name": "泡面调料包·夜市款",
+   "rarity": 1,
+   "desc": "比面还重要。摊主说是正品，你选择相信。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_11",
+   "name": "泡面调料包·复刻款",
+   "rarity": 2,
+   "desc": "比面还重要。比原版还像原版。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_12",
+   "name": "泡面调料包·年终奖特别版",
+   "rarity": 3,
+   "desc": "比面还重要。比年终奖本身还稀有。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_13",
+   "name": "泡面调料包·博物馆退役款",
+   "rarity": 4,
+   "desc": "比面还重要。展柜里待了十年，终于出来透透气。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_14",
+   "name": "泡面调料包·传说级",
+   "rarity": 5,
+   "desc": "比面还重要。论坛里只有一张模糊的照片。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_20",
+   "name": "薯片罐·夜市款",
+   "rarity": 1,
+   "desc": "最后一片在罐底。摊主说是正品，你选择相信。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_21",
+   "name": "薯片罐·复刻款",
+   "rarity": 2,
+   "desc": "最后一片在罐底。比原版还像原版。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_22",
+   "name": "薯片罐·年终奖特别版",
+   "rarity": 3,
+   "desc": "最后一片在罐底。比年终奖本身还稀有。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_23",
+   "name": "薯片罐·博物馆退役款",
+   "rarity": 4,
+   "desc": "最后一片在罐底。展柜里待了十年，终于出来透透气。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_24",
+   "name": "薯片罐·传说级",
+   "rarity": 5,
+   "desc": "最后一片在罐底。论坛里只有一张模糊的照片。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_30",
+   "name": "奶茶吸管·夜市款",
+   "rarity": 1,
+   "desc": "粗的那种。摊主说是正品，你选择相信。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_31",
+   "name": "奶茶吸管·复刻款",
+   "rarity": 2,
+   "desc": "粗的那种。比原版还像原版。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_32",
+   "name": "奶茶吸管·年终奖特别版",
+   "rarity": 3,
+   "desc": "粗的那种。比年终奖本身还稀有。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_33",
+   "name": "奶茶吸管·博物馆退役款",
+   "rarity": 4,
+   "desc": "粗的那种。展柜里待了十年，终于出来透透气。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_34",
+   "name": "奶茶吸管·传说级",
+   "rarity": 5,
+   "desc": "粗的那种。论坛里只有一张模糊的照片。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_40",
+   "name": "巧克力金币·夜市款",
+   "rarity": 1,
+   "desc": "小时候以为是真钱。摊主说是正品，你选择相信。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_41",
+   "name": "巧克力金币·复刻款",
+   "rarity": 2,
+   "desc": "小时候以为是真钱。比原版还像原版。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_42",
+   "name": "巧克力金币·年终奖特别版",
+   "rarity": 3,
+   "desc": "小时候以为是真钱。比年终奖本身还稀有。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_43",
+   "name": "巧克力金币·博物馆退役款",
+   "rarity": 4,
+   "desc": "小时候以为是真钱。展柜里待了十年，终于出来透透气。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s31_44",
+   "name": "巧克力金币·传说级",
+   "rarity": 5,
+   "desc": "小时候以为是真钱。论坛里只有一张模糊的照片。",
+   "series": "零食柜",
+   "art": "cat_kitchen",
+   "tint": "#ffca28"
+  },
+  {
+   "id": "s32_00",
+   "name": "枸杞罐·普通款",
+   "rarity": 1,
+   "desc": "保温杯的灵魂伴侣。满大街都是，但它是你的。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_01",
+   "name": "枸杞罐·加班限定",
+   "rarity": 2,
+   "desc": "保温杯的灵魂伴侣。只在晚上十点以后出现。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_02",
+   "name": "枸杞罐·联名款",
+   "rarity": 3,
+   "desc": "保温杯的灵魂伴侣。联名对象不详，价格翻倍。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_03",
+   "name": "枸杞罐·出错版",
+   "rarity": 4,
+   "desc": "保温杯的灵魂伴侣。工厂印错了，反而成了宝贝。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_04",
+   "name": "枸杞罐·出土文物款",
+   "rarity": 5,
+   "desc": "保温杯的灵魂伴侣。考古学家都不知道怎么分类。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_10",
+   "name": "泡脚桶·普通款",
+   "rarity": 1,
+   "desc": "一泡就是一晚上。满大街都是，但它是你的。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_11",
+   "name": "泡脚桶·加班限定",
+   "rarity": 2,
+   "desc": "一泡就是一晚上。只在晚上十点以后出现。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_12",
+   "name": "泡脚桶·联名款",
+   "rarity": 3,
+   "desc": "一泡就是一晚上。联名对象不详，价格翻倍。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_13",
+   "name": "泡脚桶·出错版",
+   "rarity": 4,
+   "desc": "一泡就是一晚上。工厂印错了，反而成了宝贝。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_14",
+   "name": "泡脚桶·出土文物款",
+   "rarity": 5,
+   "desc": "一泡就是一晚上。考古学家都不知道怎么分类。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_20",
+   "name": "按摩锤·普通款",
+   "rarity": 1,
+   "desc": "敲一敲，腰不酸了。满大街都是，但它是你的。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_21",
+   "name": "按摩锤·加班限定",
+   "rarity": 2,
+   "desc": "敲一敲，腰不酸了。只在晚上十点以后出现。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_22",
+   "name": "按摩锤·联名款",
+   "rarity": 3,
+   "desc": "敲一敲，腰不酸了。联名对象不详，价格翻倍。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_23",
+   "name": "按摩锤·出错版",
+   "rarity": 4,
+   "desc": "敲一敲，腰不酸了。工厂印错了，反而成了宝贝。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_24",
+   "name": "按摩锤·出土文物款",
+   "rarity": 5,
+   "desc": "敲一敲，腰不酸了。考古学家都不知道怎么分类。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_30",
+   "name": "护眼台灯·普通款",
+   "rarity": 1,
+   "desc": "盯着它看一小时。满大街都是，但它是你的。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_31",
+   "name": "护眼台灯·加班限定",
+   "rarity": 2,
+   "desc": "盯着它看一小时。只在晚上十点以后出现。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_32",
+   "name": "护眼台灯·联名款",
+   "rarity": 3,
+   "desc": "盯着它看一小时。联名对象不详，价格翻倍。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_33",
+   "name": "护眼台灯·出错版",
+   "rarity": 4,
+   "desc": "盯着它看一小时。工厂印错了，反而成了宝贝。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_34",
+   "name": "护眼台灯·出土文物款",
+   "rarity": 5,
+   "desc": "盯着它看一小时。考古学家都不知道怎么分类。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_40",
+   "name": "早睡打卡表·普通款",
+   "rarity": 1,
+   "desc": "第一天就失败了。满大街都是，但它是你的。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_41",
+   "name": "早睡打卡表·加班限定",
+   "rarity": 2,
+   "desc": "第一天就失败了。只在晚上十点以后出现。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_42",
+   "name": "早睡打卡表·联名款",
+   "rarity": 3,
+   "desc": "第一天就失败了。联名对象不详，价格翻倍。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_43",
+   "name": "早睡打卡表·出错版",
+   "rarity": 4,
+   "desc": "第一天就失败了。工厂印错了，反而成了宝贝。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s32_44",
+   "name": "早睡打卡表·出土文物款",
+   "rarity": 5,
+   "desc": "第一天就失败了。考古学家都不知道怎么分类。",
+   "series": "健康养生",
+   "art": "cat_sports",
+   "tint": "#81c784"
+  },
+  {
+   "id": "s33_00",
+   "name": "铜钱手串·二手款",
+   "rarity": 1,
+   "desc": "叮当响。上一任主人留下了一点体温和一点划痕。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_01",
+   "name": "铜钱手串·周一限定",
+   "rarity": 2,
+   "desc": "叮当响。拿在手里会莫名有点累。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_02",
+   "name": "铜钱手串·老板签名版",
+   "rarity": 3,
+   "desc": "叮当响。签名写的是“下次一定”。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_03",
+   "name": "铜钱手串·内测版",
+   "rarity": 4,
+   "desc": "叮当响。还没上线就被你拿到了。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_04",
+   "name": "铜钱手串·全球仅一件",
+   "rarity": 5,
+   "desc": "叮当响。另一件在你梦里。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_10",
+   "name": "银镯子·二手款",
+   "rarity": 1,
+   "desc": "外婆给的。上一任主人留下了一点体温和一点划痕。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_11",
+   "name": "银镯子·周一限定",
+   "rarity": 2,
+   "desc": "外婆给的。拿在手里会莫名有点累。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_12",
+   "name": "银镯子·老板签名版",
+   "rarity": 3,
+   "desc": "外婆给的。签名写的是“下次一定”。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_13",
+   "name": "银镯子·内测版",
+   "rarity": 4,
+   "desc": "外婆给的。还没上线就被你拿到了。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_14",
+   "name": "银镯子·全球仅一件",
+   "rarity": 5,
+   "desc": "外婆给的。另一件在你梦里。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_20",
+   "name": "胸前怀表链·二手款",
+   "rarity": 1,
+   "desc": "表不见了，链子还在。上一任主人留下了一点体温和一点划痕。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_21",
+   "name": "胸前怀表链·周一限定",
+   "rarity": 2,
+   "desc": "表不见了，链子还在。拿在手里会莫名有点累。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_22",
+   "name": "胸前怀表链·老板签名版",
+   "rarity": 3,
+   "desc": "表不见了，链子还在。签名写的是“下次一定”。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_23",
+   "name": "胸前怀表链·内测版",
+   "rarity": 4,
+   "desc": "表不见了，链子还在。还没上线就被你拿到了。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_24",
+   "name": "胸前怀表链·全球仅一件",
+   "rarity": 5,
+   "desc": "表不见了，链子还在。另一件在你梦里。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_30",
+   "name": "发卡·二手款",
+   "rarity": 1,
+   "desc": "粉色的那一个。上一任主人留下了一点体温和一点划痕。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_31",
+   "name": "发卡·周一限定",
+   "rarity": 2,
+   "desc": "粉色的那一个。拿在手里会莫名有点累。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_32",
+   "name": "发卡·老板签名版",
+   "rarity": 3,
+   "desc": "粉色的那一个。签名写的是“下次一定”。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_33",
+   "name": "发卡·内测版",
+   "rarity": 4,
+   "desc": "粉色的那一个。还没上线就被你拿到了。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_34",
+   "name": "发卡·全球仅一件",
+   "rarity": 5,
+   "desc": "粉色的那一个。另一件在你梦里。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_40",
+   "name": "戒指盒·二手款",
+   "rarity": 1,
+   "desc": "里面是空的。上一任主人留下了一点体温和一点划痕。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_41",
+   "name": "戒指盒·周一限定",
+   "rarity": 2,
+   "desc": "里面是空的。拿在手里会莫名有点累。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_42",
+   "name": "戒指盒·老板签名版",
+   "rarity": 3,
+   "desc": "里面是空的。签名写的是“下次一定”。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_43",
+   "name": "戒指盒·内测版",
+   "rarity": 4,
+   "desc": "里面是空的。还没上线就被你拿到了。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s33_44",
+   "name": "戒指盒·全球仅一件",
+   "rarity": 5,
+   "desc": "里面是空的。另一件在你梦里。",
+   "series": "复古饰品",
+   "art": "item_necklace",
+   "tint": "#d4a373"
+  },
+  {
+   "id": "s34_00",
+   "name": "毛笔·打折款",
+   "rarity": 1,
+   "desc": "笔尖分叉了。买的时候省了钱，用的时候省了心。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_01",
+   "name": "毛笔·开光款",
+   "rarity": 2,
+   "desc": "笔尖分叉了。据说转发能带来好运。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_02",
+   "name": "毛笔·会员专享",
+   "rarity": 3,
+   "desc": "笔尖分叉了。开了会员才看得见。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_03",
+   "name": "毛笔·传家宝",
+   "rarity": 4,
+   "desc": "笔尖分叉了。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_04",
+   "name": "毛笔·传说级",
+   "rarity": 5,
+   "desc": "笔尖分叉了。论坛里只有一张模糊的照片。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_10",
+   "name": "砚台·打折款",
+   "rarity": 1,
+   "desc": "磨墨磨到手酸。买的时候省了钱，用的时候省了心。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_11",
+   "name": "砚台·开光款",
+   "rarity": 2,
+   "desc": "磨墨磨到手酸。据说转发能带来好运。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_12",
+   "name": "砚台·会员专享",
+   "rarity": 3,
+   "desc": "磨墨磨到手酸。开了会员才看得见。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_13",
+   "name": "砚台·传家宝",
+   "rarity": 4,
+   "desc": "磨墨磨到手酸。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_14",
+   "name": "砚台·传说级",
+   "rarity": 5,
+   "desc": "磨墨磨到手酸。论坛里只有一张模糊的照片。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_20",
+   "name": "宣纸·打折款",
+   "rarity": 1,
+   "desc": "写坏了好多张。买的时候省了钱，用的时候省了心。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_21",
+   "name": "宣纸·开光款",
+   "rarity": 2,
+   "desc": "写坏了好多张。据说转发能带来好运。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_22",
+   "name": "宣纸·会员专享",
+   "rarity": 3,
+   "desc": "写坏了好多张。开了会员才看得见。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_23",
+   "name": "宣纸·传家宝",
+   "rarity": 4,
+   "desc": "写坏了好多张。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_24",
+   "name": "宣纸·传说级",
+   "rarity": 5,
+   "desc": "写坏了好多张。论坛里只有一张模糊的照片。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_30",
+   "name": "印章·打折款",
+   "rarity": 1,
+   "desc": "刻着你的名字。买的时候省了钱，用的时候省了心。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_31",
+   "name": "印章·开光款",
+   "rarity": 2,
+   "desc": "刻着你的名字。据说转发能带来好运。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_32",
+   "name": "印章·会员专享",
+   "rarity": 3,
+   "desc": "刻着你的名字。开了会员才看得见。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_33",
+   "name": "印章·传家宝",
+   "rarity": 4,
+   "desc": "刻着你的名字。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_34",
+   "name": "印章·传说级",
+   "rarity": 5,
+   "desc": "刻着你的名字。论坛里只有一张模糊的照片。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_40",
+   "name": "字帖·打折款",
+   "rarity": 1,
+   "desc": "临了三页就放下了。买的时候省了钱，用的时候省了心。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_41",
+   "name": "字帖·开光款",
+   "rarity": 2,
+   "desc": "临了三页就放下了。据说转发能带来好运。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_42",
+   "name": "字帖·会员专享",
+   "rarity": 3,
+   "desc": "临了三页就放下了。开了会员才看得见。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_43",
+   "name": "字帖·传家宝",
+   "rarity": 4,
+   "desc": "临了三页就放下了。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s34_44",
+   "name": "字帖·传说级",
+   "rarity": 5,
+   "desc": "临了三页就放下了。论坛里只有一张模糊的照片。",
+   "series": "书法文房",
+   "art": "item_books",
+   "tint": "#795548"
+  },
+  {
+   "id": "s35_00",
+   "name": "摇杆·夜市款",
+   "rarity": 1,
+   "desc": "摇到发烫。摊主说是正品，你选择相信。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_01",
+   "name": "摇杆·复刻款",
+   "rarity": 2,
+   "desc": "摇到发烫。比原版还像原版。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_02",
+   "name": "摇杆·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "摇到发烫。抽了四十个才出的那个。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_03",
+   "name": "摇杆·博物馆退役款",
+   "rarity": 4,
+   "desc": "摇到发烫。展柜里待了十年，终于出来透透气。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_04",
+   "name": "摇杆·出土文物款",
+   "rarity": 5,
+   "desc": "摇到发烫。考古学家都不知道怎么分类。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_10",
+   "name": "投币口·夜市款",
+   "rarity": 1,
+   "desc": "吞过你的零花钱。摊主说是正品，你选择相信。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_11",
+   "name": "投币口·复刻款",
+   "rarity": 2,
+   "desc": "吞过你的零花钱。比原版还像原版。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_12",
+   "name": "投币口·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "吞过你的零花钱。抽了四十个才出的那个。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_13",
+   "name": "投币口·博物馆退役款",
+   "rarity": 4,
+   "desc": "吞过你的零花钱。展柜里待了十年，终于出来透透气。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_14",
+   "name": "投币口·出土文物款",
+   "rarity": 5,
+   "desc": "吞过你的零花钱。考古学家都不知道怎么分类。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_20",
+   "name": "娃娃机娃娃·夜市款",
+   "rarity": 1,
+   "desc": "夹了二十次才夹到。摊主说是正品，你选择相信。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_21",
+   "name": "娃娃机娃娃·复刻款",
+   "rarity": 2,
+   "desc": "夹了二十次才夹到。比原版还像原版。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_22",
+   "name": "娃娃机娃娃·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "夹了二十次才夹到。抽了四十个才出的那个。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_23",
+   "name": "娃娃机娃娃·博物馆退役款",
+   "rarity": 4,
+   "desc": "夹了二十次才夹到。展柜里待了十年，终于出来透透气。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_24",
+   "name": "娃娃机娃娃·出土文物款",
+   "rarity": 5,
+   "desc": "夹了二十次才夹到。考古学家都不知道怎么分类。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_30",
+   "name": "跳舞机脚印·夜市款",
+   "rarity": 1,
+   "desc": "踩错了好几步。摊主说是正品，你选择相信。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_31",
+   "name": "跳舞机脚印·复刻款",
+   "rarity": 2,
+   "desc": "踩错了好几步。比原版还像原版。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_32",
+   "name": "跳舞机脚印·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "踩错了好几步。抽了四十个才出的那个。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_33",
+   "name": "跳舞机脚印·博物馆退役款",
+   "rarity": 4,
+   "desc": "踩错了好几步。展柜里待了十年，终于出来透透气。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_34",
+   "name": "跳舞机脚印·出土文物款",
+   "rarity": 5,
+   "desc": "踩错了好几步。考古学家都不知道怎么分类。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_40",
+   "name": "高分榜截图·夜市款",
+   "rarity": 1,
+   "desc": "名字是 AAA。摊主说是正品，你选择相信。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_41",
+   "name": "高分榜截图·复刻款",
+   "rarity": 2,
+   "desc": "名字是 AAA。比原版还像原版。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_42",
+   "name": "高分榜截图·盲盒隐藏款",
+   "rarity": 3,
+   "desc": "名字是 AAA。抽了四十个才出的那个。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_43",
+   "name": "高分榜截图·博物馆退役款",
+   "rarity": 4,
+   "desc": "名字是 AAA。展柜里待了十年，终于出来透透气。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s35_44",
+   "name": "高分榜截图·出土文物款",
+   "rarity": 5,
+   "desc": "名字是 AAA。考古学家都不知道怎么分类。",
+   "series": "街机厅",
+   "art": "item_console",
+   "tint": "#ab47bc"
+  },
+  {
+   "id": "s36_00",
+   "name": "宇航员冰淇淋·普通款",
+   "rarity": 1,
+   "desc": "冻干的，有点甜。满大街都是，但它是你的。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_01",
+   "name": "宇航员冰淇淋·加班限定",
+   "rarity": 2,
+   "desc": "冻干的，有点甜。只在晚上十点以后出现。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_02",
+   "name": "宇航员冰淇淋·年终奖特别版",
+   "rarity": 3,
+   "desc": "冻干的，有点甜。比年终奖本身还稀有。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_03",
+   "name": "宇航员冰淇淋·出错版",
+   "rarity": 4,
+   "desc": "冻干的，有点甜。工厂印错了，反而成了宝贝。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_04",
+   "name": "宇航员冰淇淋·全球仅一件",
+   "rarity": 5,
+   "desc": "冻干的，有点甜。另一件在你梦里。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_10",
+   "name": "陨石碎片·普通款",
+   "rarity": 1,
+   "desc": "鉴定师说是煤。满大街都是，但它是你的。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_11",
+   "name": "陨石碎片·加班限定",
+   "rarity": 2,
+   "desc": "鉴定师说是煤。只在晚上十点以后出现。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_12",
+   "name": "陨石碎片·年终奖特别版",
+   "rarity": 3,
+   "desc": "鉴定师说是煤。比年终奖本身还稀有。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_13",
+   "name": "陨石碎片·出错版",
+   "rarity": 4,
+   "desc": "鉴定师说是煤。工厂印错了，反而成了宝贝。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_14",
+   "name": "陨石碎片·全球仅一件",
+   "rarity": 5,
+   "desc": "鉴定师说是煤。另一件在你梦里。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_20",
+   "name": "星空投影灯·普通款",
+   "rarity": 1,
+   "desc": "把天花板变成银河。满大街都是，但它是你的。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_21",
+   "name": "星空投影灯·加班限定",
+   "rarity": 2,
+   "desc": "把天花板变成银河。只在晚上十点以后出现。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_22",
+   "name": "星空投影灯·年终奖特别版",
+   "rarity": 3,
+   "desc": "把天花板变成银河。比年终奖本身还稀有。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_23",
+   "name": "星空投影灯·出错版",
+   "rarity": 4,
+   "desc": "把天花板变成银河。工厂印错了，反而成了宝贝。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_24",
+   "name": "星空投影灯·全球仅一件",
+   "rarity": 5,
+   "desc": "把天花板变成银河。另一件在你梦里。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_30",
+   "name": "火箭模型·普通款",
+   "rarity": 1,
+   "desc": "只差一个发射台。满大街都是，但它是你的。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_31",
+   "name": "火箭模型·加班限定",
+   "rarity": 2,
+   "desc": "只差一个发射台。只在晚上十点以后出现。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_32",
+   "name": "火箭模型·年终奖特别版",
+   "rarity": 3,
+   "desc": "只差一个发射台。比年终奖本身还稀有。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_33",
+   "name": "火箭模型·出错版",
+   "rarity": 4,
+   "desc": "只差一个发射台。工厂印错了，反而成了宝贝。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_34",
+   "name": "火箭模型·全球仅一件",
+   "rarity": 5,
+   "desc": "只差一个发射台。另一件在你梦里。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_40",
+   "name": "外星人明信片·普通款",
+   "rarity": 1,
+   "desc": "邮戳看不懂。满大街都是，但它是你的。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_41",
+   "name": "外星人明信片·加班限定",
+   "rarity": 2,
+   "desc": "邮戳看不懂。只在晚上十点以后出现。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_42",
+   "name": "外星人明信片·年终奖特别版",
+   "rarity": 3,
+   "desc": "邮戳看不懂。比年终奖本身还稀有。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_43",
+   "name": "外星人明信片·出错版",
+   "rarity": 4,
+   "desc": "邮戳看不懂。工厂印错了，反而成了宝贝。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s36_44",
+   "name": "外星人明信片·全球仅一件",
+   "rarity": 5,
+   "desc": "邮戳看不懂。另一件在你梦里。",
+   "series": "太空探索",
+   "art": "cat_mystery",
+   "tint": "#5c6bc0"
+  },
+  {
+   "id": "s37_00",
+   "name": "贝壳·二手款",
+   "rarity": 1,
+   "desc": "放在耳边能听见海。上一任主人留下了一点体温和一点划痕。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_01",
+   "name": "贝壳·周一限定",
+   "rarity": 2,
+   "desc": "放在耳边能听见海。拿在手里会莫名有点累。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_02",
+   "name": "贝壳·联名款",
+   "rarity": 3,
+   "desc": "放在耳边能听见海。联名对象不详，价格翻倍。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_03",
+   "name": "贝壳·内测版",
+   "rarity": 4,
+   "desc": "放在耳边能听见海。还没上线就被你拿到了。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_04",
+   "name": "贝壳·传说级",
+   "rarity": 5,
+   "desc": "放在耳边能听见海。论坛里只有一张模糊的照片。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_10",
+   "name": "漂流瓶·二手款",
+   "rarity": 1,
+   "desc": "里面的信写着“你好”。上一任主人留下了一点体温和一点划痕。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_11",
+   "name": "漂流瓶·周一限定",
+   "rarity": 2,
+   "desc": "里面的信写着“你好”。拿在手里会莫名有点累。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_12",
+   "name": "漂流瓶·联名款",
+   "rarity": 3,
+   "desc": "里面的信写着“你好”。联名对象不详，价格翻倍。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_13",
+   "name": "漂流瓶·内测版",
+   "rarity": 4,
+   "desc": "里面的信写着“你好”。还没上线就被你拿到了。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_14",
+   "name": "漂流瓶·传说级",
+   "rarity": 5,
+   "desc": "里面的信写着“你好”。论坛里只有一张模糊的照片。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_20",
+   "name": "海玻璃·二手款",
+   "rarity": 1,
+   "desc": "被海浪磨圆了。上一任主人留下了一点体温和一点划痕。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_21",
+   "name": "海玻璃·周一限定",
+   "rarity": 2,
+   "desc": "被海浪磨圆了。拿在手里会莫名有点累。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_22",
+   "name": "海玻璃·联名款",
+   "rarity": 3,
+   "desc": "被海浪磨圆了。联名对象不详，价格翻倍。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_23",
+   "name": "海玻璃·内测版",
+   "rarity": 4,
+   "desc": "被海浪磨圆了。还没上线就被你拿到了。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_24",
+   "name": "海玻璃·传说级",
+   "rarity": 5,
+   "desc": "被海浪磨圆了。论坛里只有一张模糊的照片。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_30",
+   "name": "小螃蟹壳·二手款",
+   "rarity": 1,
+   "desc": "主人已经搬家了。上一任主人留下了一点体温和一点划痕。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_31",
+   "name": "小螃蟹壳·周一限定",
+   "rarity": 2,
+   "desc": "主人已经搬家了。拿在手里会莫名有点累。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_32",
+   "name": "小螃蟹壳·联名款",
+   "rarity": 3,
+   "desc": "主人已经搬家了。联名对象不详，价格翻倍。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_33",
+   "name": "小螃蟹壳·内测版",
+   "rarity": 4,
+   "desc": "主人已经搬家了。还没上线就被你拿到了。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_34",
+   "name": "小螃蟹壳·传说级",
+   "rarity": 5,
+   "desc": "主人已经搬家了。论坛里只有一张模糊的照片。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_40",
+   "name": "沙滩铲·二手款",
+   "rarity": 1,
+   "desc": "挖过一个很深的坑。上一任主人留下了一点体温和一点划痕。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_41",
+   "name": "沙滩铲·周一限定",
+   "rarity": 2,
+   "desc": "挖过一个很深的坑。拿在手里会莫名有点累。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_42",
+   "name": "沙滩铲·联名款",
+   "rarity": 3,
+   "desc": "挖过一个很深的坑。联名对象不详，价格翻倍。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_43",
+   "name": "沙滩铲·内测版",
+   "rarity": 4,
+   "desc": "挖过一个很深的坑。还没上线就被你拿到了。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s37_44",
+   "name": "沙滩铲·传说级",
+   "rarity": 5,
+   "desc": "挖过一个很深的坑。论坛里只有一张模糊的照片。",
+   "series": "海边捡到的",
+   "art": "cat_decor",
+   "tint": "#26c6da"
+  },
+  {
+   "id": "s38_00",
+   "name": "烧烤签·打折款",
+   "rarity": 1,
+   "desc": "撸串撸到凌晨。买的时候省了钱，用的时候省了心。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_01",
+   "name": "烧烤签·开光款",
+   "rarity": 2,
+   "desc": "撸串撸到凌晨。据说转发能带来好运。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_02",
+   "name": "烧烤签·老板签名版",
+   "rarity": 3,
+   "desc": "撸串撸到凌晨。签名写的是“下次一定”。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_03",
+   "name": "烧烤签·传家宝",
+   "rarity": 4,
+   "desc": "撸串撸到凌晨。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_04",
+   "name": "烧烤签·出土文物款",
+   "rarity": 5,
+   "desc": "撸串撸到凌晨。考古学家都不知道怎么分类。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_10",
+   "name": "小龙虾手套·打折款",
+   "rarity": 1,
+   "desc": "一次性的，但很珍贵。买的时候省了钱，用的时候省了心。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_11",
+   "name": "小龙虾手套·开光款",
+   "rarity": 2,
+   "desc": "一次性的，但很珍贵。据说转发能带来好运。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_12",
+   "name": "小龙虾手套·老板签名版",
+   "rarity": 3,
+   "desc": "一次性的，但很珍贵。签名写的是“下次一定”。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_13",
+   "name": "小龙虾手套·传家宝",
+   "rarity": 4,
+   "desc": "一次性的，但很珍贵。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_14",
+   "name": "小龙虾手套·出土文物款",
+   "rarity": 5,
+   "desc": "一次性的，但很珍贵。考古学家都不知道怎么分类。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_20",
+   "name": "啤酒瓶盖·打折款",
+   "rarity": 1,
+   "desc": "开盖有奖，再来一瓶。买的时候省了钱，用的时候省了心。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_21",
+   "name": "啤酒瓶盖·开光款",
+   "rarity": 2,
+   "desc": "开盖有奖，再来一瓶。据说转发能带来好运。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_22",
+   "name": "啤酒瓶盖·老板签名版",
+   "rarity": 3,
+   "desc": "开盖有奖，再来一瓶。签名写的是“下次一定”。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_23",
+   "name": "啤酒瓶盖·传家宝",
+   "rarity": 4,
+   "desc": "开盖有奖，再来一瓶。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_24",
+   "name": "啤酒瓶盖·出土文物款",
+   "rarity": 5,
+   "desc": "开盖有奖，再来一瓶。考古学家都不知道怎么分类。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_30",
+   "name": "夜宵外卖单·打折款",
+   "rarity": 1,
+   "desc": "备注写着“多放辣”。买的时候省了钱，用的时候省了心。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_31",
+   "name": "夜宵外卖单·开光款",
+   "rarity": 2,
+   "desc": "备注写着“多放辣”。据说转发能带来好运。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_32",
+   "name": "夜宵外卖单·老板签名版",
+   "rarity": 3,
+   "desc": "备注写着“多放辣”。签名写的是“下次一定”。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_33",
+   "name": "夜宵外卖单·传家宝",
+   "rarity": 4,
+   "desc": "备注写着“多放辣”。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_34",
+   "name": "夜宵外卖单·出土文物款",
+   "rarity": 5,
+   "desc": "备注写着“多放辣”。考古学家都不知道怎么分类。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_40",
+   "name": "路边摊塑料凳·打折款",
+   "rarity": 1,
+   "desc": "坐过最多的椅子。买的时候省了钱，用的时候省了心。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_41",
+   "name": "路边摊塑料凳·开光款",
+   "rarity": 2,
+   "desc": "坐过最多的椅子。据说转发能带来好运。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_42",
+   "name": "路边摊塑料凳·老板签名版",
+   "rarity": 3,
+   "desc": "坐过最多的椅子。签名写的是“下次一定”。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_43",
+   "name": "路边摊塑料凳·传家宝",
+   "rarity": 4,
+   "desc": "坐过最多的椅子。爷爷说：“这个不能卖。”然后卖了。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s38_44",
+   "name": "路边摊塑料凳·出土文物款",
+   "rarity": 5,
+   "desc": "坐过最多的椅子。考古学家都不知道怎么分类。",
+   "series": "深夜食堂",
+   "art": "cat_kitchen",
+   "tint": "#ff8a65"
+  },
+  {
+   "id": "s39_00",
+   "name": "学士帽·夜市款",
+   "rarity": 1,
+   "desc": "扔上天又捡回来。摊主说是正品，你选择相信。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_01",
+   "name": "学士帽·复刻款",
+   "rarity": 2,
+   "desc": "扔上天又捡回来。比原版还像原版。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_02",
+   "name": "学士帽·会员专享",
+   "rarity": 3,
+   "desc": "扔上天又捡回来。开了会员才看得见。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_03",
+   "name": "学士帽·博物馆退役款",
+   "rarity": 4,
+   "desc": "扔上天又捡回来。展柜里待了十年，终于出来透透气。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_04",
+   "name": "学士帽·全球仅一件",
+   "rarity": 5,
+   "desc": "扔上天又捡回来。另一件在你梦里。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_10",
+   "name": "毕业证书壳·夜市款",
+   "rarity": 1,
+   "desc": "证书在家里。摊主说是正品，你选择相信。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_11",
+   "name": "毕业证书壳·复刻款",
+   "rarity": 2,
+   "desc": "证书在家里。比原版还像原版。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_12",
+   "name": "毕业证书壳·会员专享",
+   "rarity": 3,
+   "desc": "证书在家里。开了会员才看得见。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_13",
+   "name": "毕业证书壳·博物馆退役款",
+   "rarity": 4,
+   "desc": "证书在家里。展柜里待了十年，终于出来透透气。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_14",
+   "name": "毕业证书壳·全球仅一件",
+   "rarity": 5,
+   "desc": "证书在家里。另一件在你梦里。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_20",
+   "name": "宿舍钥匙·夜市款",
+   "rarity": 1,
+   "desc": "退宿时忘了交。摊主说是正品，你选择相信。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_21",
+   "name": "宿舍钥匙·复刻款",
+   "rarity": 2,
+   "desc": "退宿时忘了交。比原版还像原版。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_22",
+   "name": "宿舍钥匙·会员专享",
+   "rarity": 3,
+   "desc": "退宿时忘了交。开了会员才看得见。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_23",
+   "name": "宿舍钥匙·博物馆退役款",
+   "rarity": 4,
+   "desc": "退宿时忘了交。展柜里待了十年，终于出来透透气。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_24",
+   "name": "宿舍钥匙·全球仅一件",
+   "rarity": 5,
+   "desc": "退宿时忘了交。另一件在你梦里。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_30",
+   "name": "散伙饭菜单·夜市款",
+   "rarity": 1,
+   "desc": "那天谁都没少喝。摊主说是正品，你选择相信。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_31",
+   "name": "散伙饭菜单·复刻款",
+   "rarity": 2,
+   "desc": "那天谁都没少喝。比原版还像原版。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_32",
+   "name": "散伙饭菜单·会员专享",
+   "rarity": 3,
+   "desc": "那天谁都没少喝。开了会员才看得见。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_33",
+   "name": "散伙饭菜单·博物馆退役款",
+   "rarity": 4,
+   "desc": "那天谁都没少喝。展柜里待了十年，终于出来透透气。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_34",
+   "name": "散伙饭菜单·全球仅一件",
+   "rarity": 5,
+   "desc": "那天谁都没少喝。另一件在你梦里。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_40",
+   "name": "论文致谢页·夜市款",
+   "rarity": 1,
+   "desc": "写得最认真的一页。摊主说是正品，你选择相信。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_41",
+   "name": "论文致谢页·复刻款",
+   "rarity": 2,
+   "desc": "写得最认真的一页。比原版还像原版。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_42",
+   "name": "论文致谢页·会员专享",
+   "rarity": 3,
+   "desc": "写得最认真的一页。开了会员才看得见。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_43",
+   "name": "论文致谢页·博物馆退役款",
+   "rarity": 4,
+   "desc": "写得最认真的一页。展柜里待了十年，终于出来透透气。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  },
+  {
+   "id": "s39_44",
+   "name": "论文致谢页·全球仅一件",
+   "rarity": 5,
+   "desc": "写得最认真的一页。另一件在你梦里。",
+   "series": "毕业季",
+   "art": "item_books",
+   "tint": "#ffd54f"
+  }
+ ]
 }

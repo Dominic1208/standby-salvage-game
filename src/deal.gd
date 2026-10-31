@@ -143,8 +143,9 @@ func challenge() -> Dictionary:
 		var confess := challenge_count >= 2 and rng.randf() < float(tuning.confess_chance)
 		if lie_seen or confess:
 			exposed = true
-			min_price = _round10(min_price * float(tuning.challenge_caught_factor))
-			ask = maxi(min_price, _round10(ask * 0.8))
+			# 被揭穿就说实话：要价降到真实价值，底价再低一截，揭穿骗子一定有赚头
+			min_price = _round10(true_value * float(tuning.exposed_floor_ratio))
+			ask = maxi(min_price, _round10(true_value * float(tuning.exposed_ask_ratio)))
 			return {"text": "“%s”" % line("caught"), "mood": "caught" if lie_seen else "confess"}
 		patience -= float(tuning.challenge_unproven_loss)
 		return {"text": "“%s”" % line("deny"), "mood": "unproven"}
