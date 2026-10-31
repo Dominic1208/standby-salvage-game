@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="待机回收站">
+<meta name="theme-color" content="#14110f">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="stylesheet" href="/shell.css">
+<title>待机回收站</title>
+</head>
+<body>
+
+<!-- 顶部状态栏：属于外壳，不属于游戏。点一下直接进通讯台 -->
+<header id="statusbar" role="button" tabindex="0" aria-label="打开通讯台">
+  <span id="conn-dot" class="dot off"></span>
+  <span id="conn-text">未连接</span>
+  <span class="sep">·</span>
+  <span id="agent-text">员工：待命</span>
+  <span id="pending-badge" class="badge hidden">0</span>
+</header>
+
+<!-- 游戏画面（Godot 网页导出），碰不到下面任何批准界面 -->
+<main id="game-wrap">
+  <iframe id="game" src="/game/index.html" title="待机回收站游戏" allow="autoplay"></iframe>
+  <div id="game-missing" class="hidden">
+    <p>游戏还没导出到 <code>web/game/</code>。</p>
+    <p>通讯台照常可用：点顶部状态栏。</p>
+  </div>
+</main>
+
+<!-- 员工推门：入口提示（外壳绘制，风格贴近游戏） -->
+<div id="door" class="hidden" role="alert">
+  <div class="door-avatar" id="door-avatar">🧑‍🔧</div>
+  <div class="door-text">
+    <div class="door-who" id="door-who">Claude 员工推门进来</div>
+    <div class="door-say" id="door-say">“老板，有件事要你批一下。”</div>
+  </div>
+  <button id="door-open" class="door-btn">查看</button>
+</div>
+
+<!-- 真实批准卡片：全屏、系统风格、纯文字，不套游戏皮肤 -->
+<section id="card" class="hidden" aria-modal="true" role="dialog" aria-labelledby="card-title">
+  <div class="card-inner">
+    <div class="card-flag">真实操作 · 会影响你的电脑</div>
+    <h1 id="card-title">批准请求</h1>
+    <div id="card-sim" class="card-sim hidden">这是一条模拟请求，不会影响电脑</div>
+    <dl class="card-fields">
+      <dt>哪个 AI</dt><dd id="f-agent"></dd>
+      <dt>哪个任务</dt><dd id="f-task"></dd>
+      <dt>要做什么</dt><dd id="f-summary"></dd>
+      <dt>具体内容</dt><dd><pre id="f-detail"></pre></dd>
+      <dt>批准后</dt><dd id="f-after"></dd>
+      <dt>拒绝后</dt><dd>AI 不会执行这一步，会收到“用户拒绝”的说明，自己换方案或停下来问你。</dd>
+    </dl>
+    <div id="card-status" class="card-status hidden"></div>
+    <div id="card-actions">
+      <div id="slider" class="slider disabled" aria-label="向右滑动批准">
+        <div id="slider-fill" class="slider-fill"></div>
+        <div id="slider-knob" class="slider-knob">›</div>
+        <span class="slider-label">向右滑动 批准</span>
+      </div>
+      <div class="card-row">
+        <button id="btn-deny" class="btn deny" disabled>拒绝</button>
+        <button id="btn-later" class="btn later">稍后处理</button>
+      </div>
+      <div class="card-hash">请求编号 <span id="f-id"></span> · 校验 <span id="f-hash"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 通讯台：任务、请求、汇报的完整列表 -->
+<section id="console" class="hidden" aria-label="通讯台">
+  <div class="console-head">
+    <h2>通讯台</h2>
+    <button id="console-close" class="icon-btn" aria-label="关闭">✕</button>
+  </div>
+  <div class="console-tools">
+    <button id="btn-push" class="btn small">开启锁屏通知</button>
+    <button id="btn-sim" class="btn small ghost">模拟一条请求</button>
+  </div>
+  <p id="push-hint" class="hint"></p>
+  <h3>待处理</h3>
+  <ul id="list-pending" class="list"></ul>
+  <h3>最近</h3>
+  <ul id="list-recent" class="list"></ul>
+</section>
+
+<!-- 配对 -->
+<section id="pair" class="hidden">
+  <div class="pair-inner">
+    <h1>连接你的电脑</h1>
+    <p>在电脑上运行连接程序，输入窗口里显示的 6 位配对码。</p>
+    <input id="pair-code" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+    <button id="pair-go" class="btn">配对</button>
+    <p id="pair-err" class="err"></p>
+    <button id="pair-skip" class="btn ghost small">先只玩游戏</button>
+  </div>
+</section>
+
+<script src="/app.js"></script>
+</body>
+</html>

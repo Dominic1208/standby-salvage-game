@@ -1,0 +1,25 @@
+{
+  "_说明": "把下面的 hooks 合并进 D:/AI/小游戏/.claude/settings.local.json（只影响在这个文件夹里启动的 Claude Code 会话）。连接程序没开时钩子会立刻退出，电脑上照常弹确认框。",
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "python \"D:/AI/小游戏/connector/claude_hook.py\"", "timeout": 3600 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "python \"D:/AI/小游戏/connector/claude_hook.py\"", "timeout": 10 } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "python \"D:/AI/小游戏/connector/claude_hook.py\"", "timeout": 10 } ] }
+    ],
+    "Notification": [
+      { "hooks": [ { "type": "command", "command": "python \"D:/AI/小游戏/connector/claude_hook.py\"", "timeout": 10 } ] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "python \"D:/AI/小游戏/connector/claude_hook.py\"", "timeout": 10 } ] }
+    ]
+  }
+}

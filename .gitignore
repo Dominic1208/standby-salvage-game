@@ -175,3 +175,8 @@ $RECYCLE.BIN/
 # the project root. Anchored so a reports/ folder elsewhere stays tracked.
 /reports/
 /test-results/
+
+# 待机回收站
+connector/data/
+web/game/
+__pycache__/
