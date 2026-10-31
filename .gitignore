@@ -181,4 +181,4 @@ connector/data/
 web/game/
 __pycache__/
 art_source/
-src/assets/art/codex_log.txt
+src/assets/art/codex_log*.txt
