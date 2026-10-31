@@ -90,6 +90,7 @@ def main():
         if agent != "claude":
             check(f"A7 {agent} 超时没有放行", '"allow"' not in out)
 
+    call(LOCAL, f"/api/devices/{dev['deviceId']}", method="DELETE")  # 测完移除测试设备
     print(f"\n通过 {sum(ok for _, ok in results)} / {len(results)}")
 
 

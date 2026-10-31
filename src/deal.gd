@@ -63,6 +63,10 @@ func _init(p_tuning: Dictionary, catalog: Dictionary, archetypes: Array, persona
 				item["leaky"] = true
 		value *= float(c.mult)
 		clues.append(c)
+	# 以“这个部位的平均结果”为基准：好线索让真实价值高于参考价，坏线索低于参考价。
+	# 不除这个平均值的话，坏结果多的部位会把所有货物都系统性压低，玩家怎么出价都亏。
+	for part in parts:
+		value /= _mean_mult(cat.parts[part])
 	if lying:
 		value *= float(lie.mult)
 	true_value = maxi(10, roundi(value * rng.randf_range(0.9, 1.1)))
@@ -88,6 +92,13 @@ func _make_item(catalog: Dictionary) -> Dictionary:
 		"art": catalog.categories[row[1]].art,
 		"leaky": false,
 	}
+
+
+func _mean_mult(variants: Array) -> float:
+	var total := 0.0
+	for v in variants:
+		total += float(v[1])
+	return maxf(0.1, total / maxf(1.0, variants.size()))
 
 
 func _pick(arr: Array) -> Variant:

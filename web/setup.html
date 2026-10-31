@@ -33,6 +33,9 @@
   .done b { color: var(--ok); } .todo b { color: #6a5a4c; }
   button.big { font-size: 18px; padding: 14px 24px; }
   details { margin-top: 16px; } summary { cursor: pointer; color: var(--muted); }
+  .tool-buttons { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 10px 0; }
+  .tool-row { background:#120f0d; border:1px solid #2f2721; border-radius: 12px; padding: 12px 14px; }
+  .tool-row b { display:block; margin-bottom: 6px; } .tool-row .muted { font-size: 13px; }
 </style>
 </head>
 <body>
@@ -59,6 +62,7 @@
         <p class="url" id="url">…</p>
         <p class="muted">iPhone：用 Safari 打开后点「分享 → 添加到主屏幕」，以后像 App 一样从桌面打开。</p>
         <p class="muted" id="devices"></p>
+        <div id="device-list" class="tool-buttons"></div>
         <button class="ghost" id="new-code">换一个二维码</button>
         <p class="muted">手机打不开？多半是第一次运行时 Windows 防火墙没点「允许」：到「设置 → 隐私和安全性 → Windows 安全中心 → 防火墙 → 允许应用通过防火墙」里勾上「待机回收站」。</p>
       </div>
@@ -67,13 +71,12 @@
 
   <section class="card">
     <h2><span class="step">2</span>连接你的 AI（只需要一次）</h2>
-    <p class="muted">用 <b>Claude Code</b>（包括 Claude 桌面应用，以及接了 <b>DeepSeek</b>、Kimi 等国内模型的 Claude Code）：点一下就好。</p>
-    <button class="big" id="connect-claude">一键连接 Claude Code</button>
-    <span class="muted" id="claude-state"></span>
+    <p class="muted">点一下就连上（用 <b>DeepSeek</b>、Kimi 等国内模型的 Claude Code，点 Claude Code 那个就行）。改动前会自动备份设置文件，随时可以断开。</p>
+    <div id="tool-buttons" class="tool-buttons"></div>
     <p class="muted">连接后，<b>新开</b>的 Claude 会话才会生效。改动前会自动备份你的设置文件，随时可以断开。
       接了 DeepSeek 接口的会自动算作 DeepSeek 员工（蓝色）。</p>
     <details>
-      <summary>用 Codex、Gemini CLI、Qwen Code、Copilot、Cursor 等其他 AI？</summary>
+      <summary>用 Copilot、Cursor 等上面没有的 AI？</summary>
       <p class="muted">把下面这句话发给它，它会自己读说明、把待机回收站接到自己身上，然后帮你测试。</p>
       <div class="tools">
         <span class="tool">Codex</span><span class="tool">DeepSeek</span><span class="tool">Gemini CLI</span>
@@ -111,20 +114,57 @@ async function load(fresh) {
   mark("c-phone", info.devices.length > 0);
 }
 $("new-code").onclick = () => load(true);
-function mark(id, ok) { const el = $(id); el.className = "check " + (ok ? "done" : "todo"); el.querySelector("b").textContent = ok ? "✓" : "○"; }
-async function loadClaude() {
-  const st = await (await fetch("/api/connect/claude")).json();
-  $("connect-claude").textContent = st.connected ? "断开 Claude Code" : (st.stale ? "重新连接 Claude Code（程序换了位置）" : "一键连接 Claude Code");
-  $("connect-claude").className = st.connected ? "ghost" : "big";
-  $("claude-state").textContent = st.error || (st.connected ? "✓ 已连接，新开的 Claude 会话生效" : "");
-  mark("c-claude", st.connected);
-  return st;
+async function loadDevices() {
+  const list = await (await fetch("/api/devices")).json();
+  const box = $("device-list");
+  box.innerHTML = "";
+  for (const d of list) {
+    const row = document.createElement("div");
+    row.className = "tool-row";
+    const when = new Date(d.paired * 1000).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    row.innerHTML = `<b>${d.name}</b><div class="muted">配对于 ${when}</div>`;
+    const btn = document.createElement("button");
+    btn.className = "ghost";
+    btn.textContent = "移除";
+    btn.onclick = async () => {
+      if (!confirm(`移除「${d.name}」？这台设备需要重新扫码才能再连接。`)) return;
+      await fetch(`/api/devices/${d.id}`, { method: "DELETE" });
+      loadDevices(); load(false);
+    };
+    row.append(btn);
+    box.append(row);
+  }
 }
-$("connect-claude").onclick = async () => {
-  const st = await (await fetch("/api/connect/claude")).json();
-  await fetch("/api/connect/claude", { method: st.connected ? "DELETE" : "POST" });
-  loadClaude();
-};
+loadDevices();
+function mark(id, ok) { const el = $(id); el.className = "check " + (ok ? "done" : "todo"); el.querySelector("b").textContent = ok ? "✓" : "○"; }
+const TOOLS = [
+  { id: "claude", name: "Claude Code", note: "包括 Claude 桌面应用；新开的会话生效" },
+  { id: "codex", name: "Codex", note: "连接后，在 Codex 里输入 /hooks 确认信任一次" },
+  { id: "qwen", name: "Qwen Code", note: "新开的会话生效" },
+  { id: "gemini", name: "Gemini CLI", note: "新开的会话生效" },
+];
+async function loadTools() {
+  let any = false;
+  const box = $("tool-buttons");
+  box.innerHTML = "";
+  for (const t of TOOLS) {
+    const st = await (await fetch(`/api/connect/${t.id}`)).json();
+    any = any || st.connected;
+    const row = document.createElement("div");
+    row.className = "tool-row";
+    row.innerHTML = `<b>${t.name}</b>`;
+    const btn = document.createElement("button");
+    btn.className = st.connected ? "ghost" : "";
+    btn.textContent = st.connected ? "断开" : (st.stale ? "重新连接（程序换了位置）" : "一键连接");
+    btn.onclick = async () => { await fetch(`/api/connect/${t.id}`, { method: st.connected ? "DELETE" : "POST" }); loadTools(); };
+    const note = document.createElement("div");
+    note.className = "muted";
+    note.textContent = st.error || (st.connected ? `✓ 已连接 · ${t.note}` : t.note);
+    row.append(btn, note);
+    box.append(row);
+  }
+  mark("c-claude", any);
+}
 async function loadAuto() {
   const st = await (await fetch("/api/autostart")).json();
   $("autostart").textContent = st.enabled ? "关闭开机自动运行" : "开启开机自动运行";
@@ -136,7 +176,7 @@ $("autostart").onclick = async () => {
   await fetch("/api/autostart", { method: st.enabled ? "DELETE" : "POST" });
   loadAuto();
 };
-loadClaude(); loadAuto();
+loadTools(); loadAuto();
 $("copy").onclick = async () => {
   try { await navigator.clipboard.writeText($("prompt").textContent); $("copied").textContent = "已复制"; }
   catch { $("copied").textContent = "复制失败，请手动选中复制"; }

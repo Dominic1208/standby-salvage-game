@@ -31,8 +31,14 @@ from push import PushSender
 FROZEN = getattr(sys, "frozen", False)   # 打包成 exe 时为 True
 ROOT = Path(__file__).resolve().parent
 WEB_DIR = Path(sys._MEIPASS) / "web" if FROZEN else ROOT.parent / "web"
-# 打包版把数据放在用户目录，升级覆盖程序文件夹也不会丢配对和存档
-DATA_DIR = Path(os.environ.get("APPDATA", Path.home())) / "StandbySalvage" if FROZEN else ROOT / "data"
+# 打包版把数据放在用户目录，升级覆盖程序文件夹也不会丢配对和存档。
+# 不用 AppData：从商店版应用（例如 Claude 桌面应用）里启动时，AppData 会被 Windows 重定向到
+# 那个应用的私有目录，同一台电脑上会出现两份互相看不见的数据。
+DATA_DIR = Path.home() / ".standby-salvage" if FROZEN else ROOT / "data"
+_OLD_DATA_DIR = Path(os.environ.get("APPDATA", Path.home())) / "StandbySalvage"
+if FROZEN and not DATA_DIR.exists() and _OLD_DATA_DIR.exists():
+    import shutil
+    shutil.copytree(_OLD_DATA_DIR, DATA_DIR)  # 迁移旧版数据（配对、员工、存档）
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 SAVES_DIR = DATA_DIR / "saves"
 SAVES_DIR.mkdir(exist_ok=True)
@@ -541,17 +547,37 @@ async def setup_info(request: web.Request) -> web.Response:
     })
 
 
-# ---------------- 一键连接 Claude Code / 开机自动运行（只限本机） ----------------
+# ---------------- 一键连接 AI 工具 / 开机自动运行（只限本机） ----------------
 
-CLAUDE_SETTINGS = Path(os.environ.get("STANDBY_CLAUDE_SETTINGS",
-                                      Path.home() / ".claude" / "settings.json"))
-CLAUDE_EVENTS = {  # 事件 -> (matcher, 超时秒数)
-    "PermissionRequest": ("*", 3600),
-    "PostToolUse": ("*", 10),
-    "Stop": (None, 10),
-    "Notification": (None, 10),
-    "UserPromptSubmit": (None, 10),
+def _cfg_path(agent: str, default: Path) -> Path:
+    """测试时可以用环境变量 STANDBY_<AGENT>_SETTINGS 指向假的设置文件。"""
+    return Path(os.environ.get(f"STANDBY_{agent.upper()}_SETTINGS", default))
+
+
+# 每个工具：设置文件、要挂的事件（事件 -> (matcher, 超时)）、额外要打开的开关
+CONNECT_TOOLS = {
+    "claude": {
+        "label": "Claude Code", "path": _cfg_path("claude", Path.home() / ".claude" / "settings.json"),
+        "events": {"PermissionRequest": ("*", 3600), "PostToolUse": ("*", 10), "Stop": (None, 10),
+                   "Notification": (None, 10), "UserPromptSubmit": (None, 10)},
+    },
+    "codex": {  # Codex 的钩子格式和 Claude 一样；新钩子需要用户在 Codex 里用 /hooks 信任一次
+        "label": "Codex", "path": _cfg_path("codex", Path.home() / ".codex" / "hooks.json"),
+        "events": {"PermissionRequest": ("*", 3600), "PostToolUse": ("*", 10), "Stop": (None, 10),
+                   "UserPromptSubmit": (None, 10)},
+    },
+    "qwen": {  # Qwen Code 也有 PermissionRequest；超时 ≥1000 按毫秒算，所以长等待写毫秒
+        "label": "Qwen Code", "path": _cfg_path("qwen", Path.home() / ".qwen" / "settings.json"),
+        "events": {"PermissionRequest": ("*", 3600000), "PostToolUse": ("*", 10), "Stop": (None, 10),
+                   "UserPromptSubmit": (None, 10)},
+    },
+    "gemini": {  # Gemini 没有“弹确认框时”的事件，只能在改东西的工具执行前拦；超时单位是毫秒
+        "label": "Gemini CLI", "path": _cfg_path("gemini", Path.home() / ".gemini" / "settings.json"),
+        "events": {"BeforeTool": ("run_shell_command|write_file|replace", 600000), "AfterAgent": (None, 10000),
+                   "BeforeAgent": (None, 10000)},
+    },
 }
+CLAUDE_SETTINGS = CONNECT_TOOLS["claude"]["path"]
 STARTUP_DIR = Path(os.environ.get("STANDBY_STARTUP_DIR", Path(os.environ.get("APPDATA", Path.home()))
                                   / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"))
 STARTUP_FILE = STARTUP_DIR / "待机回收站.cmd"
@@ -581,34 +607,43 @@ def _strip_ours(hooks: dict) -> dict:
     return out
 
 
-def claude_status() -> dict:
+def tool_status(agent: str) -> dict:
+    path: Path = CONNECT_TOOLS[agent]["path"]
     try:
-        cfg = json.loads(CLAUDE_SETTINGS.read_text("utf-8")) if CLAUDE_SETTINGS.exists() else {}
+        cfg = json.loads(path.read_text("utf-8")) if path.exists() else {}
     except ValueError:
-        return {"connected": False, "error": "settings.json 格式有误，没有改动"}
+        return {"connected": False, "error": f"{path.name} 格式有误，没有改动"}
     cmds = [h.get("command", "") for gs in cfg.get("hooks", {}).values() if isinstance(gs, list)
             for g in gs for h in g.get("hooks", [])]
     mine = [c for c in cmds if _is_ours(str(c))]
-    return {"connected": any(hook_command("claude") == c for c in mine), "stale": bool(mine) and
-            not any(hook_command("claude") == c for c in mine), "path": str(CLAUDE_SETTINGS)}
+    ok = any(hook_command(agent) == c for c in mine)
+    return {"connected": ok, "stale": bool(mine) and not ok, "path": str(path)}
 
 
-async def connect_claude(request: web.Request) -> web.Response:
-    """把钩子写进用户级 ~/.claude/settings.json（先备份、只增删自己的条目）。DELETE 是断开。"""
+def claude_status() -> dict:
+    return tool_status("claude")
+
+
+async def connect_tool(request: web.Request) -> web.Response:
+    """把钩子写进工具的用户级设置（先备份、只增删自己的条目）。GET 查状态，POST 连接，DELETE 断开。"""
     local_only(request)
+    agent = request.match_info.get("agent", "claude")
+    if agent not in CONNECT_TOOLS:
+        raise web.HTTPNotFound(text="不支持一键连接这个工具，请用设置页里的那句话交给它自己连接")
     if request.method == "GET":
-        return web.json_response(claude_status())
+        return web.json_response(tool_status(agent))
+    path: Path = CONNECT_TOOLS[agent]["path"]
     try:
-        cfg = json.loads(CLAUDE_SETTINGS.read_text("utf-8")) if CLAUDE_SETTINGS.exists() else {}
+        cfg = json.loads(path.read_text("utf-8")) if path.exists() else {}
     except ValueError:
-        return web.json_response({"ok": False, "error": "settings.json 格式有误，没有改动"}, status=400)
-    if CLAUDE_SETTINGS.exists():
-        backup = CLAUDE_SETTINGS.with_name(f"settings.json.bak-待机回收站-{int(now())}")
-        backup.write_text(CLAUDE_SETTINGS.read_text("utf-8"), "utf-8")
+        return web.json_response({"ok": False, "error": f"{path.name} 格式有误，没有改动"}, status=400)
+    if path.exists():
+        backup = path.with_name(f"{path.name}.bak-待机回收站-{int(now())}")
+        backup.write_text(path.read_text("utf-8"), "utf-8")
     hooks = _strip_ours(cfg.get("hooks", {}))
     if request.method == "POST":
-        for event, (matcher, timeout) in CLAUDE_EVENTS.items():
-            group = {"hooks": [{"type": "command", "command": hook_command("claude"), "timeout": timeout}]}
+        for event, (matcher, timeout) in CONNECT_TOOLS[agent]["events"].items():
+            group = {"hooks": [{"type": "command", "command": hook_command(agent), "timeout": timeout}]}
             if matcher:
                 group = {"matcher": matcher, **group}
             hooks.setdefault(event, []).append(group)
@@ -616,9 +651,9 @@ async def connect_claude(request: web.Request) -> web.Response:
         cfg["hooks"] = hooks
     else:
         cfg.pop("hooks", None)
-    CLAUDE_SETTINGS.parent.mkdir(parents=True, exist_ok=True)
-    CLAUDE_SETTINGS.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), "utf-8")
-    return web.json_response({"ok": True, **claude_status()})
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), "utf-8")
+    return web.json_response({"ok": True, **tool_status(agent)})
 
 
 async def autostart(request: web.Request) -> web.Response:
@@ -642,6 +677,26 @@ async def setup_test(request: web.Request) -> web.Response:
                               {"command": "npm install left-pad"}, simulated=True, label="测试")
     asyncio.create_task(_auto_clear_sim(a["id"]))
     return web.json_response({"approvalId": a["id"]})
+
+
+async def list_devices(request: web.Request) -> web.Response:
+    """设置页用：已配对设备列表。只限本机。"""
+    local_only(request)
+    return web.json_response([{"id": d["id"], "name": d.get("name", "手机"), "paired": d.get("paired", 0)}
+                              for d in STATE.devices.values()])
+
+
+async def remove_device(request: web.Request) -> web.Response:
+    """移除一台已配对设备：它的令牌立刻失效。只限本机。"""
+    local_only(request)
+    dev_id = request.match_info["id"]
+    removed = STATE.devices.pop(dev_id, None)
+    if removed:
+        STATE.save_devices()
+        save = SAVES_DIR / f"{dev_id}.json"
+        if save.exists():
+            save.unlink()
+    return web.json_response({"ok": bool(removed)})
 
 
 async def setup_page(request: web.Request) -> web.FileResponse:
@@ -707,7 +762,9 @@ def make_app() -> web.Application:
     app.router.add_get("/setup", setup_page)
     app.router.add_get("/api/setup-info", setup_info)
     app.router.add_post("/api/setup-test", setup_test)
-    app.router.add_route("*", "/api/connect/claude", connect_claude)
+    app.router.add_get("/api/devices", list_devices)
+    app.router.add_delete("/api/devices/{id}", remove_device)
+    app.router.add_route("*", "/api/connect/{agent}", connect_tool)
     app.router.add_route("*", "/api/autostart", autostart)
     app.router.add_get("/api/save", save_get)
     app.router.add_post("/api/save", save_put)

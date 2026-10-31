@@ -30,7 +30,7 @@ POLL = 25
 PROFILES = {
     "claude": {"fallback": "silent", "max_wait": 55 * 60},
     "codex": {"fallback": "silent", "max_wait": 55 * 60},
-    "qwen": {"fallback": "ask", "max_wait": 9 * 60},
+    "qwen": {"fallback": "silent", "max_wait": 55 * 60},
     "copilot": {"fallback": "ask", "max_wait": 9 * 60},
     "gemini": {"fallback": "silent", "max_wait": 9 * 60},
     "cursor": {"fallback": "silent", "max_wait": 9 * 60},
@@ -45,7 +45,7 @@ LABELS = {"grok": "Grok", "claude": "Claude Code", "codex": "Codex", "gemini": "
 
 def emit(agent: str, event: str, decision: str, reason: str = "") -> None:
     """按工具要求的格式输出决定。decision: allow / deny / ask。"""
-    if agent in ("claude", "codex") and event == "PermissionRequest":
+    if agent in ("claude", "codex", "qwen") and event == "PermissionRequest":
         if decision == "ask":
             return  # 不输出 = 交回电脑上的确认框
         body = {"behavior": decision}
@@ -85,7 +85,8 @@ def normalize(raw: dict) -> dict:
         "tool_input": ti,
         "transcript_path": raw.get("transcript_path", ""),
         "title": chat_title(raw.get("transcript_path", "")),
-        "text": (raw.get("last_assistant_message") or "") if isinstance(raw.get("last_assistant_message"), str) else "",
+        "text": next((raw[k] for k in ("last_assistant_message", "prompt_response")
+                      if isinstance(raw.get(k), str) and raw.get(k)), ""),
     }
 
 
@@ -222,7 +223,7 @@ def run(agent: str) -> None:
     event = hook["event"]
     # 只通知、不需要决定的事件
     if event in ("Stop", "Notification", "PostToolUse", "UserPromptSubmit", "AfterAgent", "stop",
-                 "SessionEnd", "afterAgentResponse"):
+                 "SessionEnd", "afterAgentResponse", "BeforeAgent"):
         if event in ("Stop", "stop", "AfterAgent", "afterAgentResponse"):
             hook["text"] = hook.get("text") or latest_ai_text(hook.get("transcript_path", ""))
         try:

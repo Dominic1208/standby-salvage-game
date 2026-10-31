@@ -233,7 +233,7 @@ func _next_customer() -> void:
 	deal = Deal.new(tuning, catalog, customers, personas, rng, reputation)
 	deal_open = true
 	var cname: String = deal.customer.name
-	offer_amount = clampi(roundi(deal.ask * float(tuning.offer_start_ratio) / 10.0) * 10, 10, maxi(cash, 10))
+	offer_amount = clampi(deal.ask, 10, maxi(cash, 10))  # 出价屏先显示顾客的要价，点 5/7/9 成再变
 	figure_color = CUSTOMER_COLORS[absi(hash(deal.customer.art)) % CUSTOMER_COLORS.size()]
 	figure_initial = cname.substr(0, 1)
 	portrait.texture = _art(deal.customer.get("art", ""))
@@ -244,7 +244,7 @@ func _next_customer() -> void:
 	story_label.text = "“%s”" % deal.story
 	item_label.text = deal.item.name
 	var hot := str(deal.item.get("tag", "")) == order_tag
-	tag_label.text = ("【%s】今日订单！" % deal.item.tag) if hot else ("【%s】" % deal.item.get("tag", ""))
+	tag_label.text = (("【%s】今日订单！" % deal.item.tag) if hot else ("【%s】" % deal.item.get("tag", ""))) 		+ "　市场参考价 ¥%d" % int(deal.item.base)
 	tag_label.add_theme_color_override("font_color", COL_STAMP if hot else COL_INK_SOFT)
 	_log("“%s”" % deal.line("greet"), COL_TEXT)
 	_build_clues()
