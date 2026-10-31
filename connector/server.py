@@ -47,6 +47,7 @@ LOOK_POOLS = {
 }
 GENERIC_LOOKS = [f"staff_{i}" for i in range(1, 9)]
 SPECIAL_LOOKS = [f"special_{i}" for i in range(1, 5)]
+EMPLOYEE_FORGET = 3 * 24 * 3600   # 3 天没动静的员工不再显示
 SPECIAL_EVERY = 6             # 每第 6 位新员工是特别员工（太空人、外星人……）
 
 
@@ -118,15 +119,18 @@ class State:
     def save_employees(self) -> None:
         EMPLOYEES_FILE.write_text(json.dumps(self.employees, ensure_ascii=False, indent=2), "utf-8")
 
-    def employee_for(self, agent: str, label: str, cwd: str) -> dict:
+    def employee_for(self, agent: str, label: str, cwd: str, session_id: str = "", title: str = "") -> dict:
+        """每个对话一位员工：名字用对话标题；拿不到标题时退回按文件夹。用户改过的名字不会被覆盖。"""
         project = Path(cwd.replace("\\", "/")).name if cwd else ""
         project = project or "未命名项目"
-        key = f"{agent}:{project.lower()}"
+        key = f"{agent}:s:{session_id}" if session_id else f"{agent}:{project.lower()}"
         emp = self.employees.get(key)
+        if emp and title and not emp.get("renamed") and emp.get("name") != title:
+            emp["name"] = title  # 对话标题出来了或改了
         if not emp:
             same_agent = [e for e in self.employees.values() if e["agent"] == agent]
             emp = {"id": secrets.token_urlsafe(6), "key": key, "agent": agent, "label": label or agent,
-                   "project": project, "name": project,
+                   "project": project, "name": title or project, "session": session_id,
                    "look": pick_look(agent, len(same_agent), len(self.employees)),
                    "index": len(same_agent), "created": now(), "status": "working"}
             self.employees[key] = emp
@@ -138,6 +142,8 @@ class State:
         waiting = {a.get("employeeId") for a in self.approvals.values() if a["status"] == "pending"}
         out = []
         for e in sorted(self.employees.values(), key=lambda e: e["created"]):
+            if now() - e.get("last_seen", e["created"]) > EMPLOYEE_FORGET:
+                continue  # 好几天没动静的对话，员工就不来店里了
             status = "waiting" if e["id"] in waiting else e.get("status", "working")
             if status == "working" and now() - e.get("last_seen", 0) > 3600:
                 status = "resting"
@@ -209,8 +215,9 @@ def require_device(request: web.Request) -> dict:
 
 
 async def create_approval(agent: str, session_id: str, cwd: str, tool_name: str,
-                          tool_input: dict, simulated: bool = False, label: str = "") -> dict:
-    emp = STATE.employee_for(agent, label, "D:/演示项目" if simulated else cwd)
+                          tool_input: dict, simulated: bool = False, label: str = "", title: str = "") -> dict:
+    emp = STATE.employee_for(agent, label, "D:/演示项目" if simulated else cwd,
+                             "" if simulated else session_id, title)
     # 同一会话出现新请求，说明旧请求已在电脑上处理过：标记失效
     for old in STATE.approvals.values():
         if old["status"] == "pending" and old["sessionId"] == session_id and not simulated:
@@ -317,6 +324,7 @@ async def hook_permission(request: web.Request) -> web.Response:
             tool_name=hook.get("tool_name", ""),
             tool_input=hook.get("tool_input", {}),
             label=data.get("label", ""),
+            title=hook.get("title", ""),
         )
     if a["status"] != "pending":
         return web.json_response({"approvalId": a["id"], "decision": a["status"]})
@@ -349,7 +357,7 @@ async def hook_event(request: web.Request) -> web.Response:
         for a in list(STATE.approvals.values()):
             if a["status"] == "pending" and a["sessionId"] == sid and not a["simulated"]:
                 await resolve(a["id"], "stale", "电脑端")
-    emp = STATE.employee_for(agent, data.get("label", ""), hook.get("cwd", ""))
+    emp = STATE.employee_for(agent, data.get("label", ""), hook.get("cwd", ""), sid, hook.get("title", ""))
     emp["status"] = "working"
     if name == "Stop":
         emp["status"] = "resting"
@@ -416,6 +424,7 @@ async def rename_employee(request: web.Request) -> web.Response:
     for e in STATE.employees.values():
         if e["id"] == data.get("id") and name:
             e["name"] = name
+            e["renamed"] = True
             STATE.save_employees()
             await STATE.broadcast({"type": "employees", "employees": STATE.employees_public()})
             return web.json_response({"ok": True})

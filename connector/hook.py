@@ -84,7 +84,29 @@ def normalize(raw: dict) -> dict:
         "tool_name": raw.get("tool_name") or raw.get("toolName") or ("Bash" if "command" in raw else ""),
         "tool_input": ti,
         "transcript_path": raw.get("transcript_path", ""),
+        "title": chat_title(raw.get("transcript_path", "")),
     }
+
+
+def chat_title(transcript_path: str) -> str:
+    """Claude Code 把对话标题记在对话记录里（"custom-title"）。从文件末尾往前找最新的一条。"""
+    if not transcript_path:
+        return ""
+    try:
+        with open(transcript_path, "rb") as f:
+            f.seek(0, 2)
+            size = f.tell()
+            f.seek(max(0, size - 400_000))
+            tail = f.read().decode("utf-8", "ignore")
+        if '"custom-title"' not in tail and size > 400_000:
+            with open(transcript_path, "rb") as f:
+                tail = f.read().decode("utf-8", "ignore")
+        for line in reversed(tail.splitlines()):
+            if '"custom-title"' in line:
+                return str(json.loads(line).get("customTitle", ""))[:24]
+    except (OSError, ValueError):
+        pass
+    return ""
 
 
 def post(path: str, body: dict, timeout: float) -> dict:
