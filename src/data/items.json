@@ -1,86 +1,288 @@
 {
-  "_doc": "货物表。clues 的 mult 是这条线索对真实价值的影响；lie 是顾客撒谎时的说法、替换哪条线索（clue）、换成什么（text），以及撒谎时真实价值再乘多少（mult）。leaky=true 表示会污染相邻货物的问题货。",
+  "_doc": "货物表。clues 的 mult 是这条线索对真实价值的影响；lie 是顾客撒谎时的说法、替换哪条线索（clue）、换成什么（text），以及撒谎时真实价值再乘多少（mult）。leaky=true 表示会污染相邻货物的问题货。 tag 是收购商订单用的类别；art 是 assets/art/ 下的图片名（没有图就用默认画法）。",
   "items": [
     {
-      "name": "老式机械怀表", "base": 600,
+      "name": "老式机械怀表",
+      "base": 600,
       "story": "我爸退休时单位送的，他用不上了。",
       "clues": [
-        {"part": "表盖内侧", "text": "刻着「退休纪念」四个字", "mult": 1.0},
-        {"part": "机芯", "text": "上弦后走时正常", "mult": 1.1},
-        {"part": "表蒙", "text": "有一道明显的划痕", "mult": 0.85}
+        {
+          "part": "表盖内侧",
+          "text": "刻着「退休纪念」四个字",
+          "mult": 1.0
+        },
+        {
+          "part": "机芯",
+          "text": "上弦后走时正常",
+          "mult": 1.1
+        },
+        {
+          "part": "表蒙",
+          "text": "有一道明显的划痕",
+          "mult": 0.85
+        }
       ],
-      "lie": {"story": "我自己年轻时买的，一直舍不得戴。", "clue": 0, "text": "刻着「钟表店样品 请勿出售」", "mult": 0.6}
+      "lie": {
+        "story": "我自己年轻时买的，一直舍不得戴。",
+        "clue": 0,
+        "text": "刻着「钟表店样品 请勿出售」",
+        "mult": 0.6
+      },
+      "tag": "古董",
+      "art": "item_watch"
     },
     {
-      "name": "二手游戏机", "base": 900,
+      "name": "二手游戏机",
+      "base": 900,
       "story": "孩子上大学了，家里没人玩了。",
       "clues": [
-        {"part": "机身底部", "text": "序列号完整清楚", "mult": 1.0},
-        {"part": "开机测试", "text": "能进系统，手柄摇杆有点漂移", "mult": 0.8},
-        {"part": "包装", "text": "原装盒子和说明书都在", "mult": 1.2}
+        {
+          "part": "机身底部",
+          "text": "序列号完整清楚",
+          "mult": 1.0
+        },
+        {
+          "part": "开机测试",
+          "text": "能进系统，手柄摇杆有点漂移",
+          "mult": 0.8
+        },
+        {
+          "part": "包装",
+          "text": "原装盒子和说明书都在",
+          "mult": 1.2
+        }
       ],
-      "lie": {"story": "上个月刚买的，别人送的我用不上。", "clue": 0, "text": "序列号被刮花了，看不清", "mult": 0.6}
+      "lie": {
+        "story": "上个月刚买的，别人送的我用不上。",
+        "clue": 0,
+        "text": "序列号被刮花了，看不清",
+        "mult": 0.6
+      },
+      "tag": "电子",
+      "art": "item_console"
     },
     {
-      "name": "电动滑板车", "base": 1100, "leaky": true,
+      "name": "电动滑板车",
+      "base": 1100,
+      "leaky": true,
       "story": "换了辆新的，这个放家里占地方。",
       "clues": [
-        {"part": "电池仓", "text": "电池鼓包，有液体渗出来", "mult": 0.5},
-        {"part": "车架", "text": "没有焊接修补的痕迹", "mult": 1.0},
-        {"part": "里程表", "text": "显示骑了 300 公里", "mult": 1.1}
+        {
+          "part": "电池仓",
+          "text": "电池鼓包，有液体渗出来",
+          "mult": 0.5
+        },
+        {
+          "part": "车架",
+          "text": "没有焊接修补的痕迹",
+          "mult": 1.0
+        },
+        {
+          "part": "里程表",
+          "text": "显示骑了 300 公里",
+          "mult": 1.1
+        }
       ],
-      "lie": {"story": "几乎没骑过，一直放在家里。", "clue": 2, "text": "显示骑了 8000 公里", "mult": 0.7}
+      "lie": {
+        "story": "几乎没骑过，一直放在家里。",
+        "clue": 2,
+        "text": "显示骑了 8000 公里",
+        "mult": 0.7
+      },
+      "tag": "电子",
+      "art": "item_scooter"
     },
     {
-      "name": "实木椅子", "base": 300,
+      "name": "实木椅子",
+      "base": 300,
       "story": "搬家了，新房子放不下。",
       "clues": [
-        {"part": "椅腿", "text": "榫卯结构，非常结实", "mult": 1.2},
-        {"part": "坐垫底下", "text": "有几个虫眼", "mult": 0.6},
-        {"part": "底部", "text": "老漆，颜色均匀", "mult": 1.0}
+        {
+          "part": "椅腿",
+          "text": "榫卯结构，非常结实",
+          "mult": 1.2
+        },
+        {
+          "part": "坐垫底下",
+          "text": "有几个虫眼",
+          "mult": 0.6
+        },
+        {
+          "part": "底部",
+          "text": "老漆，颜色均匀",
+          "mult": 1.0
+        }
       ],
-      "lie": {"story": "这可是古董，祖上传下来的！", "clue": 2, "text": "贴着家具城的价格标签", "mult": 0.5}
+      "lie": {
+        "story": "这可是古董，祖上传下来的！",
+        "clue": 2,
+        "text": "贴着家具城的价格标签",
+        "mult": 0.5
+      },
+      "tag": "古董",
+      "art": "item_chair"
     },
     {
-      "name": "金色项链", "base": 1500,
+      "name": "金色项链",
+      "base": 1500,
       "story": "以前的东西，不想留着了。",
       "clues": [
-        {"part": "扣头", "text": "刻着 Au750", "mult": 1.0},
-        {"part": "称重", "text": "上秤 6.2 克", "mult": 1.0},
-        {"part": "链节", "text": "有一处断过又接上", "mult": 0.8}
+        {
+          "part": "扣头",
+          "text": "刻着 Au750",
+          "mult": 1.0
+        },
+        {
+          "part": "称重",
+          "text": "上秤 6.2 克",
+          "mult": 1.0
+        },
+        {
+          "part": "链节",
+          "text": "有一处断过又接上",
+          "mult": 0.8
+        }
       ],
-      "lie": {"story": "纯金的，足金，你放心！", "clue": 0, "text": "刻着「GP」，是镀金", "mult": 0.15}
+      "lie": {
+        "story": "纯金的，足金，你放心！",
+        "clue": 0,
+        "text": "刻着「GP」，是镀金",
+        "mult": 0.15
+      },
+      "tag": "首饰",
+      "art": "item_necklace"
     },
     {
-      "name": "单反相机", "base": 1300,
+      "name": "单反相机",
+      "base": 1300,
       "story": "以前拍着玩的，现在都用手机了。",
       "clues": [
-        {"part": "快门次数", "text": "两万次，还很年轻", "mult": 1.0},
-        {"part": "镜头", "text": "镜片里有一点霉斑", "mult": 0.75},
-        {"part": "背带", "text": "磨得很旧", "mult": 1.0}
+        {
+          "part": "快门次数",
+          "text": "两万次，还很年轻",
+          "mult": 1.0
+        },
+        {
+          "part": "镜头",
+          "text": "镜片里有一点霉斑",
+          "mult": 0.75
+        },
+        {
+          "part": "背带",
+          "text": "磨得很旧",
+          "mult": 1.0
+        }
       ],
-      "lie": {"story": "我自己的，平时拍孩子用。", "clue": 2, "text": "缝着「电视台 器材组」", "mult": 0.6}
+      "lie": {
+        "story": "我自己的，平时拍孩子用。",
+        "clue": 2,
+        "text": "缝着「电视台 器材组」",
+        "mult": 0.6
+      },
+      "tag": "电子",
+      "art": "item_camera"
     },
     {
-      "name": "木吉他", "base": 700,
+      "name": "木吉他",
+      "base": 700,
       "story": "学了半年没坚持下来。",
       "clues": [
-        {"part": "琴颈", "text": "笔直，没有变形", "mult": 1.1},
-        {"part": "面板", "text": "有一道裂缝", "mult": 0.6},
-        {"part": "琴盒", "text": "里面有一张旧演出门票", "mult": 1.0}
+        {
+          "part": "琴颈",
+          "text": "笔直，没有变形",
+          "mult": 1.1
+        },
+        {
+          "part": "面板",
+          "text": "有一道裂缝",
+          "mult": 0.6
+        },
+        {
+          "part": "琴盒",
+          "text": "里面有一张旧演出门票",
+          "mult": 1.0
+        }
       ],
-      "lie": {"story": "全新的，就弹过两次。", "clue": 2, "text": "贴着「少年宫 乐器室」的标签", "mult": 0.6}
+      "lie": {
+        "story": "全新的，就弹过两次。",
+        "clue": 2,
+        "text": "贴着「少年宫 乐器室」的标签",
+        "mult": 0.6
+      },
+      "tag": "乐器",
+      "art": "item_guitar"
     },
     {
-      "name": "一箱旧书", "base": 200,
+      "name": "一箱旧书",
+      "base": 200,
       "story": "老家清理出来的。",
       "clues": [
-        {"part": "扉页", "text": "有作者亲笔签名", "mult": 1.5},
-        {"part": "书页", "text": "有点受潮发黄", "mult": 0.8},
-        {"part": "书脊", "text": "一整套，一本不少", "mult": 1.1}
+        {
+          "part": "扉页",
+          "text": "有作者亲笔签名",
+          "mult": 1.5
+        },
+        {
+          "part": "书页",
+          "text": "有点受潮发黄",
+          "mult": 0.8
+        },
+        {
+          "part": "书脊",
+          "text": "一整套，一本不少",
+          "mult": 1.1
+        }
       ],
-      "lie": {"story": "我自己一本一本收来的。", "clue": 0, "text": "盖着「图书馆藏书」的章", "mult": 0.5}
+      "lie": {
+        "story": "我自己一本一本收来的。",
+        "clue": 0,
+        "text": "盖着「图书馆藏书」的章",
+        "mult": 0.5
+      },
+      "tag": "古董",
+      "art": "item_books"
     }
   ],
-  "customers": ["张阿姨", "小刘", "老陈", "戴帽子的男人", "穿西装的女人", "外卖小哥", "大学生", "林师傅"]
+  "customers": [
+    {
+      "name": "张阿姨",
+      "type": "shrewd",
+      "art": "customer_zhang"
+    },
+    {
+      "name": "小刘",
+      "type": "desperate",
+      "art": "customer_liu"
+    },
+    {
+      "name": "老陈",
+      "type": "honest",
+      "art": "customer_chen"
+    },
+    {
+      "name": "戴帽子的男人",
+      "type": "slick",
+      "art": "customer_hat"
+    },
+    {
+      "name": "穿西装的女人",
+      "type": "shrewd",
+      "art": "customer_suit"
+    },
+    {
+      "name": "外卖小哥",
+      "type": "desperate",
+      "art": "customer_courier"
+    },
+    {
+      "name": "大学生",
+      "type": "desperate",
+      "art": "customer_student"
+    },
+    {
+      "name": "林师傅",
+      "type": "honest",
+      "art": "customer_lin"
+    }
+  ]
 }

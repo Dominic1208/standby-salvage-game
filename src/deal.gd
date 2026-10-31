@@ -1,11 +1,13 @@
 class_name Deal
 extends RefCounted
-## 一笔交易的全部规则：顾客、货物真实价值、鉴定、质疑来历、砍价。
-## 不碰界面，方便以后写单元测试。所有数值来自 data/tuning.json。
+## 一笔交易的全部规则：顾客性格、货物真实价值、鉴定、质疑来历、砍价。
+## 不碰界面，方便以后写单元测试。数值来自 data/tuning.json，台词来自 data/personalities.json。
 
 var tuning: Dictionary
 var item: Dictionary          ## 货物原始数据
-var customer: String
+var customer: Dictionary      ## {name, type, art}
+var persona: Dictionary       ## 性格数据（数值修正 + 台词池）
+var rng: RandomNumberGenerator
 var lying: bool
 var story: String
 var clues: Array = []         ## [{part, text, mult, revealed, is_lie}]
@@ -17,12 +19,17 @@ var rounds_left: int
 var challenged := false
 
 
-## 用货物表、顾客名单和随机数生成器创建一位新顾客。
-func _init(p_tuning: Dictionary, items: Array, customers: Array, rng: RandomNumberGenerator) -> void:
+## 创建一位新顾客。reputation 越高，骗子越少。
+func _init(p_tuning: Dictionary, items: Array, customers: Array, personas: Dictionary,
+		p_rng: RandomNumberGenerator, reputation: int) -> void:
 	tuning = p_tuning
+	rng = p_rng
 	item = items[rng.randi_range(0, items.size() - 1)]
 	customer = customers[rng.randi_range(0, customers.size() - 1)]
-	lying = item.has("lie") and rng.randf() < float(tuning.lie_chance)
+	persona = personas[customer.type]
+	var lie_chance := float(tuning.lie_chance) * float(persona.lie_mult) \
+		- reputation * float(tuning.rep_lie_reduction)
+	lying = item.has("lie") and rng.randf() < clampf(lie_chance, 0.0, 0.9)
 	story = item.lie.story if lying else item.story
 
 	var value := float(item.base)
@@ -40,13 +47,20 @@ func _init(p_tuning: Dictionary, items: Array, customers: Array, rng: RandomNumb
 		value *= float(item.lie.mult)
 	true_value = roundi(value * rng.randf_range(0.9, 1.1))
 
-	ask = _round10(float(item.base) * rng.randf_range(tuning.greed_min, tuning.greed_max))
-	var floor_ratio := rng.randf_range(tuning.min_price_min, tuning.min_price_max)
+	var greed := rng.randf_range(tuning.greed_min, tuning.greed_max) + float(persona.greed_add)
+	ask = _round10(float(item.base) * greed)
+	var floor_ratio := rng.randf_range(tuning.min_price_min, tuning.min_price_max) + float(persona.floor_add)
 	if lying:
 		floor_ratio *= float(tuning.liar_min_factor)
 	min_price = mini(_round10(true_value * floor_ratio), ask)
-	patience = float(tuning.patience_start)
+	patience = float(tuning.patience_start) * float(persona.patience_mult)
 	rounds_left = int(tuning.haggle_rounds)
+
+
+## 从这位顾客的台词池里随机取一句。
+func line(kind: String) -> String:
+	var pool: Array = persona.get(kind, [""])
+	return str(pool[rng.randi_range(0, pool.size() - 1)]).replace("{ask}", str(ask))
 
 
 ## 查看第 i 条线索，返回线索文字。
@@ -66,26 +80,24 @@ func challenge() -> Dictionary:
 		if lie_seen:
 			min_price = _round10(min_price * float(tuning.challenge_caught_factor))
 			ask = maxi(min_price, _round10(ask * 0.8))
-			return {"text": "顾客脸色一变：“行吧行吧……便宜点给你，别多问。”", "mood": "caught"}
+			return {"text": "“%s”" % line("caught"), "mood": "caught"}
 		patience -= float(tuning.challenge_unproven_loss)
-		return {"text": "顾客冷笑：“你有证据吗？”", "mood": "unproven"}
+		return {"text": "“你有证据吗？”", "mood": "unproven"}
 	patience -= float(tuning.challenge_honest_loss)
-	return {"text": "顾客很不高兴：“我好心来卖东西，你怀疑我？”", "mood": "honest"}
+	return {"text": "“%s”" % line("offended"), "mood": "honest"}
 
 
 ## 玩家出价。返回 {result, text}，result 为 accept / counter / leave。
 func offer(amount: int) -> Dictionary:
 	if amount >= min_price:
-		return {"result": "accept", "text": "顾客点点头：“成交。”"}
+		return {"result": "accept", "text": "“%s”" % line("accept")}
 	rounds_left -= 1
 	var gap := float(min_price - amount) / float(min_price)
 	patience -= float(tuning.patience_base_loss) + float(tuning.patience_gap_loss) * gap
-	if patience <= 0.0:
-		return {"result": "leave", "text": "顾客气得把东西收回去：“你这是抢钱！”"}
-	if rounds_left <= 0:
-		return {"result": "leave", "text": "顾客摇摇头：“谈不拢，算了。”"}
+	if patience <= 0.0 or rounds_left <= 0:
+		return {"result": "leave", "text": "“%s”" % line("leave")}
 	ask = maxi(_round10(maxf(min_price * float(tuning.counter_floor), (amount + ask) / 2.0)), min_price)
-	return {"result": "counter", "text": "顾客想了想：“%d，不能再少了。”" % ask}
+	return {"result": "counter", "text": "“%s”" % line("counter")}
 
 
 ## 卖出这件货能赚多少（付出 paid 之后）。

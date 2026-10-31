@@ -27,7 +27,11 @@ const CUSTOMER_COLORS := [Color("6c8ebf"), Color("c27c5a"), Color("7fa66a"), Col
 var tuning: Dictionary
 var items: Array
 var customers: Array
+var personas: Dictionary
 var rng := RandomNumberGenerator.new()
+var reputation := 0           ## 街坊口碑：公道交易、揭穿骗子会涨，压榨老实人会跌
+var order_tag := ""           ## 今天收购商高价收的类别
+var run_state := "playing"    ## playing / day_end / lost / won
 
 var cash: int
 var day := 1
@@ -40,6 +44,13 @@ var deal_open := false
 # 界面节点
 var hud_day: Label
 var hud_cash: Label
+var hud_rep: Label
+var order_label: Label
+var shop_bg: TextureRect
+var portrait: TextureRect
+var item_icon: TextureRect
+var tag_label: Label
+var float_layer: Control
 var time_pips: HBoxContainer
 var scene_panel: Control
 var figure: Control
@@ -81,6 +92,7 @@ func _ready() -> void:
 	var data := _load_json("res://data/items.json")
 	items = data.items
 	customers = data.customers
+	personas = _load_json("res://data/personalities.json").types
 	rng.randomize()
 	cash = int(tuning.start_cash)
 	time_left = int(tuning.time_per_day)
@@ -94,7 +106,7 @@ func _ready() -> void:
 			});
 			if (window.parent !== window) window.parent.postMessage({type: 'game-ready'}, location.origin);
 		""", true)
-	_next_customer()
+	_start_day()
 
 
 func _process(delta: float) -> void:
@@ -144,21 +156,38 @@ func _show_pause(on: bool) -> void:
 
 # ---------------- 流程 ----------------
 
+func _start_day() -> void:
+	run_state = "playing"
+	time_left = int(tuning.time_per_day)
+	var tags: Array = tuning.order_tags
+	order_tag = tags[rng.randi_range(0, tags.size() - 1)]
+	order_label.text = "今日订单：收购商高价收【%s】类，%.1f 倍" % [order_tag, float(tuning.order_bonus)]
+	_next_customer()
+	_float_text("第 %d 天开张" % day, COL_NEON)
+
+
 func _next_customer() -> void:
 	if time_left < int(tuning.time_per_customer) + 1:
 		_end_day()
 		return
 	time_left -= int(tuning.time_per_customer)
-	deal = Deal.new(tuning, items, customers, rng)
+	deal = Deal.new(tuning, items, customers, personas, rng, reputation)
 	deal_open = true
-	offer_amount = clampi(roundi(deal.ask * float(tuning.offer_start_ratio) / 10.0) * 10, 10, cash)
+	var cname: String = deal.customer.name
+	offer_amount = clampi(roundi(deal.ask * float(tuning.offer_start_ratio) / 10.0) * 10, 10, maxi(cash, 10))
 	figure_color = CUSTOMER_COLORS[customers.find(deal.customer) % CUSTOMER_COLORS.size()]
-	figure_initial = deal.customer.substr(0, 1)
+	figure_initial = cname.substr(0, 1)
+	portrait.texture = _art(deal.customer.get("art", ""))
 	figure.queue_redraw()
-	name_label.text = deal.customer
+	item_icon.texture = _art(deal.item.get("art", ""))
+	item_icon.visible = item_icon.texture != null
+	name_label.text = "%s · %s" % [cname, deal.persona.label]
 	story_label.text = "“%s”" % deal.story
 	item_label.text = deal.item.name
-	_log("%s 把一件%s放在柜台上。" % [deal.customer, deal.item.name], COL_MUTED)
+	var hot := str(deal.item.get("tag", "")) == order_tag
+	tag_label.text = ("【%s】今日订单！" % deal.item.tag) if hot else ("【%s】" % deal.item.get("tag", ""))
+	tag_label.add_theme_color_override("font_color", COL_STAMP if hot else COL_INK_SOFT)
+	_log("“%s”" % deal.line("greet"), COL_TEXT)
 	_build_clues()
 	_refresh()
 	_animate_arrival()
@@ -166,11 +195,11 @@ func _next_customer() -> void:
 
 func _animate_arrival() -> void:
 	figure.modulate.a = 0.0
-	figure.position = Vector2(146, 52)
+	figure.position = Vector2(146, 40)
 	bubble.modulate.a = 0.0
 	ticket.modulate.a = 0.0
 	var tw := create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tw.tween_property(figure, "position:x", 26.0, 0.35)
+	tw.tween_property(figure, "position:x", 16.0, 0.35)
 	tw.parallel().tween_property(figure, "modulate:a", 1.0, 0.3)
 	tw.tween_property(bubble, "modulate:a", 1.0, 0.2)
 	tw.tween_property(ticket, "modulate:a", 1.0, 0.2)
@@ -209,6 +238,7 @@ func _on_challenge() -> void:
 	_log(r.text, COL_OK if r.mood == "caught" else COL_BAD)
 	if r.mood == "caught":
 		_pulse(ask_stamp)
+		_change_rep(1, "揭穿了骗子")
 	else:
 		_shake(figure)
 	if deal.patience <= 0:
@@ -220,6 +250,9 @@ func _on_challenge() -> void:
 
 func _on_offer() -> void:
 	if not deal_open:
+		return
+	if offer_amount > cash:
+		_log("钱不够了。", COL_BAD)
 		return
 	var r := deal.offer(offer_amount)
 	match r.result:
@@ -236,28 +269,52 @@ func _on_offer() -> void:
 			_refresh()
 
 
+func _on_quick_offer(ratio: float) -> void:
+	if not deal_open:
+		return
+	offer_amount = clampi(roundi(deal.ask * ratio / 10.0) * 10, 10, mini(maxi(cash, 10), deal.ask))
+	_refresh()
+	_pulse(offer_label)
+
+
 func _on_take() -> void:
 	if deal_open and deal.ask <= cash:
+		_log("“%s”" % deal.line("accept"), COL_OK)
 		_buy(deal.ask)
 
 
 func _on_refuse() -> void:
 	if deal_open:
-		_close_deal(false, "你摆摆手，%s 带着%s走了。" % [deal.customer, deal.item.name])
+		_close_deal(false, "你摆摆手，%s 带着%s走了。" % [deal.customer.name, deal.item.name])
 
 
 func _buy(price: int) -> void:
 	cash -= price
 	inventory.append({"name": deal.item.name, "paid": price, "value": deal.true_value,
-		"leaky": deal.item.get("leaky", false)})
+		"leaky": deal.item.get("leaky", false), "tag": deal.item.get("tag", "")})
+	# 口碑：对老实人给公道价会涨，压榨会跌
+	if not deal.lying:
+		var ratio := float(price) / maxf(1.0, deal.true_value)
+		if ratio >= float(tuning.rep_fair_ratio):
+			_change_rep(1, "给了公道价")
+		elif ratio < float(tuning.rep_lowball_ratio):
+			_change_rep(-1, "压价太狠")
 	var p := deal.profit(price)
 	var lines := ["%s　付出 ¥%d" % [deal.item.name, price], "收购商估价 ¥%d" % deal.true_value]
+	if str(deal.item.get("tag", "")) == order_tag:
+		lines.append("符合今日订单，打烊时按 %.1f 倍收" % float(tuning.order_bonus))
 	if deal.lying:
 		lines.append("顾客说了谎：%s" % _lie_text())
 	if deal.item.get("leaky", false):
-		lines.append("注意：这是会漏液的问题货")
+		lines.append("注意：这是会漏液的问题货，可能弄坏仓库里别的货")
 	_show_result("成交", ("+¥%d" % p) if p >= 0 else ("-¥%d" % -p), COL_OK if p >= 0 else COL_BAD,
 		"\n".join(lines))
+
+
+func _change_rep(delta: int, why: String) -> void:
+	reputation += delta
+	_float_text("（街坊口碑 %s%d · %s）" % ["+" if delta > 0 else "", delta, why], COL_OK if delta > 0 else COL_BAD)
+	_refresh()
 
 
 func _lie_text() -> String:
@@ -294,35 +351,124 @@ func _open_result() -> void:
 
 func _on_result_next() -> void:
 	result_layer.visible = false
-	_next_customer()
+	match run_state:
+		"day_end":
+			_start_day()
+		"lost", "won":
+			_restart()
+		_:
+			_next_customer()
+
+
+func _restart() -> void:
+	day = 1
+	cash = int(tuning.start_cash)
+	reputation = 0
+	inventory.clear()
+	_start_day()
 
 
 func _end_day() -> void:
+	var lines: Array = []
+	# 漏液的问题货会弄坏仓库里另一件货
+	var leaky := inventory.filter(func(it): return it.leaky)
+	if not leaky.is_empty() and inventory.size() > 1:
+		var victims := inventory.filter(func(it): return not it.leaky)
+		if not victims.is_empty():
+			var v: Dictionary = victims[rng.randi_range(0, victims.size() - 1)]
+			var loss := roundi(int(v.value) * float(tuning.leak_damage))
+			v.value = int(v.value) - loss
+			lines.append("漏液弄坏了%s，少卖 ¥%d" % [v.name, loss])
 	var total := 0
 	var paid := 0
+	var bonus := 0
 	for it in inventory:
-		total += int(it.value)
+		var value := int(it.value)
+		if str(it.tag) == order_tag:
+			var extra := roundi(value * (float(tuning.order_bonus) - 1.0))
+			bonus += extra
+			value += extra
+		total += value
 		paid += int(it.paid)
 	cash += total
 	var net := total - paid
+	lines.push_front("收了 %d 件货，花了 ¥%d" % [inventory.size(), paid])
+	lines.insert(1, "收购商一共付了 ¥%d" % total)
+	if bonus > 0:
+		lines.insert(2, "其中订单加价 ¥%d" % bonus)
+	inventory.clear()
+
 	result_title.text = "第 %d 天 打烊" % day
 	result_big.text = ("+¥%d" % net) if net >= 0 else ("-¥%d" % -net)
 	result_big.add_theme_color_override("font_color", COL_OK if net >= 0 else COL_BAD)
-	result_label.text = "收了 %d 件货，花了 ¥%d\n收购商一共付了 ¥%d\n\n现金 ¥%d" % [inventory.size(), paid, total, cash]
-	inventory.clear()
-	day += 1
-	time_left = int(tuning.time_per_day)
-	result_btn.text = "开始第 %d 天" % day
+	run_state = "day_end"
+	var due := int(tuning.loan_due.get(str(day), 0))
+	if due > 0:
+		if cash >= due:
+			cash -= due
+			lines.append("\n还贷 ¥%d ✓ 收债人点点头走了" % due)
+		else:
+			lines.append("\n今天要还贷 ¥%d，你只有 ¥%d……\n收债人把店门锁上了。" % [due, cash])
+			run_state = "lost"
+	lines.append("现金 ¥%d　口碑 %d" % [cash, reputation])
+	if run_state == "day_end" and day >= int(tuning.run_days):
+		run_state = "won"
+		lines.append("\n贷款全部还清，这家店归你了。")
+	elif run_state == "day_end":
+		var next_due := _next_due(day + 1)
+		if next_due.x > 0:
+			lines.append("下次还贷：第 %d 天 ¥%d" % [next_due.x, next_due.y])
+	result_label.text = "\n".join(lines)
+	match run_state:
+		"lost":
+			result_title.text = "店被收走了"
+			result_btn.text = "从头再来"
+		"won":
+			result_title.text = "七天撑过来了！"
+			result_btn.text = "再开一局"
+		_:
+			result_btn.text = "开始第 %d 天" % (day + 1)
+	if run_state == "day_end":
+		day += 1
 	deal_open = false
 	_open_result()
 	_refresh()
 
 
+func _next_due(from_day: int) -> Vector2i:
+	for d in range(from_day, int(tuning.run_days) + 1):
+		var amount := int(tuning.loan_due.get(str(d), 0))
+		if amount > 0:
+			return Vector2i(d, amount)
+	return Vector2i.ZERO
+
+
 func _change_offer(sign_dir: int) -> void:
 	var step := maxi(10, roundi(deal.ask * float(tuning.offer_step_ratio) / 10.0) * 10)
-	offer_amount = clampi(offer_amount + sign_dir * step, 10, mini(cash, deal.ask))
+	offer_amount = clampi(offer_amount + sign_dir * step, 10, mini(maxi(cash, 10), deal.ask))
 	_refresh()
 	_pulse(offer_label)
+
+
+func _float_text(text: String, color: Color) -> void:
+	var l := _label(text, 26, color)
+	l.add_theme_constant_override("outline_size", 8)
+	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	l.offset_top = 300
+	float_layer.add_child(l)
+	var tw := create_tween()
+	tw.tween_property(l, "offset_top", 230.0, 1.4).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(l, "modulate:a", 0.0, 1.4).set_delay(0.6)
+	tw.tween_callback(l.queue_free)
+
+
+func _art(art_name: String) -> Texture2D:
+	var path := "res://assets/art/%s.png" % art_name
+	if art_name != "" and ResourceLoader.exists(path):
+		return load(path)
+	return null
 
 
 func _log(text: String, color: Color) -> void:
@@ -333,6 +479,7 @@ func _log(text: String, color: Color) -> void:
 func _refresh() -> void:
 	hud_day.text = "第 %d 天" % day
 	hud_cash.text = "¥%d" % cash
+	hud_rep.text = "口碑 %d" % reputation
 	var total := int(tuning.time_per_day)
 	if time_pips.get_child_count() != total:
 		for c in time_pips.get_children():
@@ -425,6 +572,11 @@ func _build_ui() -> void:
 	col.add_child(log_label)
 
 	col.add_child(_build_register())
+
+	float_layer = Control.new()
+	float_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	float_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(float_layer)
 	_build_result_layer()
 	_build_pause_layer()
 
@@ -468,6 +620,14 @@ func _build_hud() -> Control:
 	row.add_child(cash_row)
 	box.add_child(row)
 
+	var info_row := HBoxContainer.new()
+	order_label = _label("", 20, COL_NEON)
+	order_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_row.add_child(order_label)
+	hud_rep = _label("", 20, COL_OK)
+	info_row.add_child(hud_rep)
+	box.add_child(info_row)
+
 	var trow := HBoxContainer.new()
 	trow.add_theme_constant_override("separation", 10)
 	trow.add_child(_label("营业时间", 20, COL_MUTED))
@@ -483,21 +643,36 @@ func _build_hud() -> Control:
 func _build_scene() -> Control:
 	# 店铺场景：货架背景 + 顾客 + 对话气泡 + 柜台
 	scene_panel = Control.new()
-	scene_panel.custom_minimum_size = Vector2(0, 330)
+	scene_panel.custom_minimum_size = Vector2(0, 310)
 	scene_panel.clip_contents = true
 	scene_panel.draw.connect(_draw_scene_bg)
 
+	shop_bg = TextureRect.new()
+	shop_bg.texture = _art("shop_bg")
+	shop_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shop_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shop_bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	shop_bg.modulate = Color(0.8, 0.75, 0.7)
+	scene_panel.add_child(shop_bg)
+
 	figure = Control.new()
-	figure.custom_minimum_size = Vector2(180, 250)
-	figure.size = Vector2(180, 250)
-	figure.position = Vector2(26, 52)
+	figure.custom_minimum_size = Vector2(230, 270)
+	figure.size = Vector2(230, 270)
+	figure.position = Vector2(16, 40)
 	figure.draw.connect(_draw_figure)
+	portrait = TextureRect.new()
+	portrait.set_anchors_preset(Control.PRESET_FULL_RECT)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	figure.add_child(portrait)
 	scene_panel.add_child(figure)
 
 	var name_box := VBoxContainer.new()
 	name_box.position = Vector2(30, 6)
 	name_box.add_theme_constant_override("separation", 4)
 	name_label = _label("", 26, COL_TEXT)
+	name_label.add_theme_constant_override("outline_size", 8)
+	name_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	name_box.add_child(name_label)
 	patience_pips = HBoxContainer.new()
 	patience_pips.add_theme_constant_override("separation", 4)
@@ -567,6 +742,8 @@ func _draw_scene_bg() -> void:
 
 
 func _draw_figure() -> void:
+	if portrait.texture != null:
+		return  # 有美术图时用图片，否则用几何小人
 	var c := figure_color
 	var w := figure.size.x
 	# 身体
@@ -609,6 +786,15 @@ func _build_ticket() -> Control:
 	title_col.add_child(_label("回 收 单", 18, COL_INK_SOFT))
 	item_label = _label("", 34, COL_INK)
 	title_col.add_child(item_label)
+	tag_label = _label("", 20, COL_INK_SOFT)
+	title_col.add_child(tag_label)
+	item_icon = TextureRect.new()
+	item_icon.custom_minimum_size = Vector2(96, 96)
+	item_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	item_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	item_icon.visible = false
+	head.add_child(item_icon)
+	head.add_theme_constant_override("separation", 12)
 	head.add_child(title_col)
 
 	ask_stamp = PanelContainer.new()
@@ -743,6 +929,18 @@ func _build_register() -> Control:
 	plus_btn.pressed.connect(_change_offer.bind(1))
 	lcd_row.add_child(plus_btn)
 	col.add_child(lcd_row)
+
+	# 快捷出价：减少反复点加减（《深空当铺》玩家最常抱怨的就是点太多）
+	var chips := HBoxContainer.new()
+	chips.add_theme_constant_override("separation", 10)
+	for r in tuning.quick_offer_ratios:
+		var chip := _button("%d 成" % roundi(float(r) * 10), Color("2e2722"), COL_LCD, Color("24402f"))
+		chip.custom_minimum_size = Vector2(0, 56)
+		chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		chip.add_theme_font_size_override("font_size", 24)
+		chip.pressed.connect(_on_quick_offer.bind(float(r)))
+		chips.add_child(chip)
+	col.add_child(chips)
 
 	offer_btn = _button("出 价", COL_NEON, Color("1a1208"))
 	offer_btn.custom_minimum_size = Vector2(0, 84)

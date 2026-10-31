@@ -19,5 +19,14 @@
   "challenge_unproven_loss": 25,
   "challenge_honest_loss": 40,
   "offer_start_ratio": 0.5,
-  "offer_step_ratio": 0.05
+  "offer_step_ratio": 0.05,
+  "quick_offer_ratios": [0.5, 0.7, 0.9],
+  "run_days": 7,
+  "loan_due": {"3": 1200, "7": 3000},
+  "order_bonus": 1.5,
+  "order_tags": ["古董", "电子", "首饰", "乐器"],
+  "leak_damage": 0.3,
+  "rep_fair_ratio": 0.8,
+  "rep_lowball_ratio": 0.5,
+  "rep_lie_reduction": 0.04
 }
