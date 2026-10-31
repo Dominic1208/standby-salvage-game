@@ -1,0 +1,5 @@
+{
+  "_doc": "在微信公众平台 / 抖音开放平台创建小游戏后，把 AppID 填到这里，再重新 node build.mjs。微信空着时用 touristappid（开发者工具里的游客模式，只能在电脑上预览）。",
+  "wechat": "",
+  "douyin": ""
+}

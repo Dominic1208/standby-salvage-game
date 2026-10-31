@@ -1,12 +1,12 @@
 // 游戏状态和全部规则：存档、开店流程、买卖、打烊结算、贷款、包裹、员工外出、升级、抽卡、成就。
 // 界面（scenes/）只读这里的状态、调这里的函数，不自己改数值。
-import tuning from "../data/game/tuning.json";
-import catalog from "../data/game/catalog.json";
-import customersData from "../data/game/customers.json";
-import personalitiesData from "../data/game/personalities.json";
-import gifts from "../data/game/gifts.json";
-import staffData from "../data/staff.json";
-import meta from "../data/meta.json";
+import tuning from "../build/data/tuning.json";
+import catalog from "../build/data/catalog.json";
+import customersData from "../build/data/customers.json";
+import personalitiesData from "../build/data/personalities.json";
+import gifts from "../build/data/gifts.json";
+import staffData from "../build/data/staff.json";
+import meta from "../build/data/meta.json";
 import { Deal, pick, rand, randi } from "./deal.js";
 import { storage, audio, now } from "./platform.js";
 import { floatText, C } from "./ui.js";

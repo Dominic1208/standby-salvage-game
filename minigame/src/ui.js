@@ -71,6 +71,7 @@ export function textFit(s, x, y, maxW, size, color, align = "left", bold = false
   return text(s, x, y, size, color, align, bold);
 }
 
+const NO_LINE_START = "，。、；：？！）」』”…·";
 const wrapCache = new Map();
 /** 按宽度把文字拆成多行（中文逐字断，保留换行符）。 */
 export function wrapLines(s, maxW, size, bold = false) {
@@ -82,7 +83,8 @@ export function wrapLines(s, maxW, size, bold = false) {
   for (const para of String(s).split("\n")) {
     let line = "";
     for (const ch of para) {
-      if (ctx.measureText(line + ch).width > maxW && line) { out.push(line); line = ch; }
+      // 标点不放在行首：宁可这一行稍微超出一点
+      if (ctx.measureText(line + ch).width > maxW && line && !NO_LINE_START.includes(ch)) { out.push(line); line = ch; }
       else line += ch;
     }
     out.push(line);

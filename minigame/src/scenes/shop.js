@@ -11,7 +11,7 @@ export function drawShop(nav) {
   // 剩下的高度分给：场景（可伸缩）+ 当票 + 收银机
   const ticketH = 112 + d.clues.length * 70 + 76;
   const registerH = 318;
-  const sceneH = Math.max(200, Math.min(330, H - y - ticketH - registerH - 70));
+  const sceneH = Math.max(200, Math.min(520, H - y - ticketH - registerH - 70));
   drawScene(nav, 16, y, W - 32, sceneH);
   y += sceneH + 12;
   drawTicket(16, y, W - 32, ticketH);

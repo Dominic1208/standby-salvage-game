@@ -15,11 +15,13 @@ const QUEUE = [[0.5, 0.665], [0.27, 0.665], [0.73, 0.665], [0.385, 0.575], [0.61
 
 const actors = new Map();   // 员工 id → 走路状态（不存档）
 
+/** 房间图的位置：贴底，铺满顶栏以下的高度（太高就左右裁掉一点）。 */
 export function roomRect() {
   const im = img("lounge_bg");
   const iw = im ? im.width : 1024, ih = im ? im.height : 1536;
-  const h = W * ih / iw;
-  return { x: 0, y: H - h, w: W, h };
+  const h = Math.max(W * ih / iw, H - SAFE_TOP - 150);
+  const w = h * iw / ih;
+  return { x: (W - w) / 2, y: H - h, w, h };
 }
 const toScreen = (r, p) => ({ x: r.x + p.x * r.w, y: r.y + p.y * r.h });
 const randomFloor = () => ({ x: FLOOR.x + Math.random() * FLOOR.w, y: FLOOR.y + Math.random() * FLOOR.h });

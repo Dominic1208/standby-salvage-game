@@ -72,16 +72,19 @@ export const storage = {
 };
 
 // ---------------- 图片 ----------------
-// 大部分图片放在分包 "art" 里（微信首包限制 4MB），启动时先加载分包。
+// 图片和背景音乐放在分包 "res" 里（微信首包限制 4MB），启动时先加载分包；背景图是 jpg，其余 png。
 const images = new Map();
 let artReady = !api;
+const readyFns = [];
+/** 分包加载好以后执行（浏览器里立刻执行）。 */
+export function whenArtReady(fn) { if (artReady) fn(); else readyFns.push(fn); }
 export function loadArtPackage() {
   return new Promise((resolve) => {
     if (!api || !api.loadSubpackage) { artReady = true; resolve(); return; }
     api.loadSubpackage({
-      name: "art",
-      success: () => { artReady = true; resolve(); },
-      fail: () => { artReady = true; resolve(); },  // 加载失败也继续，没图的地方画色块
+      name: "res",
+      success: () => { artReady = true; readyFns.splice(0).forEach((f) => f()); resolve(); },
+      fail: () => { artReady = true; readyFns.splice(0).forEach((f) => f()); resolve(); },  // 加载失败也继续，没图的地方画色块
     });
   });
 }
@@ -94,7 +97,7 @@ export function img(name) {
     rec = { image, ok: false };
     image.onload = () => { rec.ok = true; };
     image.onerror = () => { rec.failed = true; };
-    image.src = `art/${name}.png`;
+    image.src = `res/art/${name}.${name.endsWith("_bg") ? "jpg" : "png"}`;
     images.set(name, rec);
   }
   return rec.ok ? rec.image : null;
@@ -133,12 +136,12 @@ export const audio = {
       if (!name) return;
       if (api) {
         bgmCtx = api.createInnerAudioContext();
-        bgmCtx.src = `audio/bgm_${name}.mp3`;
+        bgmCtx.src = `res/audio/bgm_${name}.mp3`;
         bgmCtx.loop = true;
         bgmCtx.volume = this.music * 0.5;
         bgmCtx.play();
       } else {
-        bgmCtx = new Audio(`audio/bgm_${name}.mp3`);
+        bgmCtx = new Audio(`res/audio/bgm_${name}.mp3`);
         bgmCtx.loop = true;
         bgmCtx.volume = this.music * 0.5;
         bgmCtx.play().catch(() => {});
