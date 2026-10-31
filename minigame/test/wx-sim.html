@@ -28,7 +28,9 @@ canvas{display:block}
   const showFns = [];
   document.addEventListener("visibilitychange", () => { if (!document.hidden) showFns.forEach((f) => f({})); });
   window.__wxLog = [];
-  window.wx = {
+  // 加 ?tt 就模拟抖音（全局变量叫 tt，而且不给胶囊位置接口，测试兜底逻辑）
+  const asDouyin = location.search.includes("tt");
+  const api = {
     getWindowInfo: () => ({ windowWidth: W, windowHeight: H, pixelRatio: devicePixelRatio || 2, statusBarHeight: STATUS,
       safeArea: { top: STATUS, bottom: H, left: 0, right: W, width: W, height: H - STATUS } }),
     getSystemInfoSync() { return this.getWindowInfo(); },
@@ -64,6 +66,9 @@ canvas{display:block}
     showShareMenu: (o) => __wxLog.push("showShareMenu " + JSON.stringify(o.menus)),
     onShareAppMessage: (f) => __wxLog.push("share: " + f().title),
   };
+  window.__menu = menu;
+  if (asDouyin) { delete api.getMenuButtonBoundingClientRect; window.tt = api; }
+  else window.wx = api;
 })();
 </script>
 <script>
@@ -74,7 +79,7 @@ window.simShot = async (name) => {
   const c = document.querySelector("canvas"), k = c.width / innerWidth;
   const o = document.createElement("canvas"); o.width = c.width; o.height = c.height;
   const g = o.getContext("2d"); g.drawImage(c, 0, 0);
-  const m = wx.getMenuButtonBoundingClientRect();
+  const m = window.__menu;
   g.strokeStyle = "#fff"; g.lineWidth = 2 * k; g.fillStyle = "rgba(0,0,0,.4)";
   g.beginPath(); g.roundRect(m.left * k, m.top * k, m.width * k, m.height * k, 16 * k); g.fill(); g.stroke();
   await fetch("/__shot?name=" + encodeURIComponent(name), { method: "POST", body: o.toDataURL("image/png") });

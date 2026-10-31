@@ -12,10 +12,13 @@ function sysInfo() {
     const s = (api.getWindowInfo ? api.getWindowInfo() : api.getSystemInfoSync());
     let safeTop = (s.safeArea && s.safeArea.top) || s.statusBarHeight || 0;
     // 右上角是平台的胶囊菜单（…和关闭），我们的按钮不能和它重叠：顶部从胶囊下面开始
+    let menuBottom = 0;
     try {
       const m = api.getMenuButtonBoundingClientRect && api.getMenuButtonBoundingClientRect();
-      if (m && m.bottom) safeTop = Math.max(safeTop, m.bottom + 6);
+      if (m && m.bottom) menuBottom = m.bottom;
     } catch {}
+    // 拿不到胶囊位置时（有的平台或版本没有这个接口），按常见胶囊高度留出来
+    safeTop = Math.max(safeTop, menuBottom ? menuBottom + 6 : (s.statusBarHeight || 20) + 44);
     return { w: s.windowWidth, h: s.windowHeight, dpr: s.pixelRatio || 2, safeTop };
   }
   return { w: window.innerWidth, h: window.innerHeight, dpr: window.devicePixelRatio || 1, safeTop: 0 };

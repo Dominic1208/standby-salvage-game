@@ -1,4 +1,4 @@
-// 浏览器试玩：把 dist/web 放在 http://localhost:8790 上；微信版模拟在 http://localhost:8790/wechat/wx-sim.html
+// 浏览器试玩：把 dist/web 放在 http://localhost:8790 上；微信版模拟在 http://localhost:8790/wechat/wx-sim.html，抖音版在 /douyin/wx-sim.html?tt
 // 调试用：POST /__shot?name=xxx（body 是 canvas 的 PNG dataURL）存到 build/shots/xxx.png，方便自动截图。
 import http from "node:http";
 import fs from "node:fs";
@@ -27,8 +27,8 @@ http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split("?")[0]);
   // /wechat/… 是微信版（用 /wechat/wx-sim.html 模拟微信打开），其余是浏览器版
   // 模拟页放在 test/ 里，不进小游戏包
-  const file = url === "/wechat/wx-sim.html" ? path.join(HERE, "test", "wx-sim.html")
-    : url.startsWith("/wechat/") ? path.join(DIST, url) : path.join(ROOT, url === "/" ? "index.html" : url);
+  const file = /^\/(wechat|douyin)\/wx-sim\.html$/.test(url) ? path.join(HERE, "test", "wx-sim.html")
+    : /^\/(wechat|douyin)\//.test(url) ? path.join(DIST, url) : path.join(ROOT, url === "/" ? "index.html" : url);
   if (!file.startsWith(HERE) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
   res.writeHead(200, { "Content-Type": TYPES[path.extname(file)] || "application/octet-stream", "Cache-Control": "no-store" });
   fs.createReadStream(file).pipe(res);
