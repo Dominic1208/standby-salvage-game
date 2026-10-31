@@ -39,9 +39,14 @@
   <img id="door-portrait" class="door-portrait" alt="">
   <div class="door-box">
     <div class="door-plate" id="door-who">员工</div>
-    <button class="door-skip" id="door-skip">跳过 »</button>
     <div class="door-say" id="door-say">“老板，有件事要你批一下。”</div>
-    <div class="door-actions"><span class="door-page" id="door-page"></span><button id="door-open" class="door-btn">查看</button></div>
+    <div class="door-page" id="door-page"></div>
+    <div class="door-actions">
+      <button id="door-full" class="door-btn ghost">展开全文</button>
+      <button id="door-skip" class="door-btn ghost">跳过</button>
+      <button id="door-alt" class="door-btn ghost hidden"></button>
+      <button id="door-open" class="door-btn">查看</button>
+    </div>
   </div>
 </div>
 
@@ -105,6 +110,19 @@
     <button id="pair-go" class="btn">配对</button>
     <p id="pair-err" class="err"></p>
     <button id="pair-skip" class="btn ghost small">先只玩游戏</button>
+  </div>
+</section>
+
+<!-- 汇报全文：一次看完 AI 这一轮说的所有话 -->
+<section id="reader" class="hidden" aria-label="汇报全文">
+  <div class="reader-head">
+    <h2 id="reader-title">汇报全文</h2>
+    <button id="reader-close" class="icon-btn" aria-label="收起">✕</button>
+  </div>
+  <div id="reader-text" class="reader-text"></div>
+  <div class="reader-actions">
+    <button id="reader-back" class="btn ghost">收起，接着听</button>
+    <button id="reader-done" class="btn">看完了</button>
   </div>
 </section>
 

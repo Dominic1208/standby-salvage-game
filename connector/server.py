@@ -94,6 +94,12 @@ class State:
         for e in self.employees.values():
             if not isinstance(e.get("look"), str):  # 旧版数字形象 → 重新分配
                 e["look"] = pick_look(self.used_looks())
+            # 汇报存在员工身上，程序重启后还能听；没存内容的旧“汇报”标记清掉，免得点开只剩闲聊
+            if e.get("reported") and e.get("last_report"):
+                self.events.append(e["last_report"])
+            elif e.get("reported"):
+                e["reported"] = False
+        self.events.sort(key=lambda ev: ev.get("time", 0))
         self.push = PushSender(DATA_DIR)
 
     # ---- 设备与配对 ----
@@ -304,6 +310,9 @@ async def add_event(kind: str, agent: str, text: str, session_id: str = "", emp:
           "employeeLook": emp["look"] if emp else "", "report": report}
     STATE.events.append(ev)
     STATE.events = STATE.events[-50:]
+    if kind == "done" and emp:
+        emp["last_report"] = ev
+        STATE.save_employees()
     await STATE.broadcast({"type": "event", "event": ev})
     label = {"done": "完成汇报", "help": "求援", "idle": "在等你"}.get(kind, kind)
     who = f"{emp['name']}（{agent_label(agent)}）" if emp else agent_label(agent)
@@ -373,6 +382,7 @@ async def hook_event(request: web.Request) -> web.Response:
     if name == "Stop":
         emp["status"] = "resting"
         emp["reported"] = True  # 带着汇报回来了，等你听完
+        emp["stopped_at"] = now()
         report = hook.get("text", "")
         await add_event("done", agent, short(report, 60) if report else "老板，这一轮工作做完了，回来看看结果吧",
                         sid, emp, report)
@@ -773,7 +783,7 @@ def _claude_running(cutoff: float) -> list[tuple]:
                         agent, label = who, name
             if cwd:
                 break
-        out.append((agent, label, cwd, p.stem, hook.chat_title(str(p))))
+        out.append((agent, label, cwd, p.stem, hook.chat_title(str(p)), p.stat().st_mtime))
     return out
 
 
@@ -797,7 +807,7 @@ def _codex_running(cutoff: float) -> list[tuple]:
         except (OSError, ValueError):
             continue
         sid = meta.get("id") or "-".join(p.stem.split("-")[-5:])
-        out.append(("codex", "Codex", meta.get("cwd", ""), sid, str(names.get(sid, ""))[:24]))
+        out.append(("codex", "Codex", meta.get("cwd", ""), sid, str(names.get(sid, ""))[:24], p.stat().st_mtime))
     return out
 
 
@@ -816,11 +826,15 @@ def scan_running(force: bool = False) -> int:
                 found += fn(cutoff)
         except Exception as exc:  # 读别人的记录文件，出什么错都不能影响主程序
             print(f"[扫描] {agent} 失败：{exc}")
-    for agent, label, cwd, sid, title in found:
+    running = 0
+    for agent, label, cwd, sid, title, mtime in found:
         emp = STATE.employee_for(agent, label, cwd, sid, title)
+        if mtime <= emp.get("stopped_at", 0) + 5:
+            continue  # 这一轮已经干完、汇报过了，记录文件是收尾时写的
+        running += 1
         if emp.get("status") != "waiting":
             emp["status"] = "working"
-    _last_found = len(found)
+    _last_found = running
     return _last_found
 
 

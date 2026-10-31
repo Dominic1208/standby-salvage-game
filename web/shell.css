@@ -115,3 +115,18 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .list li .tag { float: right; font-size: 12px; color: var(--muted); }
 .list li .tag.waiting { color: var(--neon); }
 .list li .chip { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; border: 1px solid #fff6; }
+
+/* 对话框按钮一排：展开全文 / 跳过 / 继续 */
+.door-actions { flex-wrap: wrap; }
+.door-btn.ghost { background: #2a211b; color: var(--text); border: 1px solid #5a4a3e; }
+.door-btn.hidden { display: none; }
+.door-page { margin: 4px 0 0; }
+/* 汇报全文 */
+#reader { position: fixed; inset: 0; z-index: 35; background: #181412; display: flex; flex-direction: column;
+  padding: calc(14px + var(--safe-top, 0px)) 16px calc(14px + var(--safe-bottom)); }
+#reader.hidden { display: none; }
+.reader-head { display: flex; align-items: center; justify-content: space-between; }
+.reader-head h2 { margin: 0; font-size: 18px; }
+.reader-text { flex: 1; overflow-y: auto; white-space: pre-wrap; font-size: 16px; line-height: 1.7; margin: 12px 0;
+  background: #221c18; border-radius: 12px; padding: 14px; -webkit-overflow-scrolling: touch; }
+.reader-actions { display: flex; gap: 10px; justify-content: flex-end; }

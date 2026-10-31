@@ -22,6 +22,10 @@ const SOFA_SPOTS := [Vector2(0.84, 0.445), Vector2(0.93, 0.455), Vector2(0.76, 0
 const BAR_FRONT_Y := 0.665                             ## 等你拍板的员工站在吧台前
 const BAR_TOP := 0.70                                  ## 这条线以下是吧台，点击开店
 const FLOOR_DEPTH := Vector2(0.29, 0.68)               ## 用来算远近缩放的纵向范围
+## 找你的员工在吧台前排队的固定站位（前排 3 个、后排 2 个）；更多的人在门外等
+const QUEUE_SLOTS := [Vector2(0.5, 0.665), Vector2(0.27, 0.665), Vector2(0.73, 0.665),
+	Vector2(0.385, 0.575), Vector2(0.615, 0.575)]
+const TAG_MAX_CHARS := 8                                ## 名牌最多显示几个字，免得互相挡住
 
 var art_loader: Callable            ## func(name: String) -> Texture2D
 var colors: Dictionary              ## agent -> Color
@@ -31,6 +35,7 @@ var no_tint: Array = []
 var _bg: TextureRect
 var _actors := {}                   ## id -> {node, sprite, tag, idle_tag, alert, e, target, wait, t}
 var _hint: Label
+var _queue_lbl: Label                ## “门外还有 N 人排队”
 var _rng := RandomNumberGenerator.new()
 
 
@@ -59,6 +64,15 @@ func _ready() -> void:
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_hint)
+	_queue_lbl = Label.new()
+	_queue_lbl.add_theme_font_size_override("font_size", 22)
+	_queue_lbl.add_theme_color_override("font_color", Color("fff3e0"))
+	_queue_lbl.add_theme_constant_override("outline_size", 8)
+	_queue_lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.75))
+	_queue_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_queue_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_queue_lbl.visible = false
+	add_child(_queue_lbl)
 	var tw := create_tween().set_loops()
 	tw.tween_property(_hint, "modulate:a", 0.35, 0.9)
 	tw.tween_property(_hint, "modulate:a", 1.0, 0.9)
@@ -94,6 +108,8 @@ func _on_resized() -> void:
 	var p := to_screen(Vector2(0.5, BAR_TOP + 0.075))
 	_hint.position = Vector2(0, p.y)
 	_hint.size = Vector2(size.x, 40)
+	_queue_lbl.position = Vector2(0, to_screen(DOOR + Vector2(0, 0.02)).y)
+	_queue_lbl.size = Vector2(size.x, 30)
 	for id in _actors:
 		var a: Dictionary = _actors[id]
 		a.node.position = to_screen(a.norm)
@@ -115,6 +131,7 @@ func set_employees(list: Array, animate_entry: bool) -> void:
 		else:
 			_spawn(e, delay if animate_entry else -1.0)
 			delay += 0.6
+	_assign_slots(list)
 	for id in _actors.keys():
 		if not seen.has(id) and not _actors[id].get("leaving", false):
 			var a: Dictionary = _actors[id]
@@ -123,6 +140,26 @@ func set_employees(list: Array, animate_entry: bool) -> void:
 			a.idle.visible = false
 			a.target = DOOR
 			a.wait = 0.3
+
+
+## 给排队的人发固定站位：等你批准的排最前，然后按名单顺序。站不下的留在门外（不显示）
+func _assign_slots(list: Array) -> void:
+	var order := list.duplicate()
+	order.sort_custom(func(x, y): return int(str(x.get("status", "")) == "waiting") > int(str(y.get("status", "")) == "waiting"))
+	var outside := 0
+	for i in order.size():
+		var a: Dictionary = _actors.get(order[i].id, {})
+		if a.is_empty():
+			continue
+		var old_slot: int = a.get("slot", -2)
+		a.slot = i if i < QUEUE_SLOTS.size() else -1
+		a.node.visible = a.slot >= 0
+		if a.slot < 0:
+			outside += 1
+		if old_slot != a.slot:
+			_choose_target(a)
+	_queue_lbl.visible = outside > 0
+	_queue_lbl.text = "门外还有 %d 人排队" % outside
 
 
 ## 重新播放所有人从门口走进来（每次回到主页时）
@@ -180,7 +217,7 @@ func _spawn(e: Dictionary, delay: float) -> void:
 	node.add_child(alert)
 	add_child(node)
 	var a := {"node": node, "sprite": sprite, "tag": tag, "dot": dot, "name": name_lbl, "idle": idle_lbl,
-		"alert": alert, "e": e, "norm": DOOR, "target": DOOR, "wait": maxf(delay, 0.0), "t": _rng.randf() * 10.0,
+		"alert": alert, "e": e, "norm": DOOR, "target": DOOR, "wait": maxf(delay, 0.01), "t": _rng.randf() * 10.0,
 		"entering": delay >= 0.0, "spot": -1}
 	_actors[e.id] = a
 	node.gui_input.connect(_on_actor_input.bind(e.id))
@@ -197,6 +234,17 @@ func _refresh_tags(a: Dictionary) -> void:
 	var e: Dictionary = a.e
 	var color: Color = colors.get(e.agent, Color("ffb347"))
 	var look = e.get("look", "staff_1")
+	var full_name := str(e.get("name", "员工"))
+	a.name.text = full_name if full_name.length() <= TAG_MAX_CHARS else full_name.left(TAG_MAX_CHARS) + "…"
+	var status := str(e.get("status", "working"))
+	a.idle.text = "汇报"
+	a.idle.visible = status != "waiting" and bool(e.get("reported", false))
+	a.alert.visible = status == "waiting"
+	# 名单每次刷新都会调这里；形象和颜色没变就不重建材质，免得画面闪
+	var style_key := "%s|%s" % [look, e.agent]
+	if a.get("style_key", "") == style_key:
+		return
+	a.style_key = style_key
 	var tex: Texture2D = art_loader.call(str(look))
 	if tex == null:
 		tex = art_loader.call("staff_%d" % (absi(hash(str(e.id))) % 8 + 1))
@@ -224,11 +272,6 @@ func _refresh_tags(a: Dictionary) -> void:
 	dsb.border_color = Color(0.2, 0.14, 0.1, 0.6)  # 白色（ChatGPT）在白名牌上也看得见
 	dsb.set_border_width_all(1)
 	a.dot.add_theme_stylebox_override("panel", dsb)
-	a.name.text = str(e.get("name", "员工"))
-	var status := str(e.get("status", "working"))
-	a.idle.text = "汇报"
-	a.idle.visible = status != "waiting" and bool(e.get("reported", false))
-	a.alert.visible = status == "waiting"
 
 
 ## 根据状态决定去哪：忙碌的到处走，空闲的去沙发/咖啡机，等你拍板的来吧台前
@@ -237,7 +280,8 @@ func _choose_target(a: Dictionary) -> void:
 		a.target = DOOR
 		return
 	if bool(a.e.get("reported", false)) or str(a.e.get("status", "")) == "waiting":
-		a.target = Vector2(0.30 + _rng.randf() * 0.40, BAR_FRONT_Y - _rng.randf() * 0.05)
+		var slot: int = a.get("slot", -1)
+		a.target = QUEUE_SLOTS[slot] if slot >= 0 else DOOR
 		return
 	match str(a.e.get("status", "working")):
 		"waiting":
@@ -312,6 +356,9 @@ func _process(delta: float) -> void:
 		a.sprite.position = Vector2.ZERO
 		# 名牌不跟着远近缩得太小，保证手机上看得清
 		var keep := clampf(room_w / sc, 1.0, 1.5)
+		# 排队时只有最前面正中间（下一个找你）的人显示全名，其余只留颜色点和“汇报”，免得名牌挡成一片
+		a.name.visible = a.get("slot", -1) <= 0
+		a.tag.reset_size()
 		a.tag.scale = Vector2(keep, keep)
 		a.tag.position = Vector2((node.size.x - a.tag.size.x * keep) / 2.0, -a.tag.size.y * keep - 6)
 		a.alert.position = Vector2(node.size.x / 2.0 - 8, -a.tag.size.y - 62 + sin(a.t * 6.0) * 6.0)
@@ -324,7 +371,8 @@ func _process(delta: float) -> void:
 ## 靠前（y 大）的员工画在上面。用子节点顺序而不是 z_index，免得盖住主页上的招牌和按钮
 func _sort_by_depth() -> void:
 	var list := _actors.values()
-	list.sort_custom(func(a, b): return a.get("y", 0.0) < b.get("y", 0.0))
+	# 同一排的人 y 一样，再按站位排，保证前后顺序固定、不来回闪
+	list.sort_custom(func(a, b): return a.get("y", 0.0) < b.get("y", 0.0) - 0.5 		or (absf(a.get("y", 0.0) - b.get("y", 0.0)) <= 0.5 and a.get("slot", 99) > b.get("slot", 99)))
 	var base := _hint.get_index()
 	for i in list.size():
 		move_child(list[i].node, base + i)

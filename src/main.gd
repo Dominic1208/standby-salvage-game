@@ -700,6 +700,10 @@ const DIALOG_LINES := {
 
 func _open_dialog(e: Dictionary) -> void:
 	_sfx("tap")
+	# 带着汇报回来的员工：点他就直接听汇报（汇报内容在外壳里）
+	if bool(e.get("reported", false)) and str(e.get("status", "")) != "waiting":
+		_post_shell("open-report", {"employeeId": str(e.id)})
+		return
 	var look = e.get("look", "staff_1")
 	dialog_portrait.texture = _art(str(look))
 	var color: Color = AGENT_COLORS.get(e.agent, COL_NEON)

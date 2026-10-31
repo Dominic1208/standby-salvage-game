@@ -111,7 +111,8 @@ def chat_title(transcript_path: str) -> str:
     return ""
 
 
-REPORT_LIMIT = 6000   # 最多带多少字给手机
+REPORT_LIMIT = 6000   # 请示时 AI 动手前的说明最多带多少字
+TURN_LIMIT = 40000    # 完成汇报：这一轮 AI 说过的全部话最多带多少字
 
 
 def _read_tail(path: str, size: int = 600_000) -> str:
@@ -120,6 +121,50 @@ def _read_tail(path: str, size: int = 600_000) -> str:
         end = f.tell()
         f.seek(max(0, end - size))
         return f.read().decode("utf-8", "ignore")
+
+
+def _is_real_user(item: dict) -> bool:
+    """用户真正发的消息（不是工具结果）。Claude 和 Codex 两种对话记录都认。"""
+    if item.get("type") == "user":
+        content = (item.get("message") or {}).get("content")
+        if isinstance(content, str):
+            return True
+        return any(isinstance(c, dict) and c.get("type") == "text" for c in content or [])
+    p = item.get("payload") or {}
+    return item.get("type") == "response_item" and p.get("type") == "message" and p.get("role") == "user"         and not any("<environment_context>" in str(c.get("text", "")) for c in p.get("content") or [])
+
+
+def _ai_texts(item: dict) -> list[str]:
+    if item.get("type") == "assistant":
+        content = (item.get("message") or {}).get("content") or []
+        return [c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"]
+    p = item.get("payload") or {}
+    if item.get("type") == "response_item" and p.get("type") == "message" and p.get("role") == "assistant":
+        return [c.get("text", "") for c in p.get("content") or [] if isinstance(c, dict)]
+    return []
+
+
+def turn_ai_text(transcript_path: str) -> str:
+    """完成汇报用：从用户最后一次发消息开始，AI 这一轮说过的全部话（中间的进度说明也算）。"""
+    if not transcript_path:
+        return ""
+    try:
+        lines = _read_tail(transcript_path, 3_000_000).splitlines()
+    except OSError:
+        return ""
+    parts: list[str] = []
+    for line in reversed(lines):
+        try:
+            item = json.loads(line)
+        except ValueError:
+            continue
+        if _is_real_user(item):
+            break
+        texts = [x for x in _ai_texts(item) if x.strip()]
+        if texts:
+            parts.append(chr(10).join(texts))
+    text = (chr(10) * 2).join(reversed(parts)).strip()
+    return text[:TURN_LIMIT] + ("……（后面太长，没带过来）" if len(text) > TURN_LIMIT else "")
 
 
 def latest_ai_text(transcript_path: str) -> str:
@@ -225,7 +270,9 @@ def run(agent: str) -> None:
     if event in ("Stop", "Notification", "PostToolUse", "UserPromptSubmit", "AfterAgent", "stop",
                  "SessionEnd", "afterAgentResponse", "BeforeAgent"):
         if event in ("Stop", "stop", "AfterAgent", "afterAgentResponse"):
-            hook["text"] = hook.get("text") or latest_ai_text(hook.get("transcript_path", ""))
+            # 带上这一轮的全部话；读不到对话记录时退回工具给的“最后一句”
+            whole = turn_ai_text(hook.get("transcript_path", ""))
+            hook["text"] = whole if len(whole) >= len(hook.get("text") or "") else hook["text"]
         try:
             who, label = display_agent(agent)
             post("/hook/event", {"agent": who, "label": label, "hook": {**raw, **hook,

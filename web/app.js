@@ -225,7 +225,9 @@ function handle(msg) {
         ? `已连接电脑 · ${msg.running} 名员工正在工作，点这里看名单。他们需要你批准或干完活时会走进店里。`
         : "已连接电脑 · 现在没有正在跑的 AI 任务。你在电脑上开始任务后，员工会来汇报。");
     }
-    for (const a of msg.approvals) if (a.status === "pending") queueDoor({ kind: "approval", id: a.id });
+    for (const a of msg.approvals) if (a.status === "pending") queueDoor({ kind: "approval", id: a.id }, false);
+    if (state.reportsOn) for (const ev of latestReports()) queueDoor({ kind: "event", ev }, false);
+    startDoor();
     openFromUrl();
   } else if (msg.type === "approval") {
     const a = msg.approval;
@@ -249,6 +251,14 @@ function handle(msg) {
   renderConsole();
 }
 
+// 每位“带着汇报回来、还没听”的员工最新一份汇报
+function latestReports() {
+  const reported = new Set(state.employees.filter((e) => e.reported).map((e) => e.id));
+  const byEmp = new Map();
+  for (const ev of state.events) if (ev.kind === "done" && reported.has(ev.employeeId)) byEmp.set(ev.employeeId, ev);
+  return [...byEmp.values()];
+}
+
 // ---------------- 状态栏 ----------------
 function pending() { return [...state.approvals.values()].filter((a) => a.status === "pending"); }
 function renderStatus() {
@@ -262,12 +272,16 @@ function renderStatus() {
 $("statusbar").onclick = () => openConsole();
 
 // ---------------- 员工推门 ----------------
-function queueDoor(item) {
+function queueDoor(item, start = true) {
   const key = item.kind === "approval" ? "a:" + item.id : "e:" + item.ev.id;
   if (state.doorShown.has(key)) return;
   state.doorShown.add(key);
   state.doorQueue.push(item);
-  if ($("door").classList.contains("hidden") && $("card").classList.contains("hidden")) nextDoor();
+  if (start) startDoor();
+}
+function startDoor() {
+  if ($("door").classList.contains("hidden") && $("card").classList.contains("hidden") &&
+      $("reader").classList.contains("hidden")) nextDoor();
 }
 
 // 把 AI 的长段文字（Markdown）整理成一页一页的台词
@@ -301,20 +315,38 @@ function paginate(text) {
 }
 
 // 对话框：pages 一页页翻，最后一页显示按钮。skip 直接跳到最后一页（或执行 onSkip）。
-const dlg = { pages: [], i: 0, final: null, onSkip: null };
-function showDialog(pages, final, onSkip) {
-  dlg.pages = pages; dlg.i = 0; dlg.final = final; dlg.onSkip = onSkip || null;
+// full：汇报全文（有就显示“展开全文”）；final.alt：最后一页的第二个按钮 {button, action}
+const dlg = { pages: [], i: 0, final: null, onSkip: null, full: "", title: "" };
+function showDialog(pages, final, onSkip, full = "", title = "") {
+  Object.assign(dlg, { pages, i: 0, final, onSkip: onSkip || null, full, title });
   renderDialog();
 }
 function renderDialog() {
   const last = dlg.i >= dlg.pages.length;
   $("door-say").textContent = last ? dlg.final.text : dlg.pages[dlg.i];
   $("door-say").scrollTop = 0;
+  $("door-full").classList.toggle("hidden", !dlg.full);
   $("door-skip").classList.toggle("hidden", last);
-  $("door-page").textContent = last ? "" : `${dlg.i + 1} / ${dlg.pages.length}　点对话框翻页`;
+  $("door-alt").classList.toggle("hidden", !(last && dlg.final.alt));
+  if (last && dlg.final.alt) { $("door-alt").textContent = dlg.final.alt.button; $("door-alt").onclick = dlg.final.alt.action; }
+  $("door-page").textContent = last ? "" : `第 ${dlg.i + 1} / ${dlg.pages.length} 页 · 点对话框翻页`;
   $("door-open").textContent = last ? dlg.final.button : "继续 ▸";
   $("door-open").onclick = last ? dlg.final.action : () => { dlg.i++; renderDialog(); };
 }
+$("door-full").onclick = () => {
+  $("reader-title").textContent = dlg.title || "汇报全文";
+  $("reader-text").textContent = dlg.full;
+  $("reader-text").scrollTop = 0;
+  state.readerFromDoor = true;
+  $("reader").classList.remove("hidden");
+};
+$("reader-back").onclick = $("reader-close").onclick = () => $("reader").classList.add("hidden");
+$("reader-done").onclick = () => {
+  $("reader").classList.add("hidden");
+  if (!state.readerFromDoor) return;  // 从通讯台打开的旧汇报：看完就关
+  // 看完全文 = 听完汇报：和跳过一样，有请示就去请示，没有就让员工走
+  if (dlg.onSkip) dlg.onSkip(); else { dlg.i = dlg.pages.length; renderDialog(); }
+};
 document.querySelector(".door-box").addEventListener("click", (e) => {
   if (e.target.closest("button") || dlg.i >= dlg.pages.length) return;
   dlg.i++;
@@ -327,9 +359,38 @@ $("door-skip").onclick = () => {
   renderDialog();
 };
 
+function isReport(q) { return q.kind === "event" && q.ev.kind === "done"; }
+// 一次收下所有积压的汇报：员工各自放下包裹离开，全文以后可以在通讯台“最近”里看
+function takeAllReports() {
+  const reports = state.doorQueue.filter(isReport);
+  state.doorQueue = state.doorQueue.filter((q) => !isReport(q));
+  for (const q of reports) {
+    ackReport(q.ev.employeeId);
+    tellGame({ type: "gift", tier: "big", agent: q.ev.agent });
+  }
+  toast(`收下了 ${reports.length} 份汇报和包裹。想看内容：点上方状态栏 → 最近。`);
+  nextDoor();
+}
+
 function nextDoor(startAtEnd) {
+  const waitingReports = state.doorQueue.filter(isReport).length;
+  if (waitingReports >= 3 && !state.batchAsked) {
+    // 断线很久回来，一群人排队：先问要一个个听，还是全部收下
+    state.batchAsked = true;
+    showPortrait(null);
+    $("door-who").textContent = "店门口";
+    showDialog([], {
+      text: `“老板，你不在的时候，有 ${waitingReports} 名员工带着汇报回来了。”`,
+      button: "一个个听",
+      action: () => nextDoor(),
+      alt: { button: "全部收下", action: takeAllReports },
+    });
+    $("door").classList.remove("hidden");
+    pauseGame();
+    return;
+  }
   const item = state.doorQueue.shift();
-  if (!item) { $("door").classList.add("hidden"); resumeGame(); return; }
+  if (!item) { state.batchAsked = false; $("door").classList.add("hidden"); resumeGame(); return; }
   if (item.kind === "approval") {
     const a = state.approvals.get(item.id);
     if (!a || a.status !== "pending") return nextDoor(startAtEnd);
@@ -358,13 +419,14 @@ function nextDoor(startAtEnd) {
       nextDoor(i >= 0);
     };
     const report = ev.kind === "done" ? paginate(ev.report) : [];
+    const full = ev.kind === "done" ? cleanMarkdown(ev.report) : "";
     showDialog(report.length ? report : [], {
       text: ev.kind === "done"
         ? (report.length ? "“汇报完毕。再见老板，我继续去忙了！”" : `“${ev.text}”`)
         : `“${ev.text}”`,
       button: ev.kind === "done" ? "好" : "知道了",
       action: leave,
-    }, leave);
+    }, leave, full.length > PAGE_CHARS ? full : "", `${ev.employeeName || "员工"} 的汇报`);
     tellGame({ type: "employee", agent: ev.agent, kind: ev.kind, employeeId: ev.employeeId, name: ev.employeeName });
   }
   pauseGame();
@@ -540,7 +602,8 @@ function renderConsole() {
   const items = [
     ...[...state.approvals.values()].filter((a) => a.status !== "pending")
       .map((a) => ({ t: a.created, text: `${AGENTS[a.agent]?.name || a.agent}：${a.summary} → ${STATUS_TEXT[a.status]}`, meta: a.resolvedBy || "" })),
-    ...state.events.map((e) => ({ t: e.time, text: `${AGENTS[e.agent]?.name || e.agent}：${e.text}`, meta: "" })),
+    ...state.events.map((e) => ({ t: e.time, text: `${e.employeeName || AGENTS[e.agent]?.name || e.agent}：${e.text}`,
+      meta: e.report ? "· 点开看汇报全文" : "", report: e.report, who: e.employeeName })),
   ].sort((x, y) => y.t - x.t).slice(0, 20);
   for (const it of items) {
     const li = document.createElement("li");
@@ -548,6 +611,15 @@ function renderConsole() {
     const m = document.createElement("div"); m.className = "meta";
     m.textContent = `${timeText(it.t)} ${it.meta}`;
     li.appendChild(m);
+    if (it.report) {
+      li.className = "clickable";
+      li.onclick = () => {
+        $("reader-title").textContent = `${it.who || "员工"} 的汇报`;
+        $("reader-text").textContent = cleanMarkdown(it.report);
+        state.readerFromDoor = false;
+        $("reader").classList.remove("hidden");
+      };
+    }
     rl.appendChild(li);
   }
   if (!rl.children.length) rl.innerHTML = "<li>还没有记录</li>";
@@ -614,6 +686,16 @@ window.addEventListener("message", (e) => {
   if (e.data?.type === "open-pending") {
     const a = pending().find((x) => x.employeeId === e.data.employeeId) || pending()[0];
     if (a) { $("door").classList.add("hidden"); openCard(a.id); } else openConsole();
+  }
+  if (e.data?.type === "open-report") {
+    const ev = [...state.events].reverse().find((x) => x.kind === "done" && x.employeeId === e.data.employeeId);
+    if (!ev) { ackReport(String(e.data.employeeId)); toast("这份汇报的内容没存下来（电脑端程序重启过），员工先回去了。"); }
+    else {
+      state.doorQueue = state.doorQueue.filter((q) => !(q.kind === "event" && q.ev.id === ev.id));
+      state.doorShown.add("e:" + ev.id);
+      state.doorQueue.unshift({ kind: "event", ev });
+      startDoor();
+    }
   }
   if (e.data?.type === "rename-employee") renameEmployee(String(e.data.id), String(e.data.name || ""));
   if (e.data?.type === "reroll-employee" && state.token) {
