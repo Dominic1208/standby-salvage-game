@@ -101,10 +101,11 @@ var book_grid: GridContainer
 var book_count: Label
 const SAVE_PATH := "user://save.json"
 ## 每个 AI 工具一种代表色：同一个工具的员工共用颜色，长相不同
-const AGENT_COLORS := {"claude": Color("e8875f"), "codex": Color("6fd3a0"), "deepseek": Color("4d6bfe"),
+const AGENT_COLORS := {"claude": Color("e8875f"), "codex": Color("f4f4f4"), "deepseek": Color("4d6bfe"),
+	"grok": Color("1e1e1e"),
 	"kimi": Color("f06292"), "glm": Color("26a69a"), "gemini": Color("f2c14e"), "qwen": Color("a98bff"),
 	"copilot": Color("4fd1d9"), "cursor": Color("e6e6e6")}
-const AGENT_NAMES := {"claude": "Claude", "codex": "Codex", "deepseek": "DeepSeek", "kimi": "Kimi",
+const AGENT_NAMES := {"claude": "Claude", "codex": "Codex", "deepseek": "DeepSeek", "kimi": "Kimi", "grok": "Grok",
 	"glm": "智谱", "gemini": "Gemini", "qwen": "Qwen", "copilot": "Copilot", "cursor": "Cursor"}
 const SCARF_SHADER := preload("res://canvas_char_apron_tint.gdshader")
 ## 本身就有大片白色（熊猫、企鹅、宇航服）的形象不染色，只靠工牌和光圈区分
@@ -125,7 +126,11 @@ var settings_layer: ColorRect
 
 var music_slider: HSlider
 var sfx_slider: HSlider
-var settings := {"music": 0.6, "sfx": 1.0}
+var settings := {"music": 0.6, "sfx": 1.0, "reports": true}
+var reports_check: CheckButton
+var emergency_used := false    ## 这一局借过应急款了吗
+var extra_due := {}            ## 应急款加到哪天还：{"7": 1000}
+var result_btn2: Button
 
 var _web := false
 var _poll := 0.0
@@ -181,6 +186,9 @@ func _on_shell_message(m: Dictionary) -> void:
 			_show_pause(true)
 		"resume":
 			_show_pause(false)
+			# 员工汇报完（或被跳过）回到主页：带回来的包裹当场拆
+			if home_layer.visible and not gift_queue.is_empty() and not gift_layer.visible:
+				get_tree().create_timer(0.5).timeout.connect(_open_gift)
 		"employees":
 			_set_employees(m.get("list", []))
 		"load-save":
@@ -232,7 +240,7 @@ func _next_customer() -> void:
 	figure.queue_redraw()
 	item_icon.texture = _art(deal.item.get("art", ""))
 	item_icon.visible = item_icon.texture != null
-	name_label.text = "%s · %s" % [cname, deal.persona.label]
+	name_label.text = cname
 	story_label.text = "“%s”" % deal.story
 	item_label.text = deal.item.name
 	var hot := str(deal.item.get("tag", "")) == order_tag
@@ -414,6 +422,13 @@ func _open_result() -> void:
 
 func _on_result_next() -> void:
 	result_layer.visible = false
+	result_btn2.visible = false
+	if run_state == "bankrupt":
+		_take_emergency_loan()
+		return
+	if run_state == "playing" and _is_broke():
+		_show_bankrupt()
+		return
 	match run_state:
 		"day_end":
 			_start_day()
@@ -423,7 +438,46 @@ func _on_result_next() -> void:
 			_next_customer()
 
 
+## 破产：钱不够收任何东西，仓库也是空的
+func _is_broke() -> bool:
+	return cash < 50 and inventory.is_empty()
+
+
+func _show_bankrupt() -> void:
+	deal_open = false
+	result_title.text = "破产了"
+	result_big.text = "¥%d" % cash
+	result_big.add_theme_color_override("font_color", COL_BAD)
+	if not emergency_used:
+		var due := _next_due(day)
+		run_state = "bankrupt"
+		result_label.text = "钱花光了，仓库也空了。\n\n银行愿意借你一笔应急款 ¥%d，\n第 %d 天还款时要多还 ¥%d。\n（每局只能借一次）" % [
+			int(tuning.emergency_loan), due.x if due.x > 0 else int(tuning.run_days), int(tuning.emergency_repay)]
+		result_btn.text = "借应急款"
+		result_btn2.visible = true
+	else:
+		run_state = "lost"
+		result_label.text = "钱花光了，应急款也借过了……\n店只能先关门了。\n\n收藏品会保留，下一局再来！"
+		result_btn.text = "从头再来"
+	_sfx("lose")
+	_open_result()
+
+
+func _take_emergency_loan() -> void:
+	emergency_used = true
+	cash += int(tuning.emergency_loan)
+	var due := _next_due(day)
+	var key := str(due.x if due.x > 0 else int(tuning.run_days))
+	extra_due[key] = int(extra_due.get(key, 0)) + int(tuning.emergency_repay)
+	run_state = "playing"
+	_float_text("借到应急款 ¥%d" % int(tuning.emergency_loan), COL_NEON)
+	_sfx("coin")
+	_next_customer()
+
+
 func _restart() -> void:
+	emergency_used = false
+	extra_due = {}
 	day = 1
 	cash = int(tuning.start_cash)
 	reputation = 0
@@ -465,7 +519,7 @@ func _end_day() -> void:
 	result_big.text = ("+¥%d" % net) if net >= 0 else ("-¥%d" % -net)
 	result_big.add_theme_color_override("font_color", COL_OK if net >= 0 else COL_BAD)
 	run_state = "day_end"
-	var due := int(tuning.loan_due.get(str(day), 0))
+	var due := int(tuning.loan_due.get(str(day), 0)) + int(extra_due.get(str(day), 0))
 	if due > 0:
 		if cash >= due:
 			cash -= due
@@ -504,7 +558,7 @@ func _end_day() -> void:
 
 func _next_due(from_day: int) -> Vector2i:
 	for d in range(from_day, int(tuning.run_days) + 1):
-		var amount := int(tuning.loan_due.get(str(d), 0))
+		var amount := int(tuning.loan_due.get(str(d), 0)) + int(extra_due.get(str(d), 0))
 		if amount > 0:
 			return Vector2i(d, amount)
 	return Vector2i.ZERO
@@ -546,17 +600,19 @@ func _show_home() -> void:
 	home_layer.visible = true
 	home_layer.modulate.a = 0.0
 	create_tween().tween_property(home_layer, "modulate:a", 1.0, 0.25)
-	room.replay_entry()
 	_sfx("tap")
+	if not gift_queue.is_empty():
+		_open_gift.call_deferred()
 
 
 func _set_employees(list: Array) -> void:
-	var fresh := employees.is_empty()
 	employees = list
-	home_empty.visible = list.is_empty()
-	room.set_employees(list, not fresh)
-	if fresh and home_layer.visible:
-		room.replay_entry()
+	var visible_list := list.filter(func(e): return str(e.get("status", "")) == "waiting" \
+		or (bool(settings.get("reports", true)) and bool(e.get("reported", false))))
+	home_empty.visible = visible_list.is_empty()
+	home_empty.text = ("员工们都出门探险了。\n有事要你拍板、或者带着成果回来时，\n他们会推门进来找你。"
+		if not list.is_empty() else "还没有员工报到。\n在电脑设置页把你的 AI 连进来，\n他们就会推门进来。")
+	room.set_employees(visible_list, true)
 
 
 # ---------------- 主页：大本营 ----------------
@@ -657,6 +713,7 @@ func _open_dialog(e: Dictionary) -> void:
 	dialog_name.text = "%s · %s" % [str(e.get("name", "员工")), AGENT_NAMES.get(e.agent, str(e.get("label", e.agent)))]
 	var plate: StyleBoxFlat = dialog_name.get_parent().get_theme_stylebox("panel")
 	plate.bg_color = color
+	dialog_name.add_theme_color_override("font_color", Color.WHITE if color.get_luminance() < 0.45 else Color("1a1208"))
 	var status := str(e.get("status", "working"))
 	var lines: Dictionary = DIALOG_LINES.get(e.agent, DIALOG_LINES["_"])
 	var pool: Array = lines.get(status, DIALOG_LINES["_"][status])
@@ -806,6 +863,19 @@ func _build_settings_layer() -> void:
 	col.add_child(_label("音效", 24, COL_INK))
 	sfx_slider = _slider(settings.sfx)
 	col.add_child(sfx_slider)
+	reports_check = CheckButton.new()
+	reports_check.text = "员工完成任务时，进来汇报完整内容"
+	reports_check.add_theme_font_size_override("font_size", 22)
+	reports_check.add_theme_color_override("font_color", COL_INK)
+	reports_check.add_theme_color_override("font_pressed_color", COL_INK)
+	reports_check.add_theme_color_override("font_hover_color", COL_INK)
+	reports_check.button_pressed = bool(settings.get("reports", true))
+	reports_check.toggled.connect(func(on: bool) -> void:
+		settings.reports = on
+		_apply_volume()
+		_set_employees(employees))
+	col.add_child(reports_check)
+	col.add_child(_label("关掉后，员工只在需要你批准时进来；完成任务时把包裹放下就走。", 18, COL_INK_SOFT, true))
 	var tip := _label("点主页上的员工可以给他改名。\n员工按“AI 工具 + 项目”区分：同一个 AI 的员工领巾和工牌颜色相同。", 20, COL_INK_SOFT, true)
 	col.add_child(tip)
 	var close := _button("好", COL_NEON, Color("1a1208"))
@@ -844,6 +914,10 @@ func _apply_volume() -> void:
 	if music_slider:
 		music_slider.set_value_no_signal(float(settings.music))
 		sfx_slider.set_value_no_signal(float(settings.sfx))
+		reports_check.set_pressed_no_signal(bool(settings.get("reports", true)))
+	if _web:
+		JavaScriptBridge.eval("window.parent.postMessage({type:'prefs',reports:%s},location.origin)"
+			% ("true" if settings.get("reports", true) else "false"), true)
 	if _web:
 		JavaScriptBridge.eval("window.parent.postMessage({type:'volume',music:%f,sfx:%f},location.origin)"
 			% [float(settings.music), float(settings.sfx)], true)
@@ -865,6 +939,8 @@ func _receive_gift(tier: String, _agent: String) -> void:
 	_refresh()
 	_pulse(gift_btn)
 	_save_game()
+	if home_layer.visible and not gift_layer.visible:
+		get_tree().create_timer(0.6).timeout.connect(_open_gift)
 
 
 func _open_gift() -> void:
@@ -998,7 +1074,7 @@ func _save_game() -> void:
 	var data := {"day": day, "cash": cash, "reputation": reputation, "inventory": inventory,
 		"time_left": time_left, "order_tag": order_tag, "run_state": run_state,
 		"collection": collection, "gift_queue": gift_queue, "gifts_today": gifts_today, "intel": intel,
-		"settings": settings}
+		"settings": settings, "emergency_used": emergency_used, "extra_due": extra_due}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(data))
@@ -1029,6 +1105,8 @@ func _apply_save(d) -> bool:
 	if str(d.get("run_state", "")) in ["lost", "won"]:
 		return false
 	day = int(d.get("day", 1))
+	emergency_used = bool(d.get("emergency_used", false))
+	extra_due = d.get("extra_due", {})
 	cash = int(d.get("cash", tuning.start_cash))
 	reputation = int(d.get("reputation", 0))
 	inventory = d.get("inventory", [])
@@ -1623,10 +1701,18 @@ func _build_result_layer() -> void:
 	result_btn = _button("下一位顾客", COL_NEON, Color("1a1208"))
 	result_btn.custom_minimum_size = Vector2(0, 80)
 	result_btn.pressed.connect(_on_result_next)
+	result_btn2 = _button("从头再来", Color(0, 0, 0, 0), COL_INK, COL_INK_SOFT)
+	result_btn2.custom_minimum_size = Vector2(0, 64)
+	result_btn2.pressed.connect(func() -> void:
+		result_layer.visible = false
+		result_btn2.visible = false
+		_restart())
+	result_btn2.visible = false
 	rcol.add_child(result_title)
 	rcol.add_child(result_big)
 	rcol.add_child(result_label)
 	rcol.add_child(result_btn)
+	rcol.add_child(result_btn2)
 	result_card.add_child(rcol)
 	center.add_child(result_card)
 	result_layer.add_child(center)

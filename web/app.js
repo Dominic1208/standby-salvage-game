@@ -11,7 +11,7 @@ const AGENTS = {
   copilot: { name: "Copilot 员工", avatar: "🧑‍✈️" }, cursor: { name: "Cursor 员工", avatar: "🧑‍🎨" },
 };
 const UNLOCK_DELAY = 1000;
-const AGENT_COLORS = { claude: "#e8875f", codex: "#6fd3a0", deepseek: "#4d6bfe", kimi: "#f06292", glm: "#26a69a",
+const AGENT_COLORS = { claude: "#e8875f", codex: "#f4f4f4", deepseek: "#4d6bfe", grok: "#1e1e1e", kimi: "#f06292", glm: "#26a69a",
   gemini: "#f2c14e", qwen: "#a98bff", copilot: "#4fd1d9", cursor: "#e6e6e6" };
 function showPortrait(look, agent, who) {
   const img = $("door-portrait");
@@ -19,7 +19,7 @@ function showPortrait(look, agent, who) {
   if (look) img.src = `/staff/${look}.png`;
   $("door-who").textContent = who;
   $("door-who").style.background = AGENT_COLORS[agent] || "var(--neon)";
-  $("door-who").style.color = agent === "deepseek" ? "#fff" : "#1a1208";
+  $("door-who").style.color = (agent === "deepseek" || agent === "grok") ? "#fff" : "#1a1208";
 } // 卡片出现后 1 秒内按钮不可点，防止玩游戏时误触
 
 const store = {
@@ -35,6 +35,7 @@ const state = {
   doorShown: new Set(),
   doorQueue: [],
   employees: [],
+  reportsOn: store.get("reportsOn") !== "0",   // 设置：是否听员工的完整汇报
   cardId: null,
   ws: null,
   retry: 0,
@@ -208,7 +209,13 @@ function handle(msg) {
     tellGame({ type: "employees", list: state.employees });
   } else if (msg.type === "event") {
     state.events.push(msg.event);
-    queueDoor({ kind: "event", ev: msg.event });
+    if (msg.event.kind === "done" && !state.reportsOn) {
+      // 设置成“只在需要批准时出现”：不打扰你，员工把东西放下就走
+      tellGame({ type: "gift", tier: "big", agent: msg.event.agent });
+      ackReport(msg.event.employeeId);
+    } else {
+      queueDoor({ kind: "event", ev: msg.event });
+    }
   }
   renderStatus();
   renderConsole();
@@ -235,30 +242,101 @@ function queueDoor(item) {
   if ($("door").classList.contains("hidden") && $("card").classList.contains("hidden")) nextDoor();
 }
 
-function nextDoor() {
+// 把 AI 的长段文字（Markdown）整理成一页一页的台词
+function cleanMarkdown(t) {
+  return String(t || "")
+    .replace(/```[a-zA-Z]*\n?/g, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/\*\*|__|`/g, "")
+    .replace(/^\s*[-*]\s+/gm, "· ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+const PAGE_CHARS = 120;
+function paginate(text) {
+  const pages = [];
+  for (const para of cleanMarkdown(text).split(/\n\s*\n/)) {
+    let rest = para.trim();
+    while (rest.length > PAGE_CHARS) {
+      // 尽量在句号、问号、换行处断开
+      const window = rest.slice(0, PAGE_CHARS);
+      const cut = Math.max(window.lastIndexOf("。"), window.lastIndexOf("！"), window.lastIndexOf("？"),
+        window.lastIndexOf("\n"), window.lastIndexOf(". "));
+      const at = cut > PAGE_CHARS * 0.4 ? cut + 1 : PAGE_CHARS;
+      pages.push(rest.slice(0, at).trim());
+      rest = rest.slice(at).trim();
+    }
+    if (rest) pages.push(rest);
+  }
+  return pages;
+}
+
+// 对话框：pages 一页页翻，最后一页显示按钮。skip 直接跳到最后一页（或执行 onSkip）。
+const dlg = { pages: [], i: 0, final: null, onSkip: null };
+function showDialog(pages, final, onSkip) {
+  dlg.pages = pages; dlg.i = 0; dlg.final = final; dlg.onSkip = onSkip || null;
+  renderDialog();
+}
+function renderDialog() {
+  const last = dlg.i >= dlg.pages.length;
+  $("door-say").textContent = last ? dlg.final.text : dlg.pages[dlg.i];
+  $("door-say").scrollTop = 0;
+  $("door-skip").classList.toggle("hidden", last);
+  $("door-page").textContent = last ? "" : `${dlg.i + 1} / ${dlg.pages.length}　点对话框翻页`;
+  $("door-open").textContent = last ? dlg.final.button : "继续 ▸";
+  $("door-open").onclick = last ? dlg.final.action : () => { dlg.i++; renderDialog(); };
+}
+document.querySelector(".door-box").addEventListener("click", (e) => {
+  if (e.target.closest("button") || dlg.i >= dlg.pages.length) return;
+  dlg.i++;
+  sound.sfx("tap");
+  renderDialog();
+});
+$("door-skip").onclick = () => {
+  if (dlg.onSkip) return dlg.onSkip();
+  dlg.i = dlg.pages.length;
+  renderDialog();
+};
+
+function nextDoor(startAtEnd) {
   const item = state.doorQueue.shift();
   if (!item) { $("door").classList.add("hidden"); resumeGame(); return; }
   if (item.kind === "approval") {
     const a = state.approvals.get(item.id);
-    if (!a || a.status !== "pending") return nextDoor();
+    if (!a || a.status !== "pending") return nextDoor(startAtEnd);
     const ag = AGENTS[a.agent] || { name: `${a.label || a.agent} 员工`, avatar: "🧑" };
     showPortrait(a.employeeLook, a.agent, `${a.employeeName || "员工"} · ${ag.name.replace(" 员工", "")}`);
-    $("door-say").textContent = `“老板，我要${a.summary}，这一步得你拍板。”`;
-    $("door-open").textContent = "查看";
-    $("door-open").onclick = () => { $("door").classList.add("hidden"); openCard(a.id); };
+    // 先是 AI 动手前说的话（可以跳过），最后一页请你拍板
+    showDialog(startAtEnd ? [] : paginate(a.context), {
+      text: `“老板，我要${a.summary}，这一步得你拍板。”`,
+      button: "查看",
+      action: () => { $("door").classList.add("hidden"); openCard(a.id); },
+    });
     tellGame({ type: "employee", agent: a.agent, kind: "approval", employeeId: a.employeeId, name: a.employeeName });
   } else {
     const ev = item.ev;
     const ag = AGENTS[ev.agent] || { name: ev.agent, avatar: "🧑" };
     showPortrait(ev.employeeLook, ev.agent, `${ev.employeeName || "员工"} · ${ag.name.replace(" 员工", "")}`);
-    $("door-say").textContent = `“${ev.text}”`;
-    $("door-open").textContent = ev.kind === "done" ? "看看成果" : "知道了";
-    $("door-open").onclick = () => {
+    const leave = () => {
       $("door").classList.add("hidden");
-      // 确认了完成汇报 → 员工带回一只大箱子
+      ackReport(ev.employeeId);
+      // 听完（或跳过）完成汇报 → 员工带回一只大箱子
       if (ev.kind === "done") tellGame({ type: "gift", tier: "big", agent: ev.agent });
-      nextDoor();
+      // 这位员工还有事要你批准 → 直接跳到请示那一步
+      const i = state.doorQueue.findIndex((q) => q.kind === "approval" &&
+        state.approvals.get(q.id)?.employeeId === ev.employeeId);
+      if (i > 0) state.doorQueue.unshift(state.doorQueue.splice(i, 1)[0]);
+      nextDoor(i >= 0);
     };
+    const report = ev.kind === "done" ? paginate(ev.report) : [];
+    showDialog(report.length ? report : [], {
+      text: ev.kind === "done"
+        ? (report.length ? "“汇报完毕。再见老板，我继续去忙了！”" : `“${ev.text}”`)
+        : `“${ev.text}”`,
+      button: ev.kind === "done" ? "好" : "知道了",
+      action: leave,
+    }, leave);
     tellGame({ type: "employee", agent: ev.agent, kind: ev.kind, employeeId: ev.employeeId, name: ev.employeeName });
   }
   pauseGame();
@@ -480,6 +558,7 @@ window.addEventListener("message", (e) => {
   if (e.data?.type === "save") backupSave(e.data.data);
   if (e.data?.type === "game-ready" || e.data?.type === "need-employees") tellGame({ type: "employees", list: state.employees });
   if (e.data?.type === "volume") sound.setVolume(Number(e.data.music), Number(e.data.sfx));
+  if (e.data?.type === "prefs") { state.reportsOn = !!e.data.reports; store.set("reportsOn", state.reportsOn ? "1" : "0"); }
   if (e.data?.type === "open-pending") {
     const a = pending().find((x) => x.employeeId === e.data.employeeId) || pending()[0];
     if (a) { $("door").classList.add("hidden"); openCard(a.id); } else openConsole();
@@ -491,6 +570,12 @@ window.addEventListener("message", (e) => {
   }
   if (e.data?.type === "need-save") restoreSave();
 });
+
+function ackReport(employeeId) {
+  if (!employeeId || !state.token) return;
+  fetch("/api/employee/ack", { method: "POST", headers: { "Content-Type": "application/json", "X-Device-Token": state.token },
+    body: JSON.stringify({ id: employeeId }) }).catch(() => {});
+}
 
 // ---------------- 员工改名（文字输入放在网页里，iPhone 上更好用） ----------------
 async function renameEmployee(id, current) {

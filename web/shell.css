@@ -47,8 +47,12 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 @keyframes rise { from { transform: translateY(20px); opacity: 0; } }
 .door-plate { position: absolute; left: 18px; top: -16px; background: var(--neon); color: #1a1208;
   font-weight: 700; font-size: 15px; padding: 5px 14px; border-radius: 10px; }
-.door-say { font-size: 18px; line-height: 1.6; min-height: 3.2em; }
-.door-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+.door-say { font-size: 18px; line-height: 1.6; min-height: 4.8em; max-height: 34vh; overflow-y: auto; white-space: pre-wrap; }
+.door-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 8px; }
+.door-page { color: var(--muted); font-size: 13px; margin-right: auto; }
+.door-skip { position: absolute; right: 12px; top: -16px; background: #2a211b; color: var(--text);
+  border: 1px solid #6a5040; border-radius: 10px; padding: 5px 12px; font-size: 14px; }
+.door-skip.hidden { display: none; }
 .door-btn { background: var(--neon); color: #1a1208; border: 0; border-radius: 10px;
   padding: 10px 22px; font-size: 16px; font-weight: 700; }
 #card { position: fixed; inset: 0; z-index: 40; background: var(--card-bg); color: var(--card-text);

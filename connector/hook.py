@@ -39,7 +39,7 @@ PROFILES = {
 # Claude Code 可以改接国内模型的兼容接口：按接口地址识别，员工算在对应模型名下
 PROVIDERS = (("deepseek", "deepseek", "DeepSeek"), ("moonshot", "kimi", "Kimi"),
              ("kimi", "kimi", "Kimi"), ("bigmodel", "glm", "智谱 GLM"), ("zhipu", "glm", "智谱 GLM"))
-LABELS = {"claude": "Claude Code", "codex": "Codex", "gemini": "Gemini CLI", "qwen": "Qwen Code",
+LABELS = {"grok": "Grok", "claude": "Claude Code", "codex": "Codex", "gemini": "Gemini CLI", "qwen": "Qwen Code",
           "copilot": "Copilot", "cursor": "Cursor"}
 
 
@@ -85,6 +85,7 @@ def normalize(raw: dict) -> dict:
         "tool_input": ti,
         "transcript_path": raw.get("transcript_path", ""),
         "title": chat_title(raw.get("transcript_path", "")),
+        "text": (raw.get("last_assistant_message") or "") if isinstance(raw.get("last_assistant_message"), str) else "",
     }
 
 
@@ -109,6 +110,45 @@ def chat_title(transcript_path: str) -> str:
     return ""
 
 
+REPORT_LIMIT = 6000   # 最多带多少字给手机
+
+
+def _read_tail(path: str, size: int = 600_000) -> str:
+    with open(path, "rb") as f:
+        f.seek(0, 2)
+        end = f.tell()
+        f.seek(max(0, end - size))
+        return f.read().decode("utf-8", "ignore")
+
+
+def latest_ai_text(transcript_path: str) -> str:
+    """AI 最近说的话：从对话记录末尾往前，收集上一条用户消息/工具结果之后 AI 写的文字。
+    任务完成时就是最终汇报；请示批准时就是它动手前的说明。"""
+    if not transcript_path:
+        return ""
+    try:
+        lines = _read_tail(transcript_path).splitlines()
+    except OSError:
+        return ""
+    parts: list[str] = []
+    for line in reversed(lines):
+        try:
+            item = json.loads(line)
+        except ValueError:
+            continue
+        kind = item.get("type")
+        if kind == "user":
+            break
+        if kind != "assistant":
+            continue
+        content = (item.get("message") or {}).get("content") or []
+        texts = [c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"]
+        if texts:
+            parts.append(chr(10).join(t for t in texts if t.strip()))
+    text = (chr(10) * 2).join(reversed([p for p in parts if p.strip()])).strip()
+    return text[:REPORT_LIMIT] + ("……" if len(text) > REPORT_LIMIT else "")
+
+
 def post(path: str, body: dict, timeout: float) -> dict:
     req = urllib.request.Request(BASE + path, data=json.dumps(body, ensure_ascii=False).encode(),
                                  headers={"Content-Type": "application/json"})
@@ -117,6 +157,7 @@ def post(path: str, body: dict, timeout: float) -> dict:
 
 
 def ask_phone(agent: str, hook: dict) -> None:
+    hook["text"] = hook.get("text") or latest_ai_text(hook.get("transcript_path", ""))
     profile = PROFILES.get(agent, PROFILES["generic"])
     deadline = time.time() + profile["max_wait"]
     who, label = display_agent(agent)
@@ -171,6 +212,8 @@ def run(agent: str) -> None:
     # 只通知、不需要决定的事件
     if event in ("Stop", "Notification", "PostToolUse", "UserPromptSubmit", "AfterAgent", "stop",
                  "SessionEnd", "afterAgentResponse"):
+        if event in ("Stop", "stop", "AfterAgent", "afterAgentResponse"):
+            hook["text"] = hook.get("text") or latest_ai_text(hook.get("transcript_path", ""))
         try:
             who, label = display_agent(agent)
             post("/hook/event", {"agent": who, "label": label, "hook": {**raw, **hook,

@@ -55,5 +55,7 @@
   "rep_fair_ratio": 0.8,
   "rep_lowball_ratio": 0.5,
   "rep_lie_reduction": 0.04,
-  "confess_chance": 0.45
+  "confess_chance": 0.45,
+  "emergency_loan": 800,
+  "emergency_repay": 1000
 }

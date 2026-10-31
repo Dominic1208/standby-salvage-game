@@ -38,25 +38,6 @@ SAVES_DIR = DATA_DIR / "saves"
 SAVES_DIR.mkdir(exist_ok=True)
 DEVICES_FILE = DATA_DIR / "devices.json"
 EMPLOYEES_FILE = DATA_DIR / "employees.json"
-# 员工（外出探险的冒险家）形象池：Claude 冷峻风、Codex 动物、DeepSeek 温柔风（亚洲面孔），
-# 其他 AI 用通用冒险家；偶尔混入特别员工（太空人、外星人……）
-LOOK_POOLS = {
-    "claude": [f"claude_{i}" for i in range(1, 7)],
-    "codex": [f"codex_{i}" for i in range(1, 7)],
-    "deepseek": [f"deepseek_{i}" for i in range(1, 7)],
-}
-GENERIC_LOOKS = [f"staff_{i}" for i in range(1, 9)]
-SPECIAL_LOOKS = [f"special_{i}" for i in range(1, 5)]
-EMPLOYEE_FORGET = 3 * 24 * 3600   # 3 天没动静的员工不再显示
-SPECIAL_EVERY = 6             # 每第 6 位新员工是特别员工（太空人、外星人……）
-
-
-def pick_look(agent: str, same_agent_count: int, total: int) -> str:
-    if total % SPECIAL_EVERY == SPECIAL_EVERY - 1:
-        return SPECIAL_LOOKS[(total // SPECIAL_EVERY) % len(SPECIAL_LOOKS)]
-    pool = LOOK_POOLS.get(agent, GENERIC_LOOKS)
-    return pool[same_agent_count % len(pool)]
-
 PORT = 8787
 PAIR_CODE_TTL = 1800         # 配对码有效期（秒）
 REMIND_AFTER = (300, 900)    # 5 分钟、15 分钟再提醒
@@ -64,6 +45,20 @@ REMIND_AFTER = (300, 900)    # 5 分钟、15 分钟再提醒
 mimetypes.add_type("application/wasm", ".wasm")
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("application/manifest+json", ".webmanifest")
+
+# 员工（外出探险的冒险家）形象：30 个形象所有 AI 通用，只用领巾和名牌的颜色区分是哪家 AI；已经有人用的形象不重复分配
+ALL_LOOKS = ([f"claude_{i}" for i in range(1, 7)] + [f"deepseek_{i}" for i in range(1, 7)]
+             + [f"codex_{i}" for i in range(1, 7)] + [f"special_{i}" for i in range(1, 5)]
+             + [f"staff_{i}" for i in range(1, 9)])
+GENERIC_LOOKS = ALL_LOOKS
+SPECIAL_LOOKS = [f"special_{i}" for i in range(1, 5)]
+EMPLOYEE_FORGET = 3 * 24 * 3600   # 3 天没动静的员工不再显示
+
+
+def pick_look(used: set) -> str:
+    """从还没人用的形象里随机挑一个；全用过了就挑用得最少的。"""
+    free = [x for x in ALL_LOOKS if x not in used]
+    return free[secrets.randbelow(len(free))] if free else ALL_LOOKS[secrets.randbelow(len(ALL_LOOKS))]
 
 
 def now() -> float:
@@ -87,10 +82,12 @@ class State:
         self.devices: dict[str, dict] = self._load_devices()
         self.employees: dict[str, dict] = (json.loads(EMPLOYEES_FILE.read_text("utf-8"))
                                            if EMPLOYEES_FILE.exists() else {})
-        for i, e in enumerate(sorted(self.employees.values(), key=lambda e: e["created"])):
-            if isinstance(e.get("look"), int):  # 旧版数字形象 → 按新规则重新分配
-                same = [x for x in self.employees.values() if x["agent"] == e["agent"] and x["created"] < e["created"]]
-                e["look"] = pick_look(e["agent"], len(same), i)
+        # 旧版按文件夹登记的员工（没有对话 id）已被“按对话登记”取代，启动时清掉
+        self.employees = {k: v for k, v in self.employees.items()
+                          if v.get("session") or "演示项目" in str(v.get("project", ""))}
+        for e in self.employees.values():
+            if not isinstance(e.get("look"), str):  # 旧版数字形象 → 重新分配
+                e["look"] = pick_look(self.used_looks())
         self.push = PushSender(DATA_DIR)
 
     # ---- 设备与配对 ----
@@ -131,12 +128,16 @@ class State:
             same_agent = [e for e in self.employees.values() if e["agent"] == agent]
             emp = {"id": secrets.token_urlsafe(6), "key": key, "agent": agent, "label": label or agent,
                    "project": project, "name": title or project, "session": session_id,
-                   "look": pick_look(agent, len(same_agent), len(self.employees)),
+                   "look": pick_look(self.used_looks()),
                    "index": len(same_agent), "created": now(), "status": "working"}
             self.employees[key] = emp
         emp["last_seen"] = now()
         self.save_employees()
         return emp
+
+    def used_looks(self) -> set:
+        return {e.get("look") for e in self.employees.values()
+                if now() - e.get("last_seen", e.get("created", 0)) <= EMPLOYEE_FORGET}
 
     def employees_public(self) -> list:
         waiting = {a.get("employeeId") for a in self.approvals.values() if a["status"] == "pending"}
@@ -148,7 +149,7 @@ class State:
             if status == "working" and now() - e.get("last_seen", 0) > 3600:
                 status = "resting"
             out.append({k: e.get(k) for k in ("id", "agent", "label", "project", "name", "look", "index")}
-                       | {"status": status})
+                       | {"status": status, "reported": bool(e.get("reported"))})
         return out
 
     # ---- 广播 ----
@@ -179,7 +180,7 @@ class State:
 
 def public(a: dict) -> dict:
     """手机端能看到的字段（不含内部 future）。"""
-    keys = ("id", "agent", "label", "employeeId", "employeeName", "employeeLook", "sessionId", "cwd", "toolName", "summary", "detail",
+    keys = ("id", "agent", "label", "employeeId", "employeeName", "employeeLook", "context", "sessionId", "cwd", "toolName", "summary", "detail",
             "hash", "status", "created", "resolvedBy", "simulated")
     return {k: a.get(k) for k in keys}
 
@@ -215,7 +216,8 @@ def require_device(request: web.Request) -> dict:
 
 
 async def create_approval(agent: str, session_id: str, cwd: str, tool_name: str,
-                          tool_input: dict, simulated: bool = False, label: str = "", title: str = "") -> dict:
+                          tool_input: dict, simulated: bool = False, label: str = "", title: str = "",
+                          context: str = "") -> dict:
     emp = STATE.employee_for(agent, label, "D:/演示项目" if simulated else cwd,
                              "" if simulated else session_id, title)
     # 同一会话出现新请求，说明旧请求已在电脑上处理过：标记失效
@@ -234,6 +236,7 @@ async def create_approval(agent: str, session_id: str, cwd: str, tool_name: str,
         "employeeId": emp["id"],
         "employeeName": emp["name"],
         "employeeLook": emp["look"],
+        "context": context,
         "hash": content_hash(body),
         "status": "pending",
         "created": now(),
@@ -251,7 +254,7 @@ async def create_approval(agent: str, session_id: str, cwd: str, tool_name: str,
 
 
 def agent_label(agent: str) -> str:
-    names = {"claude": "Claude", "codex": "Codex", "deepseek": "DeepSeek", "kimi": "Kimi", "glm": "智谱",
+    names = {"claude": "Claude", "codex": "Codex", "deepseek": "DeepSeek", "kimi": "Kimi", "glm": "智谱", "grok": "Grok",
              "gemini": "Gemini", "qwen": "Qwen", "copilot": "Copilot", "cursor": "Cursor"}
     return f"{names.get(agent, agent)} 员工"
 
@@ -287,11 +290,12 @@ async def resolve(approval_id: str, status: str, by: str) -> bool:
     return True
 
 
-async def add_event(kind: str, agent: str, text: str, session_id: str = "", emp: dict | None = None) -> None:
+async def add_event(kind: str, agent: str, text: str, session_id: str = "", emp: dict | None = None,
+                    report: str = "") -> None:
     ev = {"id": secrets.token_urlsafe(6), "kind": kind, "agent": agent,
           "text": text, "sessionId": session_id, "time": now(),
           "employeeId": emp["id"] if emp else "", "employeeName": emp["name"] if emp else "",
-          "employeeLook": emp["look"] if emp else ""}
+          "employeeLook": emp["look"] if emp else "", "report": report}
     STATE.events.append(ev)
     STATE.events = STATE.events[-50:]
     await STATE.broadcast({"type": "event", "event": ev})
@@ -325,6 +329,7 @@ async def hook_permission(request: web.Request) -> web.Response:
             tool_input=hook.get("tool_input", {}),
             label=data.get("label", ""),
             title=hook.get("title", ""),
+            context=hook.get("text", ""),
         )
     if a["status"] != "pending":
         return web.json_response({"approvalId": a["id"], "decision": a["status"]})
@@ -361,7 +366,10 @@ async def hook_event(request: web.Request) -> web.Response:
     emp["status"] = "working"
     if name == "Stop":
         emp["status"] = "resting"
-        await add_event("done", agent, "老板，这一轮工作做完了，回来看看结果吧", sid, emp)
+        emp["reported"] = True  # 带着汇报回来了，等你听完
+        report = hook.get("text", "")
+        await add_event("done", agent, short(report, 60) if report else "老板，这一轮工作做完了，回来看看结果吧",
+                        sid, emp, report)
     elif name == "Notification":
         msg = hook.get("message", "")
         if "permission" not in msg.lower():   # 批准类已由 PermissionRequest 处理
@@ -417,6 +425,18 @@ async def pending(request: web.Request) -> web.Response:
     return web.json_response([public(a) for a in STATE.approvals.values() if a["status"] == "pending"])
 
 
+async def ack_employee(request: web.Request) -> web.Response:
+    """手机上听完（或跳过）汇报：员工就可以离开店里了。"""
+    require_device(request)
+    data = await request.json()
+    for e in STATE.employees.values():
+        if e["id"] == data.get("id") and e.get("reported"):
+            e["reported"] = False
+            STATE.save_employees()
+            await STATE.broadcast({"type": "employees", "employees": STATE.employees_public()})
+    return web.json_response({"ok": True})
+
+
 async def rename_employee(request: web.Request) -> web.Response:
     require_device(request)
     data = await request.json()
@@ -437,11 +457,8 @@ async def reroll_employee(request: web.Request) -> web.Response:
     data = await request.json()
     for e in STATE.employees.values():
         if e["id"] == data.get("id"):
-            pool = LOOK_POOLS.get(e["agent"], GENERIC_LOOKS)
-            if secrets.randbelow(100) < 15:
-                pool = SPECIAL_LOOKS
-            choices = [x for x in pool if x != e.get("look")] or pool
-            e["look"] = choices[secrets.randbelow(len(choices))]
+            used = STATE.used_looks() | {e.get("look")}
+            e["look"] = pick_look(used)
             STATE.save_employees()
             await STATE.broadcast({"type": "employees", "employees": STATE.employees_public()})
             return web.json_response({"ok": True, "look": e["look"]})
@@ -457,7 +474,17 @@ async def simulate(request: web.Request) -> web.Response:
     require_device(request)
     if request.query.get("kind") == "done":
         emp = STATE.employee_for("claude", "Claude Code", "D:/演示项目")
-        await add_event("done", "claude", "老板，这一轮工作做完了（模拟）", "demo", emp)
+        emp["reported"] = True  # 和真实的完成事件一样：带着汇报回来
+        demo = """## 完成了
+
+我把登录页的表单校验改好了：邮箱格式不对时会提示，密码少于 8 位也会拦下。
+
+**改了这些文件：**
+- `src/login.ts`：新增校验函数
+- `src/login.test.ts`：补了 6 个测试，全部通过
+
+有一点要你决定：要不要顺便把注册页也用同一套校验？我建议要，改动不大。（这是模拟汇报）"""
+        await add_event("done", "claude", "老板，这一轮工作做完了（模拟）", "demo", emp, demo)
         return web.json_response({"ok": True})
     a = await create_approval("claude", "demo", "D:/demo-project", "Bash",
                               {"command": "npm install left-pad"}, simulated=True)
@@ -673,6 +700,7 @@ def make_app() -> web.Application:
     app.router.add_get("/api/push/key", push_key)
     app.router.add_get("/api/pending", pending)
     app.router.add_post("/api/employee/rename", rename_employee)
+    app.router.add_post("/api/employee/ack", ack_employee)
     app.router.add_post("/api/employee/reroll", reroll_employee)
     app.router.add_post("/api/simulate", simulate)
     app.router.add_get("/ws", ws_handler)

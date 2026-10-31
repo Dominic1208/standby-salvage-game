@@ -116,9 +116,13 @@ func set_employees(list: Array, animate_entry: bool) -> void:
 			_spawn(e, delay if animate_entry else -1.0)
 			delay += 0.6
 	for id in _actors.keys():
-		if not seen.has(id):
-			_actors[id].node.queue_free()
-			_actors.erase(id)
+		if not seen.has(id) and not _actors[id].get("leaving", false):
+			var a: Dictionary = _actors[id]
+			a.leaving = true
+			a.alert.visible = false
+			a.idle.visible = false
+			a.target = DOOR
+			a.wait = 0.3
 
 
 ## 重新播放所有人从门口走进来（每次回到主页时）
@@ -217,15 +221,24 @@ func _refresh_tags(a: Dictionary) -> void:
 	var dsb := StyleBoxFlat.new()
 	dsb.bg_color = color
 	dsb.set_corner_radius_all(5)
+	dsb.border_color = Color(0.2, 0.14, 0.1, 0.6)  # 白色（ChatGPT）在白名牌上也看得见
+	dsb.set_border_width_all(1)
 	a.dot.add_theme_stylebox_override("panel", dsb)
 	a.name.text = str(e.get("name", "员工"))
 	var status := str(e.get("status", "working"))
-	a.idle.visible = status == "resting"
+	a.idle.text = "汇报"
+	a.idle.visible = status != "waiting" and bool(e.get("reported", false))
 	a.alert.visible = status == "waiting"
 
 
 ## 根据状态决定去哪：忙碌的到处走，空闲的去沙发/咖啡机，等你拍板的来吧台前
 func _choose_target(a: Dictionary) -> void:
+	if a.get("leaving", false):
+		a.target = DOOR
+		return
+	if bool(a.e.get("reported", false)) or str(a.e.get("status", "")) == "waiting":
+		a.target = Vector2(0.30 + _rng.randf() * 0.40, BAR_FRONT_Y - _rng.randf() * 0.05)
+		return
 	match str(a.e.get("status", "working")):
 		"waiting":
 			a.target = Vector2(0.38 + _rng.randf() * 0.24, BAR_FRONT_Y)
@@ -283,6 +296,10 @@ func _process(delta: float) -> void:
 		else:
 			a.sprite.rotation = 0.0
 			a.entering = false
+			if a.get("leaving", false):
+				node.queue_free()
+				_actors.erase(id)
+				continue
 			if str(a.e.get("status", "")) == "working":
 				a.wait = _rng.randf_range(IDLE_WAIT.x, IDLE_WAIT.y)
 				_choose_target(a)
