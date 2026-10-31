@@ -28,6 +28,9 @@ VOICE_DIR = ROOT / "build_tmp" / "video" / "voice"
 REF_DIR = ROOT / "build_tmp" / "video" / "myvoice"
 REF_MAIN = (REF_DIR / "ref_main.wav", "大家好，我做了个小游戏，叫待机回收站。")
 REF_AUX = [REF_DIR / "ref_aux.wav"]
+# 生成后的处理：不再整体拉响度（会把停顿里的底噪一起放大），只轻度降噪、停顿处压低、稍微提一点清晰度
+POST_FX = ("afftdn=nr=10:nf=-50,agate=threshold=0.012:ratio=4:attack=5:release=180,"
+           "equalizer=f=3500:t=q:w=1.2:g=2.5,treble=g=2:f=7000,alimiter=limit=0.9")
 
 
 def main() -> None:
@@ -98,8 +101,8 @@ def main() -> None:
                 r = list(tts.run({
                     "text": line, "text_lang": "zh", "ref_audio_path": str(REF_MAIN[0]), "prompt_text": REF_MAIN[1],
                     "prompt_lang": "zh", "aux_ref_audio_paths": [str(p) for p in REF_AUX], "text_split_method": "cut5",
-                    "batch_size": 1, "top_k": 12, "top_p": 1, "temperature": 0.9, "seed": 20261031 + n * 10 + k,
-                    "speed_factor": 1.05, "parallel_infer": False, "return_fragment": False, "streaming_mode": False}))
+                    "batch_size": 1, "top_k": 15, "top_p": 1, "temperature": 1.0, "seed": 20261031 + n * 10 + k,
+                    "speed_factor": 1.0, "parallel_infer": False, "return_fragment": False, "streaming_mode": False}))
                 sr, a = r[-1]
                 a = np.asarray(a)
                 sec = len(a) / sr
@@ -110,7 +113,7 @@ def main() -> None:
             sr, a, sec = best
             wav = out.with_suffix(".wav")
             sf.write(wav, a, sr, subtype="PCM_16")
-            subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(wav), "-af", "loudnorm=I=-18:TP=-2",
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(wav), "-af", POST_FX,
                             "-ar", "44100", "-b:a", "192k", str(out)], check=True)
             wav.unlink()
             durations[out.name] = float(subprocess.run(
