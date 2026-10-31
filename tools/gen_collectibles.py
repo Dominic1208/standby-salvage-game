@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 
 GIFTS = Path(__file__).resolve().parent.parent / "src" / "data" / "gifts.json"
+ART_DIR = GIFTS.parent.parent / "assets" / "art"   # 每个系列有自己的图 col_series_XX.png 就用它，没有就先借一张现成的
 
 # 版本：名字前缀、稀有度、补一句描述。每个系列从这里按顺序取 5 个（不同系列错开，读起来不重样）
 EDITIONS = [
@@ -173,7 +174,7 @@ def build() -> list[dict]:
                     "rarity": rarity,
                     "desc": f"{odesc}{edesc}",
                     "series": series,
-                    "art": art,
+                    "art": f"col_series_{si:02d}" if (ART_DIR / f"col_series_{si:02d}.png").exists() else art,
                     "tint": tint,
                 })
     return items
