@@ -4,7 +4,7 @@ import { C, beginFrame, tap, rrect, text, textFit, para, paraHeight, button, ima
   Scroller, vgrad, anim, kick, ease, wrapLines } from "./ui.js";
 import { G, load, save, newPlayer, startDay, resultNext, resultAlt, openGift, upcomingDue, meta, staffData, gifts,
   upLevel, buyUpgrade, nextHireCost, hire, placesOpen, tripMinutes, sendStaff, answerDilemma, finishReport, draw,
-  setLook, tickStaff, bump } from "./state.js";
+  setLook, tickStaff, bump, staffLevel, dailyGift } from "./state.js";
 import * as S from "./state.js";
 import { drawHome } from "./scenes/home.js";
 import { drawShop } from "./scenes/shop.js";
@@ -66,6 +66,8 @@ onPointer("up", (x, y) => {
 
 function enterGame() {
   scene = "home";
+  const daily = !(overlayData && overlayData.intro) && dailyGift();   // 第一次玩的人先看引导，见面礼已经有了
+  if (daily) floatText(`${daily.staff ? daily.staff.name + "：" : ""}${daily.text}`, C.neon);
   whenArtReady(() => audio.bgm("shop"));   // 点了“开始”才放音乐（平台规范：不能自动播放）；音乐在分包里
   if (overlayData && overlayData.intro) nav.open("intro", { page: 0 });
 }
@@ -213,11 +215,14 @@ function drawStaffPanel() {
   for (const s of G.staff) {
     rrect(r.x, y, r.w, rowH - 12, 16, "#f8efd9", "#c9b48d", 2);
     image(s.look, r.x + 10, y + 6, 90, 108, { alignY: 1 });
-    text(s.name, r.x + 116, y + 34, 28, C.ink, "left", true);
+    const nw = text(s.name, r.x + 116, y + 34, 28, C.ink, "left", true);
+    const lv = staffLevel(s);
+    rrect(r.x + 126 + nw, y + 18, 24 * lv.title.length + 20, 32, 10, C.ink);
+    text(lv.title, r.x + 136 + nw, y + 34, 20, C.neon, "left", true);
     let status = "在店里歇着", color = C.inkSoft;
     if (s.status === "away") {
       const place = staffData.places.find((p) => p.id === s.place);
-      const left = Math.max(0, s.returnAt - Date.now());
+      const left = Math.max(0, s.returnAt - now());
       status = `在${place ? place.name : "外面"}，${fmtLeft(left)}后回来`; color = "#2f6fa8";
     } else if (s.status === "back") { status = "回来了，等你听汇报！"; color = C.stamp; }
     textFit(status, r.x + 116, y + 76, r.w - 320, 22, color);
@@ -248,6 +253,7 @@ function drawStaffCard() {
   rrect(x, y, w, h, 24, C.paper, C.paperDark, 3);
   image(s.look, x + 20, y + 20, 220, 300, { alignY: 1 });
   text(s.name, x + 260, y + 60, 34, C.ink, "left", true);
+  text(`「${staffLevel(s).title}」　探险 ${s.trips || 0} 次`, x + 260, y + 300, 22, C.inkSoft);
   const lines = ["今天想去哪儿逛逛？", "老板，有什么吩咐？", "我刚擦完柜台。", "听说码头最近有好货。", "要不要派我出去转转？"];
   para(lines[s.name.length % lines.length], x + 260, y + 100, w - 290, 25, C.inkSoft);
   button("派出门探险", x + 30, y + 340, w - 60, 62, () => nav.open("send", { staff: s }), { size: 26 });
@@ -289,7 +295,7 @@ function drawReport() {
   image(s.look, 30, y - 360, 300, 400, { alignY: 1 });
   rrect(20, y, W - 40, boxH, 22, "rgba(20,14,10,0.94)", C.neon, 2);
   rrect(40, y - 26, 260, 52, 14, C.neon);
-  textFit(`${s.name} · 汇报`, 170, y, 240, 26, "#1a1208", "center", true);
+  textFit(`${staffLevel(s).title} ${s.name} · 汇报`, 170, y, 240, 26, "#1a1208", "center", true);
   const pages = pageText(s.report, W - 100, 26, boxH - 150);
   const page = Math.min(d.page, pages.length - 1);
   para(pages[page], 50, y + 50, W - 100, 26, C.text);

@@ -60,7 +60,7 @@ def fix_text(s: str) -> str:
 def clean(o):
     """递归：替换文字；列表里含迷信内容的条目直接去掉。"""
     if isinstance(o, dict):
-        return {k: (v if k in CODE_KEYS else clean(v)) for k, v in o.items()}
+        return {k: (v if k in CODE_KEYS or k.startswith("_doc") else clean(v)) for k, v in o.items()}
     if isinstance(o, list):
         out = []
         for v in o:
@@ -79,7 +79,7 @@ def clean(o):
 def visible_strings(o):
     if isinstance(o, dict):
         for k, v in o.items():
-            if k not in CODE_KEYS:
+            if k not in CODE_KEYS and not k.startswith("_doc"):
                 yield from visible_strings(v)
     elif isinstance(o, list):
         for v in o:

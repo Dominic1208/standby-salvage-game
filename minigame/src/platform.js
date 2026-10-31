@@ -180,6 +180,8 @@ export function setupShare() {
   if (!api) return;
   try {
     api.showShareMenu && api.showShareMenu({ withShareTicket: false, menus: ["shareAppMessage", "shareTimeline"] });
-    api.onShareAppMessage && api.onShareAppMessage(() => ({ title: "开一家什么都收的回收站，揭穿骗子、等员工带宝贝回来" }));
+    const card = { title: "开一家什么都收的回收站，揭穿骗子、等员工带宝贝回来", imageUrl: "share.jpg" };
+    api.onShareAppMessage && api.onShareAppMessage(() => card);
+    api.onShareTimeline && api.onShareTimeline(() => ({ title: card.title, imageUrl: card.imageUrl }));
   } catch {}
 }

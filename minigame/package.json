@@ -5,7 +5,9 @@
   "description": "待机回收站 · 微信/抖音小游戏版",
   "scripts": {
     "build": "node build.mjs",
-    "dev": "node build.mjs --web && node serve.mjs"
+    "build:assets": "node build.mjs --assets",
+    "dev": "node build.mjs --web && node serve.mjs",
+    "test": "node test/run.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.25.10"

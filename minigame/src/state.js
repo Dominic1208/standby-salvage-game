@@ -20,7 +20,7 @@ const SAVE_KEY = "standby_salvage_save_v1";
 export const G = {
   day: 1, cash: tuning.start_cash, rep: 0, inventory: [], timeLeft: tuning.time_per_day, orderTag: "",
   runState: "playing", emergencyUsed: false, extraDue: {},
-  collection: {}, giftQueue: [], giftsToday: 0, intel: 0,
+  collection: {}, giftQueue: [], giftsToday: 0, intel: 0, lastDaily: "",
   settings: { music: 0.6, sfx: 1 },
   staff: [], upgrades: {}, skins: {}, stats: {}, ach: {},
   // 以下不存档
@@ -30,7 +30,7 @@ export const G = {
 
 // ---------------- 存档 ----------------
 const SAVED = ["day", "cash", "rep", "inventory", "timeLeft", "orderTag", "runState", "emergencyUsed", "extraDue",
-  "collection", "giftQueue", "giftsToday", "intel", "settings", "staff", "upgrades", "skins", "stats", "ach"];
+  "collection", "giftQueue", "giftsToday", "intel", "lastDaily", "settings", "staff", "upgrades", "skins", "stats", "ach"];
 export function save() {
   const d = {};
   for (const k of SAVED) d[k] = G[k];
@@ -456,8 +456,8 @@ export function tripMinutes(place) { return place.minutes * (1 - upValue("bed"))
 export function sendStaff(staff, place) {
   staff.status = "away";
   staff.place = place.id;
-  staff.departAt = Date.now();
-  staff.returnAt = Date.now() + tripMinutes(place) * 60000;
+  staff.departAt = now();
+  staff.returnAt = now() + tripMinutes(place) * 60000;
   bump("trips");
   if (place.id === "mansion") bump("mansion_trips");
   audio.sfx("door");
@@ -468,12 +468,12 @@ export function sendStaff(staff, place) {
 export function tickStaff() {
   const back = [];
   for (const s of G.staff) {
-    if (s.status === "away" && Date.now() >= s.returnAt) {
+    if (s.status === "away" && now() >= s.returnAt) {
       const place = staffData.places.find((p) => p.id === s.place) || staffData.places[0];
       s.status = "back";
       s.report = makeReport(place);
       let tier = place.tier;
-      if (tier === "small" && Math.random() < upValue("map")) tier = "big";
+      if (tier === "small" && Math.random() < upValue("map") + staffLevel(s).big_chance) tier = "big";
       s.gift = tier;
       s.dilemma = Math.random() < staffData.dilemma_chance ? makeDilemma() : null;
       back.push(s);
@@ -514,13 +514,36 @@ export function answerDilemma(staff, yes) {
   return d.yes.text.replace("{result}", hi > 0 ? `${result}（花 ¥${d.cost}，卖了 ¥${got}）` : "");
 }
 
-/** 听完汇报：员工回到店里歇着，包裹进队列。 */
+/** 员工等级：按完成的探险次数（staff.json 的 levels）。 */
+export function staffLevel(s) {
+  let lv = staffData.levels[0];
+  for (const l of staffData.levels) if ((s.trips || 0) >= l.trips) lv = l;
+  return lv;
+}
+
+/** 听完汇报：员工回到店里歇着，探险次数 +1（可能升级），包裹进队列。 */
 export function finishReport(staff) {
+  const before = staffLevel(staff);
+  staff.trips = (staff.trips || 0) + 1;
+  const after = staffLevel(staff);
+  if (after !== before) { floatText(`${staff.name} 升级成了「${after.title}」！`, C.ok); audio.sfx("win"); }
+  setMax("staff_trips_max", staff.trips);
   staff.status = "idle";
   staff.report = null;
   addGift(staff.gift || "small");
   staff.gift = null;
   save();
+}
+
+// ---------------- 每日包裹 ----------------
+/** 每天第一次打开：店里一位员工带来一个包裹。返回 {staff, text} 或 null。 */
+export function dailyGift(today = new Date().toDateString()) {
+  if (G.lastDaily === today) return null;
+  G.lastDaily = today;
+  const s = pick(G.staff.filter((x) => x.status !== "away")) || G.staff[0];
+  G.giftQueue.push(staffData.daily_gift.tier);
+  save();
+  return { staff: s, text: pick(staffData.daily_gift.text) };
 }
 
 // ---------------- 抽皮肤 ----------------

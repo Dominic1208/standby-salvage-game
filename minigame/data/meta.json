@@ -565,6 +565,20 @@
    "stat": "night",
    "goal": 1,
    "hidden": true
+  },
+  {
+   "id": "staff_lv2",
+   "name": "老员工",
+   "desc": "一位员工完成 8 次探险",
+   "stat": "staff_trips_max",
+   "goal": 8
+  },
+  {
+   "id": "staff_lv4",
+   "name": "传奇探险家",
+   "desc": "一位员工完成 30 次探险",
+   "stat": "staff_trips_max",
+   "goal": 30
   }
  ]
 }

@@ -117,8 +117,22 @@ def build_audio():
     print(f"音效 {total['sfx'] / 1024:.0f} KB（首包），背景音乐 {total['bgm'] / 1024 / 1024:.1f} MB（分包）")
 
 
+def build_share():
+    """转发卡片图（5:4，放首包根目录）：用抖音横封面缩一下。"""
+    src = ROOT / "devlog" / "video" / "抖音横封面-4比3.jpg"
+    if not src.exists():
+        return
+    im = Image.open(src).convert("RGB")
+    w, h = im.size
+    ch = round(w * 4 / 5)
+    im = im.crop((0, (h - ch) // 2, w, (h - ch) // 2 + ch)).resize((500, 400), Image.LANCZOS)
+    OUT.mkdir(parents=True, exist_ok=True)
+    im.save(OUT / "share.jpg", quality=85)
+
+
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
+    build_share()
     build_art(collect_art())
     build_audio()
 
