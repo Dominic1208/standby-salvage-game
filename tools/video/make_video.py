@@ -8,6 +8,7 @@
 """
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -78,7 +79,8 @@ def wrap(d, s, f, maxw):
     out = []
     for para in s.split("\n"):
         line = ""
-        for ch in para:
+        # 英文单词（Claude、GitHub…）整个当一个单位，不在中间断开
+        for ch in re.findall(r"[A-Za-z0-9.\-]+|.", para):
             # 标点不放在行首：宁可这一行稍微超出一点
             if text_w(d, line + ch, f) > maxw and line and ch not in "，。、；：？！）」』”…":
                 out.append(line)
