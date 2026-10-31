@@ -232,3 +232,14 @@ test("每日包裹：一天只给一次", () => {
   assert.ok(S.dailyGift("2026-11-02"));
   assert.equal(G.giftQueue.length, n + 2);
 });
+
+test("连续生成 3000 位顾客都不出错（数据清理后的结构完整）", () => {
+  fresh(33);
+  for (let i = 0; i < 3000; i++) {
+    G.timeLeft = 99;
+    S.nextCustomer();
+    const d = G.deal;
+    assert.ok(d.item.name && d.item.art && d.customer.name && d.story, `第 ${i} 位顾客数据不完整`);
+    assert.ok(d.clues.length >= 1 && d.ask >= 10 && d.trueValue >= 10);
+  }
+});

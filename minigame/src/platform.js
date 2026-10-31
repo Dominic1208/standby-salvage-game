@@ -178,6 +178,20 @@ export function vibrate() { try { api && api.vibrateShort && api.vibrateShort({ 
 export const now = () => Date.now();
 export function raf(fn) { return api ? requestAnimationFrame(fn) : window.requestAnimationFrame(fn); }
 
+/** 新版本：平台在后台下载好新包后，问玩家要不要马上重启更新（存档在本地，更新后还在）。 */
+export function setupUpdate() {
+  if (!api || !api.getUpdateManager) return;
+  try {
+    const um = api.getUpdateManager();
+    um.onUpdateReady(() => {
+      api.showModal({
+        title: "有新版本", content: "新版本已经准备好，重启一下就能用。存档不会丢。", confirmText: "重启", cancelText: "等会儿",
+        success: (r) => { if (r.confirm) um.applyUpdate(); },
+      });
+    });
+  } catch {}
+}
+
 /** 分享（右上角菜单“转发”） */
 export function setupShare() {
   if (!api) return;

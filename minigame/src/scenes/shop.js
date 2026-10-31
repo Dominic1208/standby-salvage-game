@@ -1,7 +1,7 @@
 // 开店画面：顾客上门 → 看线索 → 质疑来历 → 出价砍价 → 成交或拒绝。布局照电脑版：顶栏、店内场景、当票、收银机。
 import { ctx, W, H, SAFE_TOP } from "../platform.js";
 import { C, rrect, text, textFit, para, paraHeight, button, image, hit, vgrad, anim, kick, shakeX, ease } from "../ui.js";
-import { G, tuning, revealClue, challenge, quickOffer, stepOffer, makeOffer, takeAsk, refuse } from "../state.js";
+import { G, tuning, revealClue, challenge, quickOffer, stepOffer, makeOffer, takeAsk, refuse, upValue } from "../state.js";
 
 export function drawShop(nav) {
   vgrad(0, 0, W, H, C.bgTop, C.bgBottom);
@@ -33,7 +33,7 @@ function drawHud(nav, y) {
   text(`口碑 ${G.rep}`, W - 16, y + 12, 21, C.ok, "right");
   y += 34;
   text("营业时间", 16, y + 10, 20, C.muted);
-  const total = tuning.time_per_day + (G.upgrades.sign ? [0, 1, 2, 3][G.upgrades.sign] : 0);
+  const total = tuning.time_per_day + upValue("sign");
   const pw = (W - 140 - 16) / total;
   for (let i = 0; i < total; i++) rrect(120 + i * pw, y + 4, pw - 4, 12, 6, i < G.timeLeft ? C.neon : "#3a302a");
   if (G.intel > 0) text(`情报 ×${G.intel}`, W - 16, y + 10, 18, C.lcd, "right");

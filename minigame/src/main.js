@@ -1,5 +1,5 @@
 // 入口：主循环、场景切换、各种弹窗（结果、包裹、员工、汇报、升级、抽造型、图鉴、成就、设置、新手引导）。
-import { ctx, W, H, SAFE_TOP, onPointer, raf, audio, loadArtPackage, whenArtReady, setupShare, now, vibrate } from "./platform.js";
+import { ctx, W, H, SAFE_TOP, onPointer, raf, audio, loadArtPackage, whenArtReady, setupShare, setupUpdate, now, vibrate } from "./platform.js";
 import { C, beginFrame, tap, rrect, text, textFit, para, paraHeight, button, image, dim, floatText, drawFloats,
   Scroller, vgrad, anim, kick, ease, wrapLines } from "./ui.js";
 import { G, load, save, newPlayer, startDay, resultNext, resultAlt, openGift, upcomingDue, meta, staffData, gifts,
@@ -46,6 +46,7 @@ function boot() {
   if (!had) { newPlayer(); save(); }
   if (G.runState !== "playing" && G.runState !== "day_end") G.runState = "day_end";
   setupShare();
+  setupUpdate();
   loadArtPackage();
   if (!had) overlayData = { intro: true };
 }

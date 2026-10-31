@@ -66,8 +66,9 @@ def clean(o):
         for v in o:
             if isinstance(v, str) and SUPERSTITION.search(v):
                 continue
-            # 列表里的一条（比如一个谎话 {story, part, text}）只要有一句不合规，整条去掉
-            if isinstance(v, dict) and any(SUPERSTITION.search(t) for t in visible_strings(v)):
+            # 列表里的一条（一个谎话 {story, part, text}、一行货物 [名字, 类别, 价格]）只要有一句不合规，整条去掉；
+            # 不能只删里面的字符串，不然一行货物会少一列、错位
+            if isinstance(v, (dict, list)) and any(SUPERSTITION.search(t) for t in visible_strings(v)):
                 continue
             out.append(clean(v))
         return out
@@ -118,7 +119,9 @@ def main():
         "customers.json": clean(customers),
         "personalities.json": clean(load(SRC / "personalities.json")),
         "gifts.json": clean(gifts),
-        "tuning.json": load(SRC / "tuning.json"),
+        # 数值：电脑版为底，minigame/data/tuning.json 里写的项覆盖上去（小游戏单独调过平衡）
+        "tuning.json": {**load(SRC / "tuning.json"),
+                        **{k: v for k, v in load(MINI / "tuning.json").items() if not k.startswith("_doc")}},
         "staff.json": clean(load(MINI / "staff.json")),
         "meta.json": clean(meta),
         "ads.json": load(MINI / "ads.json"),
@@ -132,11 +135,23 @@ def main():
                 problems.append(f"{name}: 迷信？ {s[:40]}")
             elif re.search(r"[A-Za-z]", t) and name not in ("ads.json",) and not re.fullmatch(r"adv_\d+|small|big|weird|[a-z_]+", t):
                 problems.append(f"{name}: 英文？ {s[:40]}")
-    print(f"收藏品 {before} → {len(kept)}；顾客类型 {len(customers['archetypes'])} 种")
+    # 结构检查：每行货物是 [名字, 存在的类别, 价格]，每个类别至少有一个谎话和一个故事
+    cat = files["catalog.json"]
+    for row in cat["items"]:
+        if not (len(row) == 3 and isinstance(row[0], str) and row[1] in cat["categories"] and isinstance(row[2], (int, float))):
+            problems.append(f"catalog.json: 货物这一行坏了 {row}")
+    for name, c in cat["categories"].items():
+        if not c.get("lies") or not c.get("stories"):
+            problems.append(f"catalog.json: 类别「{name}」没有谎话或故事了")
+    for a in files["customers.json"]["archetypes"]:
+        if not a.get("names"):
+            problems.append(f"customers.json: 顾客类型 {a.get('art')} 没有名字了")
+    print(f"收藏品 {before} → {len(kept)}；顾客类型 {len(customers['archetypes'])} 种；货物 {len(cat['items'])} 种")
     if problems:
         print("还要处理：")
         for p in problems[:40]:
             print("  ", p)
+        sys.exit(1)   # 有问题就让打包失败，免得把坏数据打进游戏
     else:
         print("检查通过：没有迷信内容，没有英文台词")
 
