@@ -1,0 +1,109 @@
+{
+  "_doc": "讲解视频：每段 scene 的 lines 是逐句解说（一句一条字幕、一段配音）；frames 和 lines 一一对应，写这一句时画面放什么。frame 写 \"same\" 表示沿用上一句的画面。图片先在 build_tmp/video/shots/ 找，再到 devlog/screens/ 找。",
+  "voice": "zh-CN-YunxiNeural",
+  "rate": "+6%",
+  "scenes": [
+    {"id": "hook", "chapter": "开场",
+     "lines": ["AI 帮我写代码的时候，我只能干等。", "它每隔几分钟就弹一句：这条命令能不能运行？", "我就得跑回电脑前，点一下“允许”。",
+       "所以我做了个游戏：AI 在电脑上加班，我在手机上开回收站。", "它要我批准的时候，就派一个员工推门进来找我。"],
+     "frames": [
+       {"layout": "card", "head": "AI 在干活，我在干等", "code": "Allow this command?\n\n  npm run build && npm test\n\n  [ Yes ]   [ No ]"},
+       "same", "same",
+       {"layout": "title", "title": "待机回收站", "sub": "AI 在电脑上加班，我在手机上开回收站", "phones": ["home"]},
+       {"layout": "title", "title": "待机回收站", "sub": "AI 要你批准？员工推门进来找你", "phones": ["approve_final"]}]},
+
+    {"id": "what", "chapter": "01 · 它是什么",
+     "lines": ["它分成两半。", "电脑上是一个连接程序，双击就能跑；手机上是一个网页游戏，扫码就能玩，不用装 App。",
+       "电脑上每开一个 AI 对话，店里就多一名员工，名字就是对话的标题。", "Claude 的员工系橙色围巾，DeepSeek 是蓝色，Codex 是白色。",
+       "员工平时出门探险，只有两种情况会推门进来：要你拍板，或者活干完了回来汇报。"],
+     "frames": [
+       {"layout": "diagram", "head": "它分成两半", "boxes": ["电脑上的 AI\nClaude · Codex · DeepSeek", "连接程序\n双击就能跑", "手机网页游戏\n扫码就能玩"],
+        "arrows": ["请求 →\n← 批准", "请求 →\n← 批准"]},
+       "same",
+       {"layout": "phones", "phones": ["console"], "head": "一个 AI 对话 = 一名员工", "points": ["名字就是对话标题", "颜色代表哪家的 AI", "工作中 · 休息中 · 带着汇报回来了"]},
+       {"layout": "phones", "phones": ["console", "queue"], "head": "围巾颜色 = 哪家的 AI", "points": ["Claude：橙色", "DeepSeek：蓝色", "Codex：白色"]},
+       {"layout": "phones", "phones": ["home", "queue"], "head": "只有两种情况会进门", "points": ["要你拍板", "活干完了回来汇报"]}]},
+
+    {"id": "approve", "chapter": "02 · 要你拍板",
+     "lines": ["要你拍板的时候，员工先把 AI 动手前说的话讲给你听，然后递上一张批准卡片。",
+       "卡片故意做成白底黑字的系统风格，跟游戏画面完全分开，免得你玩着玩着随手点了。",
+       "滑一下批准，电脑上的 AI 马上接着干。", "就算手机一直不理它，它也绝不会自己放行，而是退回电脑上照常问你。"],
+     "frames": [
+       {"layout": "phones", "phones": ["approve_dialog", "approve_final"], "head": "先听它要干什么", "points": ["AI 动手前说的话", "一页页翻，可以跳过"]},
+       {"layout": "phones", "phones": ["approve_card"], "head": "批准卡片：和游戏分开", "points": ["白底黑字，系统风格", "写清楚：哪个 AI、做什么、批准后会怎样", "按钮 1 秒后才能点，防误触"]},
+       {"layout": "phones", "phones": ["approve_card", "approved"], "head": "滑一下，AI 接着干", "points": ["向右滑动批准", "只有第一次决定有效"]},
+       {"layout": "card", "head": "手机不理它？", "big": "绝不自动放行", "code": "手机一直没处理  →  退回电脑\nAI 照常在电脑上问你\n连接程序没开    →  一样退回电脑"}]},
+
+    {"id": "report", "chapter": "03 · 回来汇报",
+     "lines": ["活干完了，员工带着汇报回来，在吧台前排队。", "汇报就是 AI 这一轮说过的所有话：可以一页页听、可以跳过，也可以展开全文一次看完。",
+       "要是断线很久才回来，门口排了一群人，可以一个个听，也可以全部收下。", "听完汇报，员工会留下一个包裹，要你自己点开。"],
+     "frames": [
+       {"layout": "phones", "phones": ["queue"], "head": "在吧台前排队", "points": ["固定站位，最前面的显示全名", "站不下的在门外等"]},
+       {"layout": "phones", "phones": ["report_dialog", "report_full"], "head": "AI 这一轮说的所有话", "points": ["一页页听", "跳过", "展开全文"]},
+       {"layout": "phones", "phones": ["backlog"], "head": "断线很久回来？", "points": ["一个个听", "或者全部收下，以后再看"]},
+       {"layout": "phones", "phones": ["gift_weird", "gift_weird_open"], "head": "留下一个包裹", "points": ["点一下才拆开", "零钱 · 情报 · 收藏品"]}]},
+
+    {"id": "game", "chapter": "04 · 游戏本体",
+     "lines": ["游戏本体是一家什么都收的回收站。一百五十种货，乘上十二种成色，一共一千八百多种。",
+       "顾客报价，你检查东西，听他讲来历。觉得不对就质疑：拿出对不上的线索，骗子当场露馅，只能按真实价钱卖给你。",
+       "每天打烊，收购商来收货。第三天和第七天要还贷款，还不上，店就被收走。",
+       "赚来的钱可以买店铺升级，比如放大镜、霓虹招牌、老鉴定师；也可以抽员工的造型。",
+       "包裹里能开出一千多件收藏品，分四十一个系列；另外还有三十八个成就，有几个是隐藏的。"],
+     "frames": [
+       {"layout": "phones", "phones": ["shop"], "head": "什么都收的回收站", "points": ["150 种货 × 12 种成色", "= 1800 多种"]},
+       {"layout": "phones", "phones": ["clues", "haggle", "exposed"], "head": "检查 · 质疑 · 砍价", "points": ["线索和来历对不上 → 揭穿", "揭穿后按真实价钱卖", "3 / 5 / 7 / 9 成快捷出价"]},
+       {"layout": "phones", "phones": ["deal"], "head": "打烊结算，按时还贷", "points": ["第 3 天还 ¥1200", "第 7 天还 ¥3000", "还不上，店被收走"]},
+       {"layout": "phones", "phones": ["upgrades", "gacha_panel", "gacha_result"], "head": "钱花在哪", "points": ["8 种店铺升级，永久保留", "抽员工造型：22 个，4 档稀有度", "花多了，可能还不上贷款"]},
+       {"layout": "phones", "phones": ["book", "achievements"], "head": "1016 件收藏品 · 38 个成就", "points": ["41 个系列", "有隐藏成就", "跨局保留"]}]},
+
+    {"id": "art", "chapter": "04 · 游戏本体",
+     "lines": ["这些收藏品的画，全是 AI 画的。"],
+     "frames": [{"layout": "image", "image": "art-收藏品系列40张.jpg", "head": "40 个系列，每个一张专属图 · 全部 AI 画的"}]},
+
+    {"id": "how", "chapter": "05 · 怎么做出来的",
+     "lines": ["整个游戏是我和 AI 一起做的。我只负责想法和挑毛病，代码是 Claude 写的，画是 Codex 画的，音乐是在本地用 ACE-Step 生成的。",
+       "第一版只有几个色块。我问能不能好看一点，它就去翻《深空当铺》的玩家评测，看大家喜欢什么、骂什么，再回来改玩法。",
+       "游戏用 Godot 做，导出成网页；连接程序用 Python 写，接住 AI 工具的钩子，把请求转到手机上。"],
+     "frames": [
+       {"layout": "card", "head": "我和 AI 一起做的", "code": "想法、挑毛病   →  我\n写代码         →  Claude\n画画           →  Codex\n音乐           →  ACE-Step（本地）"},
+       {"layout": "compare", "left": "01-第一版界面-色块占位.jpg", "right": "shop", "left_label": "第一版", "right_label": "现在", "head": "“能不能好看一点？”"},
+       {"layout": "diagram", "head": "技术上怎么接起来", "boxes": ["AI 工具的钩子\nClaude Code · Codex", "连接程序\nPython", "手机游戏\nGodot → 网页"],
+        "arrows": ["请求 →\n← 决定", "推送 →\n← 批准"]}]},
+
+    {"id": "staff", "chapter": "05 · 怎么做出来的",
+     "lines": ["员工一开始都系着围裙。我说：他们是出门探险的人，为什么要系围裙？", "于是三十个员工全部重画成冒险家，只靠围巾颜色区分是哪家的 AI。"],
+     "frames": [
+       {"layout": "compare", "left": "art-店员8位.jpg", "right": "art-冒险家员工30位.jpg", "left_label": "一开始：系着围裙", "right_label": "重画：30 位冒险家", "head": "“他们是出门探险的人”"},
+       "same"]},
+
+    {"id": "fails", "chapter": "06 · 翻车合集",
+     "lines": ["当然，也翻了不少车。", "第一次上 iPhone 直接报错：浏览器说这个网页不安全，不让游戏启动。",
+       "有一次设置页说我连了十一台手机。我问它上哪连的？原来全是它自己测试的时候连上去的。",
+       "员工带着汇报回来，几个人叠成一团，一直闪。", "还有，我揭穿了一个骗子，花两百多块买下来，结果还是亏的。",
+       "它一查：骗子的货本来就只值三成，揭穿以后却只降了两成价。改完以后，它跑了两万笔交易的模拟，认真玩，平均每个顾客能赚四十块。",
+       "Codex 的钩子一直报失败，查了半天才发现：Windows 上路径带了引号，它根本认不出来。"],
+     "frames": [
+       {"layout": "card", "head": "翻车合集", "big": "当然，也翻了不少车"},
+       {"layout": "phones", "phones": ["07-iPhone报错-需要HTTPS.png"], "head": "翻车 #1：第一次上 iPhone", "points": ["“需要安全连接”", "游戏直接白屏"]},
+       {"layout": "card", "head": "翻车 #2", "big": "“你上哪连了十一台手机？”", "code": "已配对：11 台手机\n\n其实：1 台 iPhone\n     + 10 台测试时自己连的"},
+       {"layout": "phones", "phones": ["queue"], "head": "翻车 #3：员工叠成一团", "points": ["随机站位 → 叠在一起", "每次刷新都换位置 → 一直闪", "现在：固定站位排队"]},
+       {"layout": "phones", "phones": ["exposed"], "head": "翻车 #4：揭穿了还亏钱", "points": ["骗子的货只值 15%–70%", "揭穿后只降两成价"]},
+       {"layout": "card", "head": "改完之后：模拟 2 万笔交易", "code": "乱出价（直接 9 成）   每位顾客  -¥123\n不看线索（5→7 成）    每位顾客   +¥6\n认真玩（揭穿骗子）    每位顾客  +¥40"},
+       {"layout": "card", "head": "翻车 #5：Codex 钩子一直失败", "code": "hook: UserPromptSubmit  Failed\nhook: Stop              Failed\n\n原因：\"D:\\...\\待机回收站.exe\" hook\n      Windows 上路径带了引号，认不出来"}]},
+
+    {"id": "install", "chapter": "07 · 怎么玩",
+     "lines": ["想玩的话：去 GitHub 下载压缩包，解压，双击。", "电脑上会自动打开一个设置页。手机连同一个 Wi-Fi，扫一下二维码。",
+       "再点一下“连接你的 AI”，就好了。", "之后你在电脑上让 AI 干活，在手机上开店就行。"],
+     "frames": [
+       {"layout": "card", "head": "想玩？三步", "code": "①  GitHub 下载压缩包，解压，双击\n②  手机连同一个 Wi-Fi，扫码\n③  点一下“连接你的 AI”"},
+       {"layout": "compare", "left": "10-电脑设置页-扫码和连接AI.jpg", "right": "home", "left_label": "电脑：设置页", "right_label": "手机：扫码就能玩", "head": "扫码配对，不用装 App"},
+       {"layout": "compare", "left": "16-设置页-一键连接和进度清单.jpg", "right": "console", "left_label": "一键连接你的 AI", "right_label": "员工报到", "head": "连接你的 AI，只需要一次"},
+       {"layout": "title", "title": "待机回收站", "sub": "电脑上 AI 干活，手机上开店", "phones": ["queue"]}]},
+
+    {"id": "end", "chapter": "",
+     "lines": ["代码全部开源，你可以让自己的 AI，把它改成任何你喜欢的风格。", "下次 AI 加班的时候，你就可以理直气壮地摸鱼了。"],
+     "frames": [
+       {"layout": "title", "title": "待机回收站", "sub": "代码全部开源 · GitHub 搜“待机回收站”", "phones": ["deal"]},
+       "same"]}
+  ]
+}
