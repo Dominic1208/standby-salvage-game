@@ -1,7 +1,7 @@
 {
   "_doc": "讲解视频：第一人称博主口吻（“大家好，我是……”）。每段 scene 的 lines 是逐句解说（一句一条字幕、一段配音）；frames 和 lines 一一对应，写这一句时画面放什么，\"same\" 表示沿用上一句的画面。{name} 换成作者的名字后再配音。图片先在 build_tmp/video/shots/ 找，再到 devlog/screens/ 找。",
-  "name": "{name}",
-  "voice": "zh-CN-YunxiNeural",
+  "name": "竹子",
+  "voice": "clone:zhuzi",
   "rate": "+6%",
   "scenes": [
     {"id": "intro", "chapter": "开场",

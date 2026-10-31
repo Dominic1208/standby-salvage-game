@@ -11,7 +11,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import edge_tts
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -31,6 +30,7 @@ def duration(path: Path) -> float:
 
 
 async def main() -> None:
+    import edge_tts   # 只有用微软语音时才需要
     sys.stdout.reconfigure(encoding="utf-8")
     script = json.loads((HERE / "script.json").read_text("utf-8"))
     OUT.mkdir(parents=True, exist_ok=True)
