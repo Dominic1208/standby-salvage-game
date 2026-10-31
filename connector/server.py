@@ -505,6 +505,100 @@ async def setup_info(request: web.Request) -> web.Response:
     })
 
 
+# ---------------- 一键连接 Claude Code / 开机自动运行（只限本机） ----------------
+
+CLAUDE_SETTINGS = Path(os.environ.get("STANDBY_CLAUDE_SETTINGS",
+                                      Path.home() / ".claude" / "settings.json"))
+CLAUDE_EVENTS = {  # 事件 -> (matcher, 超时秒数)
+    "PermissionRequest": ("*", 3600),
+    "PostToolUse": ("*", 10),
+    "Stop": (None, 10),
+    "Notification": (None, 10),
+    "UserPromptSubmit": (None, 10),
+}
+STARTUP_DIR = Path(os.environ.get("STANDBY_STARTUP_DIR", Path(os.environ.get("APPDATA", Path.home()))
+                                  / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"))
+STARTUP_FILE = STARTUP_DIR / "待机回收站.cmd"
+
+
+def hook_command(agent: str) -> str:
+    if FROZEN:
+        return f'"{sys.executable}" hook --agent {agent}'
+    return f'python "{ROOT / "main.py"}" hook --agent {agent}'
+
+
+def _is_ours(cmd: str) -> bool:
+    return "hook --agent" in cmd and ("待机回收站" in cmd or "main.py" in cmd or "claude_hook.py" in cmd)
+
+
+def _strip_ours(hooks: dict) -> dict:
+    """去掉之前写进去的待机回收站钩子（程序换了位置也能清干净），保留用户自己的。"""
+    out = {}
+    for event, groups in hooks.items():
+        kept = []
+        for g in groups if isinstance(groups, list) else []:
+            inner = [h for h in g.get("hooks", []) if not _is_ours(str(h.get("command", "")))]
+            if inner:
+                kept.append({**g, "hooks": inner})
+        if kept:
+            out[event] = kept
+    return out
+
+
+def claude_status() -> dict:
+    try:
+        cfg = json.loads(CLAUDE_SETTINGS.read_text("utf-8")) if CLAUDE_SETTINGS.exists() else {}
+    except ValueError:
+        return {"connected": False, "error": "settings.json 格式有误，没有改动"}
+    cmds = [h.get("command", "") for gs in cfg.get("hooks", {}).values() if isinstance(gs, list)
+            for g in gs for h in g.get("hooks", [])]
+    mine = [c for c in cmds if _is_ours(str(c))]
+    return {"connected": any(hook_command("claude") == c for c in mine), "stale": bool(mine) and
+            not any(hook_command("claude") == c for c in mine), "path": str(CLAUDE_SETTINGS)}
+
+
+async def connect_claude(request: web.Request) -> web.Response:
+    """把钩子写进用户级 ~/.claude/settings.json（先备份、只增删自己的条目）。DELETE 是断开。"""
+    local_only(request)
+    if request.method == "GET":
+        return web.json_response(claude_status())
+    try:
+        cfg = json.loads(CLAUDE_SETTINGS.read_text("utf-8")) if CLAUDE_SETTINGS.exists() else {}
+    except ValueError:
+        return web.json_response({"ok": False, "error": "settings.json 格式有误，没有改动"}, status=400)
+    if CLAUDE_SETTINGS.exists():
+        backup = CLAUDE_SETTINGS.with_name(f"settings.json.bak-待机回收站-{int(now())}")
+        backup.write_text(CLAUDE_SETTINGS.read_text("utf-8"), "utf-8")
+    hooks = _strip_ours(cfg.get("hooks", {}))
+    if request.method == "POST":
+        for event, (matcher, timeout) in CLAUDE_EVENTS.items():
+            group = {"hooks": [{"type": "command", "command": hook_command("claude"), "timeout": timeout}]}
+            if matcher:
+                group = {"matcher": matcher, **group}
+            hooks.setdefault(event, []).append(group)
+    if hooks:
+        cfg["hooks"] = hooks
+    else:
+        cfg.pop("hooks", None)
+    CLAUDE_SETTINGS.parent.mkdir(parents=True, exist_ok=True)
+    CLAUDE_SETTINGS.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), "utf-8")
+    return web.json_response({"ok": True, **claude_status()})
+
+
+async def autostart(request: web.Request) -> web.Response:
+    """开机自动运行：在“启动”文件夹里放一个小脚本（不打开设置页）。DELETE 是关闭。"""
+    local_only(request)
+    if request.method == "POST":
+        STARTUP_DIR.mkdir(parents=True, exist_ok=True)
+        target = (f'start "" /min "{sys.executable}" --no-browser' if FROZEN
+                  else f'start "" /min python "{ROOT / "main.py"}" --no-browser')
+        # UTF-8 + chcp 65001：路径里有中文时，任何语言的 Windows 都能正确读取
+        STARTUP_FILE.write_text(f"@echo off\r\nchcp 65001 >nul\r\n{target}\r\n", "utf-8", newline="")
+    elif request.method == "DELETE" and STARTUP_FILE.exists():
+        STARTUP_FILE.unlink()
+    return web.json_response({"enabled": STARTUP_FILE.exists()})
+
+
 async def setup_test(request: web.Request) -> web.Response:
     """设置页的“试一下”：给手机发一条模拟请求。只限本机。"""
     local_only(request)
@@ -576,6 +670,8 @@ def make_app() -> web.Application:
     app.router.add_get("/setup", setup_page)
     app.router.add_get("/api/setup-info", setup_info)
     app.router.add_post("/api/setup-test", setup_test)
+    app.router.add_route("*", "/api/connect/claude", connect_claude)
+    app.router.add_route("*", "/api/autostart", autostart)
     app.router.add_get("/api/save", save_get)
     app.router.add_post("/api/save", save_put)
     app.router.add_get("/", index)
