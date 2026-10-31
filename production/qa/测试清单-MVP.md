@@ -26,6 +26,9 @@
 | B4 | 员工名字 = 对话标题 | Claude | ✅ 2026-10-31（"AI任务手机游戏原型"） |
 | B5 | Claude Code + DeepSeek 接口 → 员工算 DeepSeek（蓝色） | Claude（模拟环境变量） | ✅ 2026-10-31 |
 | B6 | Codex / Gemini / Qwen / Copilot / Cursor 输出格式 | Claude（模拟输入） | ✅ 2026-10-31（真实会话未测） |
+| B7 | 真实 Claude Code + DeepSeek：请求到手机→批准→文件建好→带汇报回来 | Claude（tools/test_real_agents.py） | ✅ 2026-10-31 |
+| B8 | 真实 Codex：钩子能跑 | Claude | ⏳ 修好了命令格式（Windows 下路径不能带引号），等用户在 Codex 里 /hooks 重新信任 |
+| B9 | 真实 Gemini CLI | Claude | ⛔ Google 已停止个人免费账号使用 Gemini CLI，需要 API 密钥才能测 |
 
 ## C. 手机端体验（必须你在 iPhone 上）
 

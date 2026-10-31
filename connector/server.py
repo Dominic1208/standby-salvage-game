@@ -583,14 +583,32 @@ STARTUP_DIR = Path(os.environ.get("STANDBY_STARTUP_DIR", Path(os.environ.get("AP
 STARTUP_FILE = STARTUP_DIR / "待机回收站.cmd"
 
 
+def _bare_path(p: str) -> str:
+    """不带引号的路径。Codex 在 Windows 上用 cmd/PowerShell 跑钩子，带引号的路径两边都会出错；
+    路径里有空格时换成 8.3 短路径，实在没有短路径才退回带引号。"""
+    if " " not in p:
+        return p
+    if os.name == "nt":
+        import ctypes
+        buf = ctypes.create_unicode_buffer(1024)
+        if ctypes.windll.kernel32.GetShortPathNameW(p, buf, 1024) and " " not in buf.value:
+            return buf.value
+    return f'"{p}"'
+
+
 def hook_command(agent: str) -> str:
+    if agent == "codex":
+        if FROZEN:
+            return f"{_bare_path(sys.executable)} hook --agent {agent}"
+        return f'python {_bare_path(str(ROOT / "main.py"))} hook --agent {agent}'
     if FROZEN:
         return f'"{sys.executable}" hook --agent {agent}'
     return f'python "{ROOT / "main.py"}" hook --agent {agent}'
 
 
 def _is_ours(cmd: str) -> bool:
-    return "hook --agent" in cmd and ("待机回收站" in cmd or "main.py" in cmd or "claude_hook.py" in cmd)
+    # 短路径里可能看不到“待机回收站”，所以 exe 只认 " hook --agent " 这段
+    return " hook --agent " in cmd and (".exe" in cmd.lower() or "main.py" in cmd or "claude_hook.py" in cmd)
 
 
 def _strip_ours(hooks: dict) -> dict:
